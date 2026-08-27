@@ -91,7 +91,7 @@
 | `codex-queue-extension` | 任务队列扩展 | ✅ 可选 | `codex-rs/ext/queue` | 3 | 1,615 |
 | `codex-skills-extension` | 技能扩展 | ✅ 可选 | `codex-rs/ext/skills` | 82 | 22,063 |
 | `codex-web-search-extension` | 网络搜索扩展 | ✅ 可选 | `codex-rs/ext/web-search` | 6 | 882 |
-| `codex-external-agent-migration` | 外部 Agent 配置迁移工具 | 🚫 不需要（桌面工具迁移场景） | `codex-rs/external-agent-migration` | 64 | 16,354 |
+| `codex-external-agent-migration` | 外部 Agent 配置迁移工具 | 🚫 不需要 ⏸️ 暂不处理（唯一消费者是 app-server ⏸️；不在 core 依赖图，不影响 Android 构建；随 app-server 族一并处置） | `codex-rs/external-agent-migration` | 64 | 16,354 |
 | `codex-features` | 集中式特性开关 | ⭐ 必需核心 | `codex-rs/features` | 4 | 3,054 |
 | `codex-feedback` | 用户反馈/错误报告采集 | ✅ 可选 | `codex-rs/feedback` | 2 | 1,377 |
 | `codex-file-search` | 文件名模糊搜索 | ✅ 可选（智能体搜索工具） | `codex-rs/file-search` | 3 | 1,346 |
@@ -4498,7 +4498,7 @@ _No module declarations._
 | 桌面环境相关 | `shell-escalation`、`utils/sleep-inhibitor`、`terminal-detection`、`git-utils`、`git-attribution`、`worktree` | 依赖桌面 shell/终端/git 生态，Android 无对应环境 |
 | 本地模型桌面客户端 | `ollama`、`lmstudio`、`code-mode`/`code-mode-protocol`（接口层暂留） | 依赖桌面本地服务或过重实验运行时；V8 宿主/运行时已删除 |
 | 遥测 | `analytics`、`otel` | 建议配置关闭 |
-| 其他 | `external-agent-migration`、`test-binary-support`、`utils/cargo-bin` | 迁移工具/测试专用 |
+| 其他 ⏸️ | `external-agent-migration`（随 app-server 族暂留）、`test-binary-support`、`utils/cargo-bin` | 迁移工具/测试专用 |
 
 > 注：`git-utils`、`terminal-detection`、`ollama`、`lmstudio`、`analytics`、`otel` 等在 core 的编译依赖图内，不能单独删除；运行时自动降级/空转，通过配置关闭，不影响 Android 产物功能。
 
