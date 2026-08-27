@@ -14,6 +14,7 @@
 | 🔧 必需·需适配 | 必需但含平台相关代码，需针对 Android 改造（证书/SQLite/沙箱/认证/目录等） |
 | ✅ 可选功能 | 功能模块，按需保留或关闭（技能、记忆、MCP 客户端、扩展等） |
 | 🚫 不需要 | 桌面/PC 集成导向（IDE 服务、CLI 入口、远程环境、对外服务器）或 Android 场景无意义；**不进入 UniFFI 构建图，可忽略或后续删除** |
+| ⏸️ 暂不处理 | 附加标记：该模块虽不需要，但**暂时保留在仓库中、不做删除**（体量大或牵连广，留待以后决策） |
 | ❌ 已删除/不可用 | 已从仓库删除，或依赖 Android 不具备的内核机制 |
 
 > **UniFFI 构建图说明**：Android 库只编译 `UniFFI 绑定 crate → codex-core-api → codex-core → 其依赖` 这条子图。标 🚫 的模块（app-server 族、exec-server 族、mcp-server、exec 等）根本不会被编译进 Android 产物；标 🚫 但注明"在 core 编译图中"的（如 git-utils、terminal-detection、ollama）无法单独删除，运行时自动空转/降级，通过配置关闭即可。
@@ -34,13 +35,13 @@
 | `codex-agent-roles` | Agent 角色配置的发现、解析与加载 | ✅ 可选（自定义智能体角色） | `codex-rs/agent-roles` | 4 | 592 |
 | `codex-analytics` | 分析事件采集与上报 | 🚫 建议禁用（遥测；仍在 core 编译图中，配置关闭即可） | `codex-rs/analytics` | 9 | 14,324 |
 | `codex-ansi-escape` | ANSI 转义序列 → ratatui 样式文本 | ❌ 已删除（TUI 渲染专用；连带移除 ansi-to-tui/ratatui/crossterm） | `codex-rs/ansi-escape` | 1 | 58 |
-| `codex-app-server` | app-server 主服务：面向桌面 IDE/App 客户端的 JSON-RPC 服务 | 🚫 不需要（桌面/IDE 集成表面；UniFFI 进程内直连 core，不经过它） | `codex-rs/app-server` | 248 | 156,315 |
-| `codex-app-server-client` | 进程内 app-server 客户端 | 🚫 不需要（随 app-server） | `codex-rs/app-server-client` | 3 | 3,143 |
-| `codex-app-server-daemon` | app-server 本地守护进程管理 | 🚫 不需要（桌面多进程机制） | `codex-rs/app-server-daemon` | 11 | 3,552 |
-| `codex-app-server-protocol` | app-server 协议类型与 schema 生成 | 🚫 不需要（UniFFI 自定义 Kotlin 接口，不复用该协议） | `codex-rs/app-server-protocol` | 57 | 33,360 |
-| `codex-app-server-protocol-noop-macros` | app-server 协议 no-op 宏 | 🚫 不需要 | `codex-rs/app-server-protocol-noop-macros` | 1 | 20 |
-| `codex-app-server-test-client` | app-server 手动测试客户端 | 🚫 不需要 | `codex-rs/app-server-test-client` | 9 | 4,081 |
-| `codex-app-server-transport` | app-server 传输层（stdio/UDS/WebSocket） | 🚫 不需要 | `codex-rs/app-server-transport` | 26 | 16,305 |
+| `codex-app-server` | app-server 主服务：面向桌面 IDE/App 客户端的 JSON-RPC 服务 | 🚫 不需要 ⏸️ 暂不处理（桌面/IDE 集成表面；UniFFI 进程内直连 core，不经过它） | `codex-rs/app-server` | 248 | 156,315 |
+| `codex-app-server-client` | 进程内 app-server 客户端 | 🚫 不需要 ⏸️ 暂不处理（随 app-server） | `codex-rs/app-server-client` | 3 | 3,143 |
+| `codex-app-server-daemon` | app-server 本地守护进程管理 | 🚫 不需要 ⏸️ 暂不处理（桌面多进程机制） | `codex-rs/app-server-daemon` | 11 | 3,552 |
+| `codex-app-server-protocol` | app-server 协议类型与 schema 生成 | 🚫 不需要 ⏸️ 暂不处理（UniFFI 自定义 Kotlin 接口，不复用该协议） | `codex-rs/app-server-protocol` | 57 | 33,360 |
+| `codex-app-server-protocol-noop-macros` | app-server 协议 no-op 宏 | 🚫 不需要 ⏸️ 暂不处理 | `codex-rs/app-server-protocol-noop-macros` | 1 | 20 |
+| `codex-app-server-test-client` | app-server 手动测试客户端 | 🚫 不需要 ⏸️ 暂不处理 | `codex-rs/app-server-test-client` | 9 | 4,081 |
+| `codex-app-server-transport` | app-server 传输层（stdio/UDS/WebSocket） | 🚫 不需要 ⏸️ 暂不处理 | `codex-rs/app-server-transport` | 26 | 16,305 |
 | `codex-apply-patch` | `apply_patch` 补丁引擎：应用模型生成的代码补丁 | ⭐ 必需核心（代码编辑能力） | `codex-rs/apply-patch` | 16 | 5,929 |
 | `codex-arg0` | argv[0] 多角色分发（沙箱/补丁助手二进制机制） | 🚫 不需要（桌面多二进制机制；沙箱降级后无用途） | `codex-rs/arg0` | 1 | 810 |
 | `codex-async-utils` | 异步小工具 | ⭐ 必需核心 | `codex-rs/async-utils` | 1 | 86 |
@@ -72,9 +73,9 @@
 | `codex-core-plugins` | 插件系统核心：加载、启用/禁用、同步 | ✅ 可选（插件生态；不用可配置关闭） | `codex-rs/core-plugins` | 73 | 42,732 |
 | `codex-diagnostics` | 进程级诊断量（Gauge） | ⭐ 必需核心 | `codex-rs/diagnostics` | 2 | 268 |
 | `codex-exec` | 非交互执行入口（`codex-exec` 二进制） | 🚫 不需要（CLI 二进制入口；UniFFI 直接调 core，无需独立进程） | `codex-rs/exec` | 31 | 11,040 |
-| `codex-exec-server` | 远程执行服务：让 codex 操作远程机器（WebSocket/Noise） | 🚫 不需要（远程环境/多机协作场景；单机 Android App 用不到） | `codex-rs/exec-server` | 133 | 49,717 |
-| `codex-exec-server-protocol` | exec-server 协议类型 | 🚫 不需要 | `codex-rs/exec-server-protocol` | 8 | 2,045 |
-| `codex-exec-server-test-support` | exec-server 测试支持 | 🚫 不需要 | `codex-rs/exec-server/tests/support` | 2 | 125 |
+| `codex-exec-server` | 远程执行服务：让 codex 操作远程机器（WebSocket/Noise） | 🚫 不需要 ⏸️ 暂不处理（远程环境/多机协作场景；单机 Android App 用不到） | `codex-rs/exec-server` | 133 | 49,717 |
+| `codex-exec-server-protocol` | exec-server 协议类型 | 🚫 不需要 ⏸️ 暂不处理 | `codex-rs/exec-server-protocol` | 8 | 2,045 |
+| `codex-exec-server-test-support` | exec-server 测试支持 | 🚫 不需要 ⏸️ 暂不处理 | `codex-rs/exec-server/tests/support` | 2 | 125 |
 | `codex-execpolicy` | 命令执行策略引擎（Starlark 白名单） | ⭐ 必需核心（**Android 无沙箱时的安全兜底**） | `codex-rs/execpolicy` | 13 | 2,975 |
 | `codex-agent-extension` | 子智能体扩展 | ✅ 可选（多智能体功能） | `codex-rs/ext/agent` | 2 | 170 |
 | `codex-connectors-extension` | 连接器扩展 | ✅ 可选 | `codex-rs/ext/connectors` | 2 | 76 |
@@ -4491,9 +4492,9 @@ _No module declarations._
 
 | 分组 | 模块 | 不需要的原因 |
 |---|---|---|
-| 桌面/IDE 集成服务 | `app-server`、`app-server-client`、`app-server-daemon`、`app-server-protocol`(+noop-macros)、`app-server-test-client`、`app-server-transport`、`uds`、`stdio-to-uds` | UniFFI 进程内直连 core，无需 JSON-RPC 服务与 IPC |
+| 桌面/IDE 集成服务 ⏸️ | `app-server`、`app-server-client`、`app-server-daemon`、`app-server-protocol`(+noop-macros)、`app-server-test-client`、`app-server-transport`、`uds`、`stdio-to-uds` | UniFFI 进程内直连 core，无需 JSON-RPC 服务与 IPC。**app-server 族（7 个）暂保留、不处理** |
 | CLI 与二进制入口 | `exec`、`utils/cli`、`arg0`、`install-context` | 无 CLI 形态；App 内直接调用库 |
-| 远程/对外服务 | `exec-server`(+protocol/test-support)、`mcp-server`、`utils/readiness` | 单机 Android App 不做远程环境、不对外提供服务 |
+| 远程/对外服务 ⏸️ | `exec-server`(+protocol/test-support)、`mcp-server`、`utils/readiness` | 单机 Android App 不做远程环境、不对外提供服务。**exec-server 族（3 个）暂保留、不处理** |
 | 桌面环境相关 | `shell-escalation`、`utils/sleep-inhibitor`、`terminal-detection`、`git-utils`、`git-attribution`、`worktree` | 依赖桌面 shell/终端/git 生态，Android 无对应环境 |
 | 本地模型桌面客户端 | `ollama`、`lmstudio`、`code-mode` 族（4 个）、`v8-poc` | 依赖桌面本地服务或过重实验运行时 |
 | 遥测 | `analytics`、`otel` | 建议配置关闭 |
