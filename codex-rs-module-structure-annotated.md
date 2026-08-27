@@ -49,7 +49,7 @@
 | `codex-build-info` | 构建信息注入 | ⭐ 必需核心 | `codex-rs/build-info` | 2 | 256 |
 | `codex-bwrap` | 捆绑的 bubblewrap 启动器 | ❌ 不可用（Android 无 user namespaces） | `codex-rs/bwrap` | 2 | 151 |
 | `codex-cli` | 统一 CLI 入口 | ❌ 已删除 | `codex-rs/cli` | 76 | 32,378 |
-| `codex-cloud-config` | 云端托管配置拉取 | ✅ 可选（云端配置同步） | `codex-rs/cloud-config` | 9 | 2,917 |
+| `codex-cloud-config` | 云端托管配置拉取服务 | ❌ 已删除（2026-08-28：cloud-tasks 族删除后遗留孤儿；企业托管配置机制 `CloudConfigBundle` 在 `codex-config` 中，不受影响） | `codex-rs/cloud-config` | 9 | 2,917 |
 | `codex-cloud-tasks` | 云端任务管理 TUI | ❌ 已删除 | `codex-rs/cloud-tasks` | 11 | 5,329 |
 | `codex-cloud-tasks-client` | 云端任务 API 客户端 | ❌ 已删除 | `codex-rs/cloud-tasks-client` | 3 | 1,117 |
 | `codex-cloud-tasks-mock-client` | 云端任务 mock 客户端 | ❌ 已删除 | `codex-rs/cloud-tasks-mock-client` | 2 | 270 |
@@ -4448,9 +4448,9 @@ _No module declarations._
 |---|---:|---|
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
 | 🔧 必需·需适配 | 8 | 必需但需 Android 平台改造（见下表；原 9 个，`codex-utils-pty` 已完成） |
-| ✅ 可选功能 | 43 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
+| ✅ 可选功能 | 42 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
 | 🚫 不需要 | 22 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 5 个是 core 编译期承重依赖，必须保留：`app-server-protocol`×2、`exec-server`×3） |
-| ❌ 已删除/不可用 | 24 | 22 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
+| ❌ 已删除/不可用 | 25 | 23 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
 ### 目标架构（UniFFI 进程内嵌入，不连接任何桌面端）
 

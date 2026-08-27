@@ -20,7 +20,6 @@ members = [
     "code-mode",
     "code-mode-protocol",
     "codex-home",
-    "cloud-config",
     "connectors",
     "config",
     "context-fragments",
@@ -141,7 +140,6 @@ codex-arg0 = { path = "arg0" }
 codex-async-utils = { path = "async-utils" }
 codex-backend-client = { path = "backend-client" }
 codex-client = { path = "codex-client" }
-codex-cloud-config = { path = "cloud-config" }
 codex-code-mode = { path = "code-mode" }
 codex-code-mode-protocol = { path = "code-mode-protocol" }
 codex-home = { path = "codex-home" }
