@@ -46,7 +46,6 @@ mod approvals;
 mod audio_truncation;
 mod auto_review;
 mod catalog_permission_messages;
-mod cli_stream;
 mod client;
 mod client_websockets;
 mod cloud_config;
@@ -90,7 +89,6 @@ mod injected_models_cache;
 mod interrupt_hooks;
 mod items;
 mod json_result;
-mod live_cli;
 mod mcp_auth_elicitation;
 mod mcp_auth_refresh;
 #[cfg(unix)]
@@ -107,8 +105,6 @@ mod models_cache_ttl;
 mod models_etag_responses;
 mod multi_agent_mode;
 mod multi_agent_resume;
-#[cfg(unix)]
-mod multi_exec_server_sandbox;
 mod network_approval;
 mod openai_file_mcp;
 mod otel;

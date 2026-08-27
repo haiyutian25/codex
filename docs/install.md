@@ -8,10 +8,6 @@
 | Git (optional, recommended) | 2.23+ for built-in PR helpers                                   |
 | RAM                         | 4-GB minimum (8-GB recommended)                                 |
 
-### DotSlash
-
-The GitHub Release also contains a [DotSlash](https://dotslash-cli.com/) file for the Codex CLI named `codex`. Using a DotSlash file makes it possible to make a lightweight commit to source control to ensure all contributors use the same version of an executable, regardless of what platform they use for development.
-
 ### Build from source
 
 ```bash
@@ -34,15 +30,15 @@ cargo install --locked cargo-nextest
 # Build Codex.
 cargo build
 
-# Launch the TUI with a sample prompt.
-cargo run --bin codex -- "explain this codebase to me"
+# Run a sample prompt non-interactively.
+cargo run --bin codex-exec -- "explain this codebase to me"
 
 # After making changes, use the root justfile helpers (they default to codex-rs):
 just fmt
 just fix -p <crate-you-touched>
 
 # Run the relevant tests (project-specific is fastest), for example:
-just test -p codex-tui
+just test -p codex-core
 # `just test` runs the test suite via nextest:
 just test
 # Avoid `--all-features` for routine local runs because it increases build
@@ -53,13 +49,6 @@ just test
 
 Codex is written in Rust, so it honors the `RUST_LOG` environment variable to configure its logging behavior.
 
-The TUI records diagnostics in bounded local stores by default. Set `log_dir` explicitly to enable a plaintext TUI log for a run:
-
-```bash
-codex -c log_dir=./.codex-log
-tail -F ./.codex-log/codex-tui.log
-```
-
-The non-interactive mode (`codex exec`) defaults to `RUST_LOG=error`, but messages are printed inline, so there is no need to monitor a separate file.
+The non-interactive mode (`codex-exec`) defaults to `RUST_LOG=error`, but messages are printed inline, so there is no need to monitor a separate file.
 
 See the Rust documentation on [`RUST_LOG`](https://docs.rs/env_logger/latest/env_logger/#enabling-logging) for more information on the configuration options.

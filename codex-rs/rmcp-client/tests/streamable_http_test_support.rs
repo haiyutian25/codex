@@ -1,8 +1,7 @@
 //! Shared helpers for Streamable HTTP RMCP integration tests.
 //!
-//! This support module starts the test HTTP server, launches a real
-//! `exec-server` when remote coverage is needed, and provides small helpers for
-//! creating RMCP clients and asserting round-trip behavior.
+//! This support module starts the test HTTP server and provides small helpers
+//! for creating RMCP clients and asserting round-trip behavior.
 
 // This support module is included by multiple integration-test crates. Each
 // crate uses a different subset of the helpers, so dead-code warnings would
@@ -11,7 +10,6 @@
 
 use std::net::TcpListener;
 use std::path::PathBuf;
-use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
@@ -22,9 +20,6 @@ use codex_config::types::OAuthCredentialsStoreMode;
 use codex_exec_server::Environment;
 use codex_exec_server::ExecServerClient;
 use codex_exec_server::HttpClient;
-use codex_exec_server::RemoteExecServerConnectArgs;
-use codex_http_client::HttpClientFactory;
-use codex_http_client::OutboundProxyPolicy;
 use codex_rmcp_client::ElicitationAction;
 use codex_rmcp_client::ElicitationResponse;
 use codex_rmcp_client::RmcpClient;
@@ -39,9 +34,6 @@ use rmcp::model::Implementation;
 use rmcp::model::InitializeRequestParams;
 use rmcp::model::ProtocolVersion;
 use serde_json::json;
-use tempfile::TempDir;
-use tokio::io::AsyncBufReadExt;
-use tokio::io::BufReader;
 use tokio::net::TcpStream;
 use tokio::process::Child;
 use tokio::process::Command;
@@ -316,73 +308,6 @@ pub(crate) async fn spawn_streamable_http_server() -> anyhow::Result<(Child, Str
 
     wait_for_streamable_http_server(&mut child, &bind_addr, Duration::from_secs(5)).await?;
     Ok((child, base_url))
-}
-
-/// Owns the exec-server process used by the remote-client integration test.
-pub(crate) struct ExecServerProcess {
-    _codex_home: TempDir,
-    child: Child,
-    pub(crate) client: ExecServerClient,
-}
-
-impl Drop for ExecServerProcess {
-    /// Stops the local exec-server process best-effort when the test exits.
-    fn drop(&mut self) {
-        let _ = self.child.start_kill();
-    }
-}
-
-/// Starts a local exec-server and connects an initialized `ExecServerClient`.
-pub(crate) async fn spawn_exec_server() -> anyhow::Result<ExecServerProcess> {
-    let codex_home = TempDir::new()?;
-    let mut child = Command::new(codex_utils_cargo_bin::cargo_bin("codex")?)
-        .args(["exec-server", "--listen", "ws://127.0.0.1:0"])
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
-        .kill_on_drop(true)
-        .env("CODEX_HOME", codex_home.path())
-        .spawn()?;
-
-    let websocket_url = read_exec_server_listen_url(&mut child).await?;
-    let client = ExecServerClient::connect_websocket(RemoteExecServerConnectArgs::new(
-        websocket_url,
-        "rmcp-client-remote-http-test".to_string(),
-        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-    ))
-    .await?;
-
-    Ok(ExecServerProcess {
-        _codex_home: codex_home,
-        child,
-        client,
-    })
-}
-
-/// Reads the websocket URL printed by `codex exec-server --listen`.
-async fn read_exec_server_listen_url(child: &mut Child) -> anyhow::Result<String> {
-    let stdout = child
-        .stdout
-        .take()
-        .context("failed to capture exec-server stdout")?;
-    let mut lines = BufReader::new(stdout).lines();
-    let deadline = Instant::now() + Duration::from_secs(10);
-
-    loop {
-        let remaining = deadline.saturating_duration_since(Instant::now());
-        if remaining.is_zero() {
-            anyhow::bail!("timed out waiting for exec-server listen URL");
-        }
-
-        let line = tokio::time::timeout(remaining, lines.next_line())
-            .await
-            .context("timed out waiting for exec-server stdout")??
-            .context("exec-server stdout closed before emitting listen URL")?;
-        let listen_url = line.trim();
-        if listen_url.starts_with("ws://") {
-            return Ok(listen_url.to_string());
-        }
-    }
 }
 
 async fn wait_for_streamable_http_server(

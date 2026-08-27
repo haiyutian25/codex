@@ -12,21 +12,9 @@ python := if os_family() == "windows" { "python" } else { "python3" }
 help:
     just -l
 
-# `codex`
-alias c := codex
-codex *args:
-    cargo run --bin codex -- {args}
-
-# `codex exec`
+# `codex exec` (standalone binary)
 exec *args:
-    cargo run --bin codex -- exec {args}
-
-# Start `codex exec-server` and run codex-tui.
-[no-cd]
-[positional-arguments]
-[unix]
-tui-with-exec-server *args:
-    {{ justfile_directory() }}/scripts/run_tui_with_exec_server.sh "$@"
+    cargo run --bin codex-exec -- {args}
 
 # Run the CLI version of the file-search crate.
 file-search *args:
@@ -35,16 +23,6 @@ file-search *args:
 # Run the standalone code-mode host from source.
 code-mode-host *args:
     cargo run --bin codex-code-mode-host -- {args}
-
-# Assemble a local Codex package.
-[no-cd]
-assemble-codex-package *args:
-    {{ python }} {{ justfile_directory() }}/scripts/build_codex_package.py {args}
-
-# Build the CLI and run the app-server test client
-app-server-test-client *args:
-    cargo build -p codex-cli
-    cargo run -p codex-app-server-test-client -- --codex-bin ./target/debug/codex {args}
 
 # Format the justfile, Rust, Bazel/Starlark, Python SDK code, and Python scripts.
 fmt:
@@ -105,31 +83,6 @@ bench *args:
 bench-smoke:
     just bench -- --test
 
-# Run Bazel-backed end-to-end macrobenchmarks with optimized binaries.
-bench-e2e:
-    # Keep measured binaries comparable to production-style optimized builds.
-    bazel test --compilation_mode=opt --cache_test_results=no --test_output=streamed //codex-rs:e2e-benchmarks
-
-# Run Bazel-backed end-to-end macrobenchmarks once per case with release-like
-# Rust cfg paths but fastbuild codegen.
-bench-e2e-smoke:
-    # Avoid optimizer cost because smoke runs only check that benchmarks work.
-    # Compile target Rust code through the same release-only cfg paths as opt.
-    # Compile exec-platform Rust tools through those release-only cfg paths too.
-    bazel test --compilation_mode=fastbuild --@rules_rust//rust/settings:extra_rustc_flag=-Cdebug-assertions=no --@rules_rust//rust/settings:extra_exec_rustc_flag=-Cdebug-assertions=no --cache_test_results=no --test_output=streamed --test_arg=--test //codex-rs:e2e-benchmarks
-
-# Build and run Codex from source using Bazel.
-# On Unix, use `[no-cd]` and `--run_under="cd $PWD &&"` to ensure Bazel runs
-# the command in the current working directory.
-[no-cd]
-[unix]
-bazel-codex *args:
-    bazel run //codex-rs/cli:codex --run_under="cd $PWD &&" -- "$@"
-
-[windows]
-bazel-codex *args:
-    bazel run //codex-rs/cli:codex --run_under='cd /d "{{ invocation_directory_native() }}" &&' -- @($args | Select-Object -Skip 1)
-
 # Build and run the standalone code-mode host from source using Bazel.
 [no-cd]
 [unix]
@@ -166,9 +119,6 @@ bazel-clippy:
 bazel-argument-comment-lint:
     bazel build --config=argument-comment-lint -- $({{ justfile_directory() }}/tools/argument-comment-lint/list-bazel-targets.sh)
 
-build-for-release:
-    bazel build //codex-rs/cli:release_binaries
-
 # Run the MCP server
 mcp-server-run *args:
     cargo run -p codex-mcp-server -- {args}
@@ -199,11 +149,3 @@ argument-comment-lint *args:
 argument-comment-lint-from-source *args:
     {{ python }} {{ justfile_directory() }}/tools/argument-comment-lint/run.py {args}
 
-# Tail logs from the state SQLite database
-[unix]
-log *args:
-    if [ "${1:-}" = "--" ]; then shift; fi; cargo run -p codex-cli --bin logs_client -- "$@"
-
-[windows]
-log *args:
-    $forwarded_args = @($args | Select-Object -Skip 1); if ($forwarded_args.Count -gt 0 -and $forwarded_args[0] -eq "--") { $forwarded_args = @($forwarded_args | Select-Object -Skip 1) }; cargo run -p codex-cli --bin logs_client -- @forwarded_args

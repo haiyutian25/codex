@@ -28,8 +28,6 @@ mod environment_add;
 mod environment_info;
 mod environment_status;
 mod exec_server_test_support;
-#[cfg(not(target_os = "windows"))]
-mod executor_mcp;
 mod executor_skills;
 mod experimental_api;
 mod experimental_feature_list;
@@ -85,8 +83,6 @@ mod residency;
 mod review;
 mod rollout_migration;
 mod safety_check_downgrade;
-#[cfg(not(target_os = "windows"))]
-mod selected_capability_stack;
 mod selected_environment;
 mod server_diagnostics;
 #[cfg(not(target_os = "windows"))]

@@ -52,19 +52,15 @@ In the codex-rs folder where the rust code lives:
   - If a file exceeds roughly 800 LoC, add new functionality in a new module instead of extending
     the existing file unless there is a strong documented reason not to.
   - This rule applies especially to high-touch files that already attract unrelated changes, such
-    as `codex-rs/tui/src/app.rs`, `codex-rs/tui/src/bottom_pane/chat_composer.rs`,
-    `codex-rs/tui/src/bottom_pane/footer.rs`, `codex-rs/tui/src/chatwidget.rs`,
-    `codex-rs/tui/src/bottom_pane/mod.rs`, and similarly central orchestration modules.
+    as central orchestration modules.
   - When extracting code from a large module, move the related tests and module/type docs toward
     the new implementation so the invariants stay close to the code that owns them.
-  - Avoid adding new standalone methods to `codex-rs/tui/src/chatwidget.rs` unless the change is
-    trivial; prefer new modules/files and keep `chatwidget.rs` focused on orchestration.
 - When running Rust commands (e.g. `just fix` or `just test`) be patient with the command and never try to kill them using the PID. Rust lock can make the execution slow, this is expected.
 
 Run `just fmt` (in the `codex-rs` directory) automatically after you have finished making code changes anywhere in this repository; do not ask for approval to run it. Additionally, run the tests:
 
 1. Do not run `cargo test` directly. Use `just test` so test execution follows the repo defaults.
-2. Run the test for the specific project that was changed. For example, if changes were made in `codex-rs/tui`, run `just test -p codex-tui`.
+2. Run the test for the specific project that was changed. For example, if changes were made in `codex-rs/core`, run `just test -p codex-core`.
 3. Once those pass, if any changes were made in common, core, or protocol, run the complete test suite with `just test`. Avoid `--all-features` for routine local runs because it expands the build matrix and can significantly increase `target/` disk usage; use it only when you specifically need full feature coverage. project-specific or individual tests can be run without asking the user, but do ask the user before running the complete test suite.
 
 Before finalizing a large change to `codex-rs`, run `just fix -p <project>` (in `codex-rs` directory) to fix any linter issues in the code. Prefer scoping with `-p` to avoid slow workspace‑wide Clippy builds; only run `just fix` without `-p` if you changed shared crates. Do not re-run tests after running `fix` or `fmt`.
@@ -130,38 +126,6 @@ For complex logic changes the size should be under 500 lines.
 If the change is larger, explore whether it can be split into reviewable stages and identify the smallest coherent stage to land first.
 Base the staging suggestion on the actual diff, dependencies, and affected call sites.
 
-## TUI style conventions
-
-See `codex-rs/tui/styles.md`.
-
-## TUI code conventions
-
-- Use concise styling helpers from ratatui’s Stylize trait.
-  - Basic spans: use "text".into()
-  - Styled spans: use "text".red(), "text".green(), "text".magenta(), "text".dim(), etc.
-  - Prefer these over constructing styles with `Span::styled` and `Style` directly.
-  - Example: patch summary file lines
-    - Desired: vec!["  └ ".into(), "M".red(), " ".dim(), "tui/src/app.rs".dim()]
-
-### TUI Styling (ratatui)
-
-- Prefer Stylize helpers: use "text".dim(), .bold(), .cyan(), .italic(), .underlined() instead of manual Style where possible.
-- Prefer simple conversions: use "text".into() for spans and vec![…].into() for lines; when inference is ambiguous (e.g., Paragraph::new/Cell::from), use Line::from(spans) or Span::from(text).
-- Computed styles: if the Style is computed at runtime, using `Span::styled` is OK (`Span::from(text).set_style(style)` is also acceptable).
-- Avoid hardcoded white: do not use `.white()`; prefer the default foreground (no color).
-- Chaining: combine helpers by chaining for readability (e.g., url.cyan().underlined()).
-- Single items: prefer "text".into(); use Line::from(text) or Span::from(text) only when the target type isn’t obvious from context, or when using .into() would require extra type annotations.
-- Building lines: use vec![…].into() to construct a Line when the target type is obvious and no extra type annotations are needed; otherwise use Line::from(vec![…]).
-- Avoid churn: don’t refactor between equivalent forms (Span::styled ↔ set_style, Line::from ↔ .into()) without a clear readability or functional gain; follow file‑local conventions and do not introduce type annotations solely to satisfy .into().
-- Compactness: prefer the form that stays on one line after rustfmt; if only one of Line::from(vec![…]) or vec![…].into() avoids wrapping, choose that. If both wrap, pick the one with fewer wrapped lines.
-
-### Text wrapping
-
-- Always use textwrap::wrap to wrap plain strings.
-- If you have a ratatui Line and you want to wrap it, use the helpers in tui/src/wrapping.rs, e.g. word_wrap_lines / word_wrap_line.
-- If you need to indent wrapped lines, use the initial_indent / subsequent_indent options from RtOptions if you can, rather than writing custom logic.
-- If you have a list of lines and you need to prefix them all with some prefix (optionally different on the first vs subsequent lines), use the `prefix_lines` helper from line_utils.
-
 ## Tests
 
 ### Test module organization
@@ -179,23 +143,24 @@ See `codex-rs/tui/styles.md`.
 
 ### Snapshot tests
 
-This repo uses snapshot tests (via `insta`), especially in `codex-rs/tui`, to validate rendered output.
+This repo uses snapshot tests (via `insta`) to validate rendered output.
 
-**Requirement:** any change that affects user-visible UI (including adding new UI) must include
+**Requirement:** any change that affects user-visible output must include
 corresponding `insta` snapshot coverage (add a new snapshot test if one doesn't exist yet, or
-update the existing snapshot). Review and accept snapshot updates as part of the PR so UI impact
+update the existing snapshot). Review and accept snapshot updates as part of the PR so the impact
 is easy to review and future diffs stay visual.
 
-When UI or text output changes intentionally, update the snapshots as follows:
+When output changes intentionally, update the snapshots as follows (replace `<crate>` with the
+affected crate, e.g. `codex-core`):
 
 - Run tests to generate any updated snapshots:
-  - `just test -p codex-tui`
+  - `just test -p <crate>`
 - Check what’s pending:
-  - `cargo insta pending-snapshots -p codex-tui`
+  - `cargo insta pending-snapshots -p <crate>`
 - Review changes by reading the generated `*.snap.new` files directly in the repo, or preview a specific file:
-  - `cargo insta show -p codex-tui path/to/file.snap.new`
+  - `cargo insta show -p <crate> path/to/file.snap.new`
 - Only if you intend to accept all new snapshots in this crate, run:
-  - `cargo insta accept -p codex-tui`
+  - `cargo insta accept -p <crate>`
 
 If you don’t have the tool:
 

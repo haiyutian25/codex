@@ -1,3 +1,6 @@
-# Codex CLI
+# Codex Harness (Rust workspace)
 
-[**Codex CLI Documentation**](https://developers.openai.com/codex/cli)
+This Cargo workspace implements the Codex agent harness. See the repository-root
+`README.md` for an overview of the crates and entry points.
+
+[**Codex Documentation**](https://developers.openai.com/codex)

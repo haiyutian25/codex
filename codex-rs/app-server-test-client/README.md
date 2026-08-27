@@ -1,22 +1,19 @@
 # App Server Test Client
-Quickstart for running and hitting `codex app-server`.
+Quickstart for running and hitting `codex-app-server`.
 
 ## Quickstart
 
 Run from `<reporoot>/codex-rs`.
 
 ```bash
-# 1) Build debug codex binary
-cargo build -p codex-cli --bin codex
+# 1) Start websocket app-server in background
+cargo run -p codex-app-server -- --listen ws://127.0.0.1:4222 &
 
-# 2) Start websocket app-server in background
-cargo run -p codex-app-server-test-client -- \
-  --codex-bin ./target/debug/codex \
-  serve --listen ws://127.0.0.1:4222 --kill
-
-# 3) Call app-server (defaults to ws://127.0.0.1:4222)
+# 2) Call app-server (defaults to ws://127.0.0.1:4222)
 cargo run -p codex-app-server-test-client -- model-list
 ```
+
+Use `--url ws://127.0.0.1:4222` to point the client at a different endpoint.
 
 `send-message` and `send-message-v2` handle `request_user_input` server requests interactively.
 When Codex asks a question, choose a numbered option (or `o` for a free-form answer when offered)
@@ -34,9 +31,8 @@ testing.
 export CODEX_HOME="$(mktemp -d)"
 printf 'cli_auth_credentials_store = "file"\n' > "$CODEX_HOME/config.toml"
 
-cargo build -p codex-cli --bin codex
+cargo run -p codex-app-server -- --listen ws://127.0.0.1:4222 &
 cargo run -p codex-app-server-test-client -- \
-  --codex-bin ./target/debug/codex \
   test-login \
   --amazon-bedrock \
   --api-key "<BEDROCK_API_KEY>" \
@@ -53,9 +49,7 @@ resulting `account/updated` notification. It uses the active `CODEX_HOME`, so po
 isolated directory when testing credential cleanup.
 
 ```bash
-cargo run -p codex-app-server-test-client -- \
-  --codex-bin ./target/debug/codex \
-  test-logout
+cargo run -p codex-app-server-test-client -- test-logout
 ```
 
 ## Testing Plugin Analytics
@@ -71,11 +65,7 @@ active Codex profile must be authenticated. On a fresh local cache, the command
 retries ephemeral turns while the installed remote bundle finishes syncing.
 
 ```bash
-# Build a debug Codex binary; analytics capture is unavailable in release builds.
-cargo build -p codex-cli --bin codex
-
 cargo run -p codex-app-server-test-client -- \
-  --codex-bin ./target/debug/codex \
   plugin-analytics-smoke \
   --plugin-id linear@openai-curated-remote
 ```
@@ -99,19 +89,18 @@ or CI.
 
 Choose a remote plugin that is available to the active account and is not
 currently installed. The command refuses to run when the plugin is already
-installed, installs it, validates `codex_plugin_installed`, uninstalls it, and
+installed, installs it, validates `codex_plugin_installed`, uninstalls it,
 validates `codex_plugin_uninstalled`, and verifies that the original
 uninstalled state was restored.
 
-The mutation events include the local Codex ID in `plugin_id` and the backend ID
-in `remote_plugin_id`.
+The mutation events include the local Codex ID in `plugin_id` and the backend
+ID in `remote_plugin_id`.
 
 `--remote-plugin-id` takes the backend ID, such as `plugins~Plugin_...`, not the
 local `<plugin>@<marketplace>` ID.
 
 ```bash
 cargo run -p codex-app-server-test-client -- \
-  --codex-bin ./target/debug/codex \
   plugin-analytics-mutation-smoke \
   --remote-plugin-id <REMOTE_PLUGIN_ID> \
   --confirm-account-mutation \
@@ -134,15 +123,14 @@ For a dirty or uncertain result, retry cleanup with:
 
 ```bash
 cargo run -p codex-app-server-test-client -- \
-  --codex-bin ./target/debug/codex \
   plugin-remote-uninstall \
   --remote-plugin-id <REMOTE_PLUGIN_ID> \
   --confirm-account-mutation
 ```
 
-Cleanup does not require analytics capture or a debug Codex binary. When the
-smoke uses global `--config` overrides, its printed recovery command preserves
-them so cleanup targets the same backend and account.
+Cleanup does not require analytics capture. When the smoke uses global
+`--config` overrides, its printed recovery command preserves them so cleanup
+targets the same backend and account.
 
 ## Watching Raw Inbound Traffic
 

@@ -23,7 +23,7 @@ use tracing_subscriber::prelude::*;
 
 let settings = OtelSettings {
     environment: "dev".to_string(),
-    service_name: "codex-cli".to_string(),
+    service_name: "codex".to_string(),
     service_version: env!("CARGO_PKG_VERSION").to_string(),
     codex_home: std::path::PathBuf::from("/tmp"),
     exporter: OtelExporter::OtlpHttp {
@@ -113,7 +113,7 @@ use codex_otel::config::{OtelExporter, OtelHttpProtocol};
 
 let metrics = MetricsClient::new(MetricsConfig::otlp(
     "dev",
-    "codex-cli",
+    "codex",
     env!("CARGO_PKG_VERSION"),
     OtelExporter::OtlpHttp {
         endpoint: "https://api.statsig.com/otlp".to_string(),
@@ -126,7 +126,7 @@ let metrics = MetricsClient::new(MetricsConfig::otlp(
     },
 ))?;
 
-metrics.counter("codex.session_started", 1, &[("source", "tui")])?;
+metrics.counter("codex.session_started", 1, &[("source", "exec")])?;
 metrics.histogram("codex.request_latency", 83, &[("route", "chat")])?;
 ```
 
@@ -136,7 +136,7 @@ In-memory (tests):
 let exporter = InMemoryMetricExporter::default();
 let metrics = MetricsClient::new(MetricsConfig::in_memory(
     "test",
-    "codex-cli",
+    "codex",
     env!("CARGO_PKG_VERSION"),
     exporter.clone(),
 ))?;

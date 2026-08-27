@@ -131,7 +131,6 @@ fn test_get_latest_messages() {
 
 ## Pull Request Body
 
-- If the nature of the change seems to have a visual component (which is often the case for changes to `codex-rs/tui`), recommend including a screenshot or video to demonstrate the change, if appropriate.
 - References to existing GitHub issues and PRs are encouraged, where appropriate, though you likely do not have network access, so may not be able to help here.
 
 # PR Information
