@@ -1,0 +1,144 @@
+# codex-utils-pty 彻底移除方案
+
+> 仓库：`haiyutian25/codex`（本地 `d:/Codex`，CLI/TUI 已移除）
+> 日期：2026-08-27
+> 动机：`codex-utils-pty` 依赖 `openpty` 等 PTY 机制，Android bionic 不提供，是 Android 改造的适配点之一。本文档给出彻底移除 PTY 能力的穷尽排查与执行方案。
+
+---
+
+## 一、现状盘点：这是一个"混合体" crate
+
+`codex-rs/utils/pty`（18 个文件，5,240 行）实际包含两类截然不同的能力：
+
+### 1.1 通用进程基础设施（**与 PTY 无关**，全仓库依赖）
+
+| API | 用途 |
+|---|---|
+| `spawn_pipe_process` / `spawn_pipe_process_no_stdin` | 管道方式启动子进程（无 PTY） |
+| `ProcessHandle` / `SpawnedProcess` / `ProcessSignal` / `ProcessDriver` / `spawn_from_driver` | 进程句柄与驱动抽象 |
+| `process_group`（`kill_process_group` / `terminate_process_group` / `detach_from_tty` / `set_parent_death_signal`） | 进程组管理 |
+| `combine_output_receivers` | stdout/stderr 合并 |
+| `DEFAULT_OUTPUT_BYTES_CAP` | 输出截断常量（1 MiB） |
+| `pty::close_inherited_fds_except` | 关闭继承 fd（名字在 pty 模块，实为通用） |
+| `ExecCommandSession` / `SpawnedPty` | 只是上面类型的别名 |
+
+### 1.2 PTY 专属部分（真正的移除对象）
+
+| API / 文件 | 用途 |
+|---|---|
+| `pty.rs`：`spawn_process`（PTY 启动）、`conpty_supported` | Unix openpty / Windows ConPTY |
+| `TerminalSize` | PTY 终端尺寸 |
+| `win/`（`JobObject`、`PsuedoCon`、`RawConPty`） | Windows ConPTY 实现 |
+| `windows_input.rs`：`WindowsTtyInputNormalizer` | Windows TTY 输入规范化 |
+
+---
+
+## 二、依赖方清单（8 个 crate）及实际用法
+
+| crate | 用到的能力 | 是否涉及 PTY |
+|---|---|---|
+| `core` | `DEFAULT_OUTPUT_BYTES_CAP`、`process_group`、`close_inherited_fds_except`、`ExecCommandSession`/`SpawnedPty` 别名、`conpty_supported`（仅测试） | 间接（经 sandboxing 的 tty 分支） |
+| `app-server` | `spawn_pty_process`、`spawn_pipe_process*`、句柄类型 | **是**（process/exec API 的 tty 模式） |
+| `exec-server` | `process_group`、`ExecCommandSession`、`close_inherited_fds_except`、`spawn_from_driver` | 间接 |
+| `sandboxing` | `pty::spawn_process`（tty 分支）、`pipe::spawn_process*` | **是**（唯一的核心分发点） |
+| `windows-sandbox-rs` | ConPTY 全家（`PsuedoCon`/`JobObject`/`RawConPty`/`WindowsTtyInputNormalizer`） | **是**（Windows 专属 crate） |
+| `git-utils` | `JobObject`（仅 `cfg(windows)`）、`process_group` | 仅 Windows |
+| `hooks` | `JobObject`（仅 `cfg(windows)`）、`process_group` | 仅 Windows |
+| `rmcp-client` | **无实际使用**（孤儿依赖，声明了但零引用） | 否 |
+
+### `tty` 标志的传播链（生产代码）
+
+```
+app-server-protocol v2（command_exec.rs:45 / process.rs:42 的 pub tty）
+  → core/tools/runtimes/unified_exec.rs:77,94
+  → core/unified_exec/mod.rs:115
+  → sandboxing/spawn.rs:38（SpawnRequest.tty）
+  → spawn.rs:99 分支：tty=true → pty::spawn_process；否则 pipe
+```
+exec-server-protocol（protocol.rs:261）与 windows-sandbox-rs 各有一条平行链路。
+`core` 中 `tty: true` 的赋值仅出现在 3 个测试文件。
+
+---
+
+## 三、方案对比
+
+| | 方案 A：就地剥离（推荐） | 方案 B：整 crate 删除 |
+|---|---|---|
+| 做法 | 保留通用进程设施，删净 PTY 部分 | 8 个 crate 全部重写进程启动/管理 |
+| 改动量 | 中（约 10 个文件 + 协议字段决策） | 极大（动及 harness 所有命令执行路径） |
+| 风险 | 低，能力损失明确可控 | 高，等于重写执行子系统 |
+| 结论 | **采用** | 否决 |
+
+---
+
+## 四、方案 A 执行细节
+
+### 4.1 从 `utils/pty` 中删除
+
+- 文件：`src/pty.rs`、`src/win/`（整目录）、`src/windows_input.rs`、`src/windows_tests.rs`、`src/windows_input_tests.rs`、`src/tests.rs` 中 PTY 用例
+- `lib.rs` 导出：`spawn_pty_process`、`conpty_supported`、`TerminalSize`、`JobObject`、`PsuedoCon`、`RawConPty`、`WindowsTtyInputNormalizer`、`pub mod pty`
+- `close_inherited_fds_except` **迁移**到 `pipe.rs`（或 `process_group.rs`）并保留导出
+- `process.rs:374` 的 `pub tty: bool`（ProcessDriver 配置）删除
+- 依赖瘦身：`Cargo.toml` 移除 `portable-pty`（PTY 后端）及 Windows ConPTY 相关依赖
+- 可选：crate 更名 `codex-utils-process`（消除名称误导；涉及 8 处 Cargo.toml 与全部 `use` 语句改名，工作量中等，可二期做）
+
+### 4.2 消费方修改
+
+| 文件 | 修改 |
+|---|---|
+| `sandboxing/src/spawn.rs:99-109` | 删除 tty 分支；`tty=true` 时降级走 `pipe::spawn_process`（保留 `tty` 字段但恒按管道处理，协议兼容） |
+| `app-server/src/command_exec.rs:271` | `spawn_pty_process` → `spawn_pipe_process` |
+| `app-server/src/request_processors/process_exec_processor.rs:310` | 同上 |
+| `core/src/tools/spec_plan_tests.rs:1039,1063` | 删除 `conpty_supported()` 相关断言 |
+| `core/src/unified_exec/async_watcher_tests.rs:39` | 改用 pipe 驱动或调整断言 |
+| `exec-server/src/local_process.rs` | tty 会话统一走管道路径 |
+| `git-utils/src/git_process.rs:7`、`hooks/src/engine/command_runner.rs:18` | 移除 `JobObject`（`cfg(windows)` 块内改用普通进程句柄） |
+| `rmcp-client/Cargo.toml:27` | 直接删除孤儿依赖 |
+| `windows-sandbox-rs` | ConPTY 后端（`conpty/`、`unified_exec/backends/*` 的 PTY 路径、`stdio_bridge`）删除；**决策点**：Android 目标不需要 Windows 沙箱，可评估整 crate 删除（`core/Cargo.toml:87` 无条件依赖需同步处理，代码内部已按 `cfg(windows)` 门控） |
+
+### 4.3 协议字段处理（决策点）
+
+`app-server-protocol`、`exec-server-protocol` 中的 `pub tty: bool`：
+- **推荐**：保留字段（协议兼容），服务端恒按非 tty 处理，文档标注 deprecated
+- 激进：删字段（破坏协议兼容，SDK/客户端需同步）
+
+---
+
+## 五、代价与收益
+
+### 失去的能力
+
+1. `unified_exec` 持久 shell 的终端仿真：依赖 TTY 探测的程序（如交互式 `bash`、`python -i`）以非交互模式运行，输出可能缺少 ANSI 着色/行缓冲行为变化
+2. app-server `process/exec`、`command/exec` API 的 tty 选项失效
+3. Windows ConPTY 支持（Android 目标无关）
+
+### 收益（Android）
+
+1. 执行链路彻底摆脱 `openpty`——bionic 无此函数的障碍归零
+2. 不再需要为 Android 实现 `/dev/ptmx` 自定义后端
+3. 依赖图移除 `portable-pty`，交叉编译面更小
+
+---
+
+## 六、执行顺序
+
+```
+1. rmcp-client 删孤儿依赖（零风险热身）
+2. utils/pty 内部：迁移 close_inherited_fds_except → 删 pty.rs/win/windows_input 及其导出
+3. sandboxing/spawn.rs 删 tty 分支（降级管道）
+4. app-server 两处 spawn_pty_process 改管道
+5. core/exec-server 测试与 tty 会话路径调整
+6. git-utils/hooks 移除 JobObject（cfg(windows)）
+7. windows-sandbox-rs ConPTY 后端清理（或整 crate 评估）
+8. 协议字段标注 deprecated（保留兼容）
+9. 验证：cargo check --workspace + cargo check --tests -p codex-core -p codex-app-server -p codex-exec-server
+10. （可选二期）crate 更名 codex-utils-process
+```
+
+## 七、验证清单
+
+- [ ] 全仓库搜索 `spawn_pty_process|conpty_supported|TerminalSize|PsuedoCon|JobObject|WindowsTtyInputNormalizer` 无残留
+- [ ] `cargo check --workspace` 通过
+- [ ] `cargo check --tests` 覆盖 core / app-server / exec-server / sandboxing 通过
+- [ ] `unified_exec` 管道模式冒烟：起会话、写 stdin、收输出、杀进程组
+- [ ] （Android 目标）`cargo check --target aarch64-linux-android` 不再出现 openpty 相关错误
