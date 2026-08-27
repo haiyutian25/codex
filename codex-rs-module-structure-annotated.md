@@ -21,9 +21,9 @@
 ## Overview
 
 - Workspace root: `codex-rs`
-- Workspace members (crates): **137**（快照时点；删除 CLI/TUI/cloud-tasks 后为 132）
-- Total `.rs` files: **3392**
-- Total `.rs` lines: **1,520,560**
+- Workspace members (crates): **116**（当前实时值；快照时点为 137，经多轮清理共移除 21 个）
+- Total `.rs` files: **2,344**（当前实时值）
+- Total `.rs` lines: **971,841**（当前实时值）
 
 ## Crates
 
