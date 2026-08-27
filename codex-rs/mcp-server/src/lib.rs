@@ -12,7 +12,6 @@ use codex_core::resolve_installation_id;
 use codex_exec_server::EnvironmentManager;
 use codex_exec_server::ExecServerRuntimePaths;
 use codex_login::default_client::set_default_client_residency_requirement;
-use codex_utils_cli::CliConfigOverrides;
 
 use rmcp::model::ClientNotification;
 use rmcp::model::ClientRequest;
@@ -61,20 +60,10 @@ type IncomingMessage = JsonRpcMessage<ClientRequest, Value, ClientNotification>;
 
 pub async fn run_main(
     arg0_paths: Arg0DispatchPaths,
-    cli_config_overrides: CliConfigOverrides,
     strict_config: bool,
 ) -> IoResult<()> {
     reject_workload_identity(codex_login::is_workload_identity_selected())?;
-    // Parse CLI overrides once and derive the base Config eagerly so later
-    // components do not need to work with raw TOML values.
-    let cli_kv_overrides = cli_config_overrides.parse_overrides().map_err(|e| {
-        std::io::Error::new(
-            ErrorKind::InvalidInput,
-            format!("error parsing -c overrides: {e}"),
-        )
-    })?;
     let config = ConfigBuilder::default()
-        .cli_overrides(cli_kv_overrides)
         .strict_config(strict_config)
         .build()
         .await

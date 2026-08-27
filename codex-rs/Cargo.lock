@@ -2976,7 +2976,6 @@ dependencies = [
  "codex-shell-command",
  "codex-skills-extension",
  "codex-utils-absolute-path",
- "codex-utils-cli",
  "codex-utils-json-to-toml",
  "core_test_support",
  "mcp_test_support",
@@ -3729,18 +3728,6 @@ dependencies = [
  "assert_cmd",
  "runfiles",
  "thiserror 2.0.18",
-]
-
-[[package]]
-name = "codex-utils-cli"
-version = "0.0.0"
-dependencies = [
- "clap",
- "codex-protocol",
- "codex-shell-command",
- "pretty_assertions",
- "serde",
- "toml 0.9.11+spec-1.1.0",
 ]
 
 [[package]]

@@ -95,7 +95,6 @@ members = [
     "utils/redacted-string",
     "utils/rustls-provider",
     "utils/string",
-    "utils/cli",
     "utils/elapsed",
     "utils/sandbox-summary",
     "utils/sleep-inhibitor",
@@ -142,7 +141,6 @@ codex-apply-patch = { path = "apply-patch" }
 codex-arg0 = { path = "arg0" }
 codex-async-utils = { path = "async-utils" }
 codex-backend-client = { path = "backend-client" }
-codex-chatgpt = { path = "chatgpt" }
 codex-client = { path = "codex-client" }
 codex-cloud-config = { path = "cloud-config" }
 codex-code-mode = { path = "code-mode" }
@@ -224,7 +222,6 @@ codex-utils-approval-presets = { path = "utils/approval-presets" }
 codex-utils-audio = { path = "utils/audio" }
 codex-utils-cache = { path = "utils/cache" }
 codex-utils-cargo-bin = { path = "utils/cargo-bin" }
-codex-utils-cli = { path = "utils/cli" }
 codex-utils-elapsed = { path = "utils/elapsed" }
 codex-utils-fuzzy-match = { path = "utils/fuzzy-match" }
 codex-utils-home-dir = { path = "utils/home-dir" }

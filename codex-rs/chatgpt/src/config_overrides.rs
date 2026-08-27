@@ -1,11 +1,4 @@
-//! Support for `-c key=value` overrides shared across Codex CLI tools.
-//!
-//! This module provides a [`CliConfigOverrides`] struct that can be embedded
-//! into a `clap`-derived CLI struct using `#[clap(flatten)]`. Each occurrence
-//! of `-c key=value` (or `--config key=value`) will be collected as a raw
-//! string. Helper methods are provided to convert the raw strings into
-//! key/value pairs as well as to apply them onto a mutable
-//! `serde_json::Value` representing the configuration tree.
+//! Support for `-c key=value` overrides on the apply command.
 
 use clap::ArgAction;
 use clap::Parser;
@@ -37,13 +30,6 @@ pub struct CliConfigOverrides {
 }
 
 impl CliConfigOverrides {
-    /// Prepend root-level config flags so they have lower precedence than
-    /// command-specific flags parsed after a subcommand.
-    pub fn prepend_root_overrides(&mut self, root_overrides: Self) {
-        self.raw_overrides
-            .splice(0..0, root_overrides.raw_overrides);
-    }
-
     /// Parse the raw strings captured from the CLI into a list of `(path,
     /// value)` tuples where `value` is a `serde_json::Value`.
     pub fn parse_overrides(&self) -> Result<Vec<(String, Value)>, String> {
@@ -112,24 +98,8 @@ mod tests {
     }
 
     #[test]
-    fn parses_bool() {
-        let true_literal = parse_toml_value("true").expect("parse");
-        assert_eq!(true_literal.as_bool(), Some(true));
-
-        let false_literal = parse_toml_value("false").expect("parse");
-        assert_eq!(false_literal.as_bool(), Some(false));
-    }
-
-    #[test]
     fn fails_on_unquoted_string() {
         assert!(parse_toml_value("hello").is_err());
-    }
-
-    #[test]
-    fn parses_array() {
-        let v = parse_toml_value("[1, 2, 3]").expect("parse");
-        let arr = v.as_array().expect("array");
-        assert_eq!(arr.len(), 3);
     }
 
     #[test]
@@ -140,31 +110,5 @@ mod tests {
         let parsed = overrides.parse_overrides().expect("parse_overrides");
         assert_eq!(parsed[0].0.as_str(), "features.use_legacy_landlock");
         assert_eq!(parsed[0].1.as_bool(), Some(true));
-    }
-
-    #[test]
-    fn prepends_root_overrides() {
-        let mut subcommand_overrides = CliConfigOverrides {
-            raw_overrides: vec![r#"model="gpt-5.2""#.to_string()],
-        };
-        subcommand_overrides.prepend_root_overrides(CliConfigOverrides {
-            raw_overrides: vec![r#"model="gpt-5.1""#.to_string()],
-        });
-
-        assert_eq!(
-            subcommand_overrides.raw_overrides,
-            vec![
-                r#"model="gpt-5.1""#.to_string(),
-                r#"model="gpt-5.2""#.to_string(),
-            ]
-        );
-    }
-
-    #[test]
-    fn parses_inline_table() {
-        let v = parse_toml_value("{a = 1, b = 2}").expect("parse");
-        let tbl = v.as_table().expect("table");
-        assert_eq!(tbl.get("a").unwrap().as_integer(), Some(1));
-        assert_eq!(tbl.get("b").unwrap().as_integer(), Some(2));
     }
 }
