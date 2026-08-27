@@ -6,6 +6,30 @@
 
 ---
 
+## 〇、原生 Android（非 Linux 虚拟机）视角复核
+
+**目标环境确认**：harness 以原生 Android 形式运行（bionic libc，App 进程内/App 拉起的子进程），**不是** Linux 虚拟机、也不是 Termux（glibc）环境。
+
+### 方案中第 2、3 个模块是什么
+
+| 模块 | 是什么 | 在原生 Android 上的处境 |
+|---|---|---|
+| **`codex-sandboxing`**（执行步骤 #2） | 沙箱策略分发层：按操作系统选择隔离后端（macOS Seatbelt / Linux Landlock+bwrap / Windows），其 `spawn.rs` 是启动子进程的统一入口——`tty=true` 分支就在这里调用 PTY 启动 | 隔离后端在 Android 上全部不可用（Android 改造方案已定为降级 `danger-full-access` + `execpolicy` 白名单 + 审批）；`tty` 分支在原生 Android 上是**死代码**，删除无损失 |
+| **`codex-app-server`**（执行步骤 #3） | JSON-RPC 服务，Android 集成的主入口（Kotlin 前端经 stdio/UDS/WebSocket 连接）。其 v2 协议的 `process/exec`、`command/exec` 请求带 `tty` 参数，服务于桌面 IDE 客户端的"终端式执行" | Android 前端没有终端可渲染，**永远不会**发起 `tty=true` 请求；该参数对 Android 无意义 |
+
+### 复核结论
+
+1. **移除必要性更强，方案方向不变**：
+   - 原生 Android 无 Linux 虚拟机/Termux 的 glibc 环境，`openpty`/`forkpty` 不存在，PTY 代码留在执行链上只会是交叉编译障碍
+   - App 进程没有控制终端（无 `/dev/tty`），"终端仿真"功能本身无意义
+   - 反之，若目标是 Linux 虚拟机或 Termux，PTY 反而可用、移除只是可选——该场景已排除，**无需为它保留兼容**
+2. **方案可以更激进**（相对原计划的加强项）：
+   - 协议 `tty` 字段：原计划"保留字段、恒按管道处理"；原生 Android 上没有任何客户端会用它，保留仅为协议稳定，未来协议升版可直接删字段
+   - `windows-sandbox-rs`：连同 ConPTY 后端**整 crate 删除**（Android 不需要 Windows 沙箱；`core/Cargo.toml:87` 的无条件依赖同步移除，代码内已有 `cfg(windows)` 门控，删除安全）
+3. **管道路径在 Android 完全可用**：bionic 完整支持 `pipe2`/`dup2` 与进程组（`setpgid`/`killpg`），移除 PTY 后整个命令执行链改走管道，无平台障碍。
+
+---
+
 ## 一、现状盘点：这是一个"混合体" crate
 
 `codex-rs/utils/pty`（18 个文件，5,240 行）实际包含两类截然不同的能力：
@@ -94,7 +118,7 @@ exec-server-protocol（protocol.rs:261）与 windows-sandbox-rs 各有一条平�
 | `exec-server/src/local_process.rs` | tty 会话统一走管道路径 |
 | `git-utils/src/git_process.rs:7`、`hooks/src/engine/command_runner.rs:18` | 移除 `JobObject`（`cfg(windows)` 块内改用普通进程句柄） |
 | `rmcp-client/Cargo.toml:27` | 直接删除孤儿依赖 |
-| `windows-sandbox-rs` | ConPTY 后端（`conpty/`、`unified_exec/backends/*` 的 PTY 路径、`stdio_bridge`）删除；**决策点**：Android 目标不需要 Windows 沙箱，可评估整 crate 删除（`core/Cargo.toml:87` 无条件依赖需同步处理，代码内部已按 `cfg(windows)` 门控） |
+| `windows-sandbox-rs` | **整 crate 删除**（原生 Android 复核结论，见第〇节）：ConPTY 后端、Windows 沙箱对 Android 目标全部无意义；同步移除 `core/Cargo.toml:87` 的无条件依赖及 core/sandboxing 中 `cfg(windows)` 门控内的引用 |
 
 ### 4.3 协议字段处理（决策点）
 
