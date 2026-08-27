@@ -103,7 +103,7 @@
 | `codex-install-context` | 桌面安装上下文探测 | 🚫 不需要（桌面安装概念；Android 打包形态不同） | `codex-rs/install-context` | 1 | 867 |
 | `codex-keyring-store` | 系统钥匙串存储抽象 | 🔧 必需·需适配（Android 用文件存储模式或接 Android Keystore） | `codex-rs/keyring-store` | 1 | 226 |
 | `codex-linux-sandbox` | Linux 沙箱助手（Landlock/bwrap/seccomp） | ❌ 不可用（Android 内核机制缺失） | `codex-rs/linux-sandbox` | 21 | 9,846 |
-| `codex-lmstudio` | LM Studio 本地模型接入 | 🚫 不需要（桌面本地模型 App；在编译图中，运行时空转） | `codex-rs/lmstudio` | 2 | 470 |
+| `codex-lmstudio` | LM Studio 自动准备工具（`--oss` 模式） | ❌ 已删除（2026-08-28：CLI 死后遗留孤儿；LM Studio 提供方定义仍在 `model-provider-info`，配置 `oss_provider = "lmstudio"` 依然可用） | `codex-rs/lmstudio` | 2 | 470 |
 | `codex-login` | 认证登录（OAuth/API Key/Device Code） | 🔧 必需·需适配（用 API Key 或 Device Code；浏览器回调不可用） | `codex-rs/login` | 42 | 16,330 |
 | `codex-mcp-server` | 把 Codex 暴露为 MCP 服务器 | 🚫 不需要（供外部桌面客户端调用；Android App 不对外提供服务） | `codex-rs/mcp-server` | 20 | 4,165 |
 | `codex-memories-read` | 记忆读取路径 | ✅ 可选（记忆功能） | `codex-rs/memories/read` | 5 | 232 |
@@ -4449,8 +4449,8 @@ _No module declarations._
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
 | 🔧 必需·需适配 | 8 | 必需但需 Android 平台改造（见下表；原 9 个，`codex-utils-pty` 已完成） |
 | ✅ 可选功能 | 42 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
-| 🚫 不需要 | 22 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 5 个是 core 编译期承重依赖，必须保留：`app-server-protocol`×2、`exec-server`×3） |
-| ❌ 已删除/不可用 | 25 | 23 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
+| 🚫 不需要 | 21 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 5 个是 core 编译期承重依赖，必须保留：`app-server-protocol`×2、`exec-server`×3） |
+| ❌ 已删除/不可用 | 26 | 24 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
 ### 目标架构（UniFFI 进程内嵌入，不连接任何桌面端）
 
@@ -4495,7 +4495,7 @@ _No module declarations._
 | CLI 与二进制入口 | ~~`exec`~~（已删除）；`utils/cli`、`arg0`、`install-context` 保留 | 无 CLI 形态；App 内直接调用库 |
 | 远程/对外服务 | `exec-server`(+protocol/test-support) **保留**、`mcp-server`、~~`utils/readiness`~~（已删除） | 单机 Android App 不做远程环境。**exec-server 族是 core 的执行/文件系统抽象层（承重墙），无法删除** |
 | 桌面环境相关 | `shell-escalation`、`utils/sleep-inhibitor`、`terminal-detection`、`git-utils`、`git-attribution`、`worktree` | 依赖桌面 shell/终端/git 生态，Android 无对应环境 |
-| 本地模型桌面客户端 | `ollama`、`lmstudio`、`code-mode`/`code-mode-protocol`（接口层保留） | 依赖桌面本地服务或过重实验运行时；V8 宿主/运行时已删除 |
+| 本地模型桌面客户端 | ~~`ollama`、`lmstudio`~~（已删除，提供方定义留在 `model-provider-info`）、`code-mode`/`code-mode-protocol`（接口层保留） | 依赖桌面本地服务或过重实验运行时；V8 宿主/运行时已删除 |
 | 遥测 | `analytics`、`otel` | 建议配置关闭 |
 | 其他 | ~~`external-agent-migration`~~（已删除）、`test-binary-support`、`utils/cargo-bin` | 迁移工具/测试专用 |
 
