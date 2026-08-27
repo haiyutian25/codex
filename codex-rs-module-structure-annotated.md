@@ -112,7 +112,7 @@
 | `codex-model-provider-info` | 模型提供方元信息 | ⭐ 必需核心 | `codex-rs/model-provider-info` | 2 | 1,302 |
 | `codex-models-manager` | 模型管理（列表/切换/本地发现） | ✅ 可选（本地模型发现部分在 Android 无意义） | `codex-rs/models-manager` | 12 | 3,195 |
 | `codex-network-proxy` | 出站网络代理与域名策略 | ✅ 可选（启用时同样需要证书适配） | `codex-rs/network-proxy` | 39 | 19,024 |
-| `codex-ollama` | Ollama 本地模型接入 | 🚫 不需要（桌面 Ollama 服务；Android 上跑本地模型应走 OpenAI 兼容端点配置） | `codex-rs/ollama` | 7 | 1,107 |
+| `codex-ollama` | Ollama 自动准备工具（`--oss` 模式） | ❌ 已删除（2026-08-28：CLI 死后遗留孤儿；Ollama 提供方定义仍在 `model-provider-info`，Android 端侧模型走 OpenAI 兼容端点配置） | `codex-rs/ollama` | 7 | 1,107 |
 | `codex-otel` | OpenTelemetry 导出 | 🚫 建议禁用（遥测；在 core 编译图中，配置关闭） | `codex-rs/otel` | 33 | 8,283 |
 | `codex-plugin` | 插件包模型与来源提供方 | ✅ 可选（随插件系统） | `codex-rs/plugin` | 7 | 914 |
 | `codex-process-hardening` | 进程加固（prctl） | ⭐ 必需核心（**已原生支持 `target_os = "android"`**） | `codex-rs/process-hardening` | 1 | 193 |
@@ -4449,8 +4449,8 @@ _No module declarations._
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
 | 🔧 必需·需适配 | 8 | 必需但需 Android 平台改造（见下表；原 9 个，`codex-utils-pty` 已完成） |
 | ✅ 可选功能 | 43 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
-| 🚫 不需要 | 23 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 5 个是 core 编译期承重依赖，必须保留：`app-server-protocol`×2、`exec-server`×3） |
-| ❌ 已删除/不可用 | 23 | 21 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
+| 🚫 不需要 | 22 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 5 个是 core 编译期承重依赖，必须保留：`app-server-protocol`×2、`exec-server`×3） |
+| ❌ 已删除/不可用 | 24 | 22 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
 ### 目标架构（UniFFI 进程内嵌入，不连接任何桌面端）
 
