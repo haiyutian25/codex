@@ -1887,35 +1887,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codex-backend-client"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "codex-api",
- "codex-backend-openapi-models",
- "codex-http-client",
- "codex-login",
- "codex-model-provider",
- "codex-protocol",
- "http 1.4.0",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tokio",
- "url",
- "wiremock",
-]
-
-[[package]]
-name = "codex-backend-openapi-models"
-version = "0.0.0"
-dependencies = [
- "serde",
- "serde_json",
- "serde_with",
-]
-
-[[package]]
 name = "codex-build-info"
 version = "0.0.0"
 dependencies = [
@@ -2519,19 +2490,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codex-git-attribution"
-version = "0.0.0"
-dependencies = [
- "codex-backend-client",
- "codex-extension-api",
- "codex-http-client",
- "codex-login",
- "serde_json",
- "tokio",
- "wiremock",
-]
-
-[[package]]
 name = "codex-git-utils"
 version = "0.0.0"
 dependencies = [
@@ -2906,7 +2864,6 @@ dependencies = [
  "codex-exec-server",
  "codex-extension-api",
  "codex-features",
- "codex-git-attribution",
  "codex-home",
  "codex-image-generation-extension",
  "codex-login",
@@ -2969,7 +2926,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "codex-backend-client",
  "codex-config",
  "codex-core",
  "codex-features",

@@ -69,12 +69,6 @@ impl MessageProcessor {
         let mut extensions = ExtensionRegistryBuilder::<Config>::with_event_sink(
             extension_event_sink(Arc::clone(&outgoing), Arc::clone(&active_turns)),
         );
-        codex_git_attribution::install(
-            &mut extensions,
-            auth_manager.clone(),
-            config.chatgpt_base_url.clone(),
-            config.http_client_factory(),
-        );
         codex_image_generation_extension::install(
             &mut extensions,
             auth_manager.clone(),

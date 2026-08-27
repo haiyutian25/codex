@@ -45,7 +45,7 @@
 | `codex-arg0` | argv[0] 多角色分发（沙箱/补丁助手二进制机制） | 🚫 不需要（桌面多二进制机制；沙箱降级后无用途） | `codex-rs/arg0` | 1 | 810 |
 | `codex-async-utils` | 异步小工具 | ⭐ 必需核心 | `codex-rs/async-utils` | 1 | 86 |
 | `codex-aws-auth` | AWS Bedrock SigV4 签名 | ✅ 可选（仅接 Bedrock 时需要） | `codex-rs/aws-auth` | 4 | 522 |
-| `codex-backend-client` | OpenAI 后端 REST API 客户端（账户/用量/云端功能） | ✅ 可选（纯 API Key 本地模式可不用） | `codex-rs/backend-client` | 9 | 2,750 |
+| `codex-backend-client` | OpenAI 后端 REST API 客户端（账户/用量/云端功能） | ❌ 已删除（2026-08-28：仅服务 ChatGPT 账号模式；本项目只用 API key，账号授权路径永久弃用） | `codex-rs/backend-client` | 9 | 2,750 |
 | `codex-build-info` | 构建信息注入 | ⭐ 必需核心 | `codex-rs/build-info` | 2 | 256 |
 | `codex-bwrap` | 捆绑的 bubblewrap 启动器 | ❌ 不可用（Android 无 user namespaces） | `codex-rs/bwrap` | 2 | 151 |
 | `codex-cli` | 统一 CLI 入口 | ❌ 已删除 | `codex-rs/cli` | 76 | 32,378 |
@@ -58,7 +58,7 @@
 | `codex-code-mode-protocol` | Code Mode 协议（protobuf） | 🚫 不需要但保留（code-mode 接口层的依赖） | `codex-rs/code-mode-protocol` | 18 | 4,332 |
 | `codex-code-mode-runtime` | Code Mode 运行时（V8） | ❌ 已删除（仅 host 使用；连带移除 deno_core_icudata） | `codex-rs/code-mode-runtime` | 21 | 7,121 |
 | `codex-api` | OpenAI Responses API 客户端（SSE/WebSocket 流式） | ⭐ 必需核心（模型调用通道） | `codex-rs/codex-api` | 46 | 15,484 |
-| `codex-backend-openapi-models` | 后端 OpenAPI 数据模型 | ✅ 可选（随 backend-client） | `codex-rs/codex-backend-openapi-models` | 21 | 1,021 |
+| `codex-backend-openapi-models` | 后端 OpenAPI 数据模型 | ❌ 已删除（2026-08-28：连带孤儿，仅 backend-client 使用） | `codex-rs/codex-backend-openapi-models` | 21 | 1,021 |
 | `codex-client` | HTTP 客户端基础：重试、SSE 流、请求遥测 | ⭐ 必需核心 | `codex-rs/codex-client` | 4 | 183 |
 | `codex-experimental-api-macros` | 实验性 API 过程宏 | ✅ 可选 | `codex-rs/codex-experimental-api-macros` | 1 | 310 |
 | `codex-home` | `CODEX_HOME` 目录解析 | 🔧 必需·需适配（指向 App 私有目录 `getFilesDir()/codex`） | `codex-rs/codex-home` | 3 | 227 |
@@ -79,7 +79,7 @@
 | `codex-agent-extension` | 子智能体扩展 | ✅ 可选（多智能体功能） | `codex-rs/ext/agent` | 2 | 170 |
 | `codex-connectors-extension` | 连接器扩展 | ✅ 可选 | `codex-rs/ext/connectors` | 2 | 76 |
 | `codex-extension-api` | 扩展（ext）API 框架 | ✅ 可选（扩展机制基座） | `codex-rs/ext/extension-api` | 27 | 2,993 |
-| `codex-git-attribution` | Git 提交归因 | 🚫 不需要（Android 设备无 git 环境） | `codex-rs/ext/git-attribution` | 4 | 441 |
+| `codex-git-attribution` | Git 提交归因 | ❌ 已删除（2026-08-28：backend-client 的唯一安装点；功能依赖 ChatGPT 账号模式且 Android 无 git） | `codex-rs/ext/git-attribution` | 4 | 441 |
 | `codex-goal-extension` | 目标（goal）跟踪扩展 | ✅ 可选 | `codex-rs/ext/goal` | 13 | 4,570 |
 | `codex-guardian-v2` | Guardian v2 安全策略扩展 | ✅ 可选（增强命令风险判定） | `codex-rs/ext/guardian-v2` | 23 | 10,433 |
 | `codex-history-notes-extension` | 历史备注扩展 | ✅ 可选 | `codex-rs/ext/history-notes` | 7 | 1,241 |
@@ -4448,9 +4448,9 @@ _No module declarations._
 |---|---:|---|
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
 | 🔧 必需·需适配 | 8 | 必需但需 Android 平台改造（见下表；原 9 个，`codex-utils-pty` 已完成） |
-| ✅ 可选功能 | 42 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
-| 🚫 不需要 | 21 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 5 个是 core 编译期承重依赖，必须保留：`app-server-protocol`×2、`exec-server`×3） |
-| ❌ 已删除/不可用 | 26 | 24 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
+| ✅ 可选功能 | 40 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
+| 🚫 不需要 | 20 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 5 个是 core 编译期承重依赖，必须保留：`app-server-protocol`×2、`exec-server`×3） |
+| ❌ 已删除/不可用 | 29 | 27 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
 ### 目标架构（UniFFI 进程内嵌入，不连接任何桌面端）
 
@@ -4494,7 +4494,7 @@ _No module declarations._
 | 桌面/IDE 集成服务 | ~~`app-server`、`app-server-client`、`app-server-daemon`、`app-server-test-client`、`app-server-transport`、`uds`、`stdio-to-uds`~~（均已删除）；`app-server-protocol`(+noop-macros) 保留 | UniFFI 进程内直连 core，无需 JSON-RPC 服务与 IPC。**protocol 两个是 core/core-api 的编译依赖（共享类型），无法删除** |
 | CLI 与二进制入口 | ~~`exec`~~（已删除）；`utils/cli`、`arg0`、`install-context` 保留 | 无 CLI 形态；App 内直接调用库 |
 | 远程/对外服务 | `exec-server`(+protocol/test-support) **保留**、`mcp-server`、~~`utils/readiness`~~（已删除） | 单机 Android App 不做远程环境。**exec-server 族是 core 的执行/文件系统抽象层（承重墙），无法删除** |
-| 桌面环境相关 | `shell-escalation`、`utils/sleep-inhibitor`、`terminal-detection`、`git-utils`、`git-attribution`、`worktree` | 依赖桌面 shell/终端/git 生态，Android 无对应环境 |
+| 桌面环境相关 | `shell-escalation`、`utils/sleep-inhibitor`、`terminal-detection`、`git-utils`、`worktree` | 依赖桌面 shell/终端/git 生态，Android 无对应环境（`git-attribution` 已删除） |
 | 本地模型桌面客户端 | ~~`ollama`、`lmstudio`~~（已删除，提供方定义留在 `model-provider-info`）、`code-mode`/`code-mode-protocol`（接口层保留） | 依赖桌面本地服务或过重实验运行时；V8 宿主/运行时已删除 |
 | 遥测 | `analytics`、`otel` | 建议配置关闭 |
 | 其他 | ~~`external-agent-migration`~~（已删除）、`test-binary-support`、`utils/cargo-bin` | 迁移工具/测试专用 |

@@ -5,7 +5,6 @@ members = [
     "agent-graph-store",
     "agent-identity",
     "agent-roles",
-    "backend-client",
     "bwrap",
     "build-info",
     "async-utils",
@@ -16,7 +15,6 @@ members = [
     "feedback",
     "features",
     "install-context",
-    "codex-backend-openapi-models",
     "code-mode",
     "code-mode-protocol",
     "codex-home",
@@ -43,7 +41,6 @@ members = [
     "ext/connectors",
     "ext/extension-api",
     "ext/goal",
-    "ext/git-attribution",
     "ext/guardian-v2",
     "ext/history-notes",
     "ext/image-generation",
@@ -137,7 +134,6 @@ codex-app-server-protocol-noop-macros = { path = "app-server-protocol-noop-macro
 codex-apply-patch = { path = "apply-patch" }
 codex-arg0 = { path = "arg0" }
 codex-async-utils = { path = "async-utils" }
-codex-backend-client = { path = "backend-client" }
 codex-client = { path = "codex-client" }
 codex-code-mode = { path = "code-mode" }
 codex-code-mode-protocol = { path = "code-mode-protocol" }
@@ -161,7 +157,6 @@ codex-execpolicy = { path = "execpolicy" }
 codex-extension-api = { path = "ext/extension-api" }
 codex-extension-items = { path = "ext/items" }
 codex-goal-extension = { path = "ext/goal" }
-codex-git-attribution = { path = "ext/git-attribution" }
 codex-guardian-v2 = { path = "ext/guardian-v2" }
 codex-history-notes-extension = { path = "ext/history-notes" }
 codex-image-generation-extension = { path = "ext/image-generation" }
