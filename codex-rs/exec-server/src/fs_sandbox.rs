@@ -477,7 +477,7 @@ pub(crate) fn spawn_command(
     // SAFETY: Descriptor cleanup only uses fork-safe system calls.
     unsafe {
         command.pre_exec(|| {
-            codex_utils_pty::pty::close_inherited_fds_except(&[]);
+            codex_utils_pty::unix_fds::close_inherited_fds_except(&[]);
             Ok(())
         });
     }

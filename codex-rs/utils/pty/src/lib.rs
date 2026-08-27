@@ -1,7 +1,8 @@
 pub mod pipe;
 mod process;
 pub mod process_group;
-pub mod pty;
+#[cfg(unix)]
+pub mod unix_fds;
 #[cfg(test)]
 mod tests;
 #[cfg(unix)]
@@ -36,9 +37,13 @@ pub type ExecCommandSession = ProcessHandle;
 /// Backwards-compatible alias for SpawnedProcess.
 pub type SpawnedPty = SpawnedProcess;
 /// Report whether ConPTY is available on this platform (Windows only).
-pub use pty::conpty_supported;
-/// Spawn a process attached to a PTY for interactive use.
-pub use pty::spawn_process as spawn_pty_process;
+#[cfg(windows)]
+pub use win::conpty_supported;
+/// Report whether ConPTY is available on this platform (non-Windows always true).
+#[cfg(not(windows))]
+pub fn conpty_supported() -> bool {
+    true
+}
 #[cfg(windows)]
 pub use win::JobObject;
 #[cfg(windows)]

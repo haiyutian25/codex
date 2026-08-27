@@ -110,7 +110,7 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
             }
             // macOS cannot receive the fd with close-on-exec set atomically.
             #[cfg(target_os = "macos")]
-            codex_utils_pty::pty::close_inherited_fds_except(inherited_fd.as_slice());
+            codex_utils_pty::unix_fds::close_inherited_fds_except(inherited_fd.as_slice());
             Ok(())
         });
     }

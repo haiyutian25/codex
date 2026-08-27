@@ -1,16 +1,11 @@
 use core::fmt;
 use std::io;
-#[cfg(unix)]
-use std::os::fd::RawFd;
 use std::process::ExitStatus;
 use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 use std::sync::atomic::AtomicBool;
 
 use anyhow::anyhow;
-use portable_pty::MasterPty;
-use portable_pty::PtySize;
-use portable_pty::SlavePty;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -66,48 +61,11 @@ impl Default for TerminalSize {
     }
 }
 
-impl From<TerminalSize> for PtySize {
-    fn from(value: TerminalSize) -> Self {
-        Self {
-            rows: value.rows,
-            cols: value.cols,
-            pixel_width: 0,
-            pixel_height: 0,
-        }
-    }
-}
-
-#[cfg(unix)]
-pub(crate) trait PtyHandleKeepAlive: Send {}
-
-#[cfg(unix)]
-impl<T: Send + ?Sized> PtyHandleKeepAlive for T {}
-
-pub(crate) enum PtyMasterHandle {
-    Resizable(Box<dyn MasterPty + Send>),
-    #[cfg(unix)]
-    Opaque {
-        raw_fd: RawFd,
-        _handle: Box<dyn PtyHandleKeepAlive>,
-    },
-}
-
-pub struct PtyHandles {
-    pub _slave: Option<Box<dyn SlavePty + Send>>,
-    pub(crate) _master: PtyMasterHandle,
-}
-
-impl fmt::Debug for PtyHandles {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("PtyHandles").finish()
-    }
-}
-
-/// Callback used by driver-backed sessions to resize a PTY-like backend when
-/// there is no local `PtyHandles` instance to resize directly.
+/// Callback used by driver-backed sessions to resize a terminal-like backend.
 type ResizeFn = Box<dyn FnMut(TerminalSize) -> anyhow::Result<()> + Send>;
 
-/// Handle for driving an interactive process (PTY or pipe).
+/// Handle for driving an interactive process (pipe-backed; terminal emulation
+/// was removed along with PTY support).
 pub struct ProcessHandle {
     writer_tx: StdMutex<Option<mpsc::Sender<Vec<u8>>>>,
     killer: StdMutex<Option<Box<dyn ChildTerminator>>>,
@@ -117,11 +75,8 @@ pub struct ProcessHandle {
     wait_handle: StdMutex<Option<JoinHandle<()>>>,
     exit_status: Arc<AtomicBool>,
     exit_code: Arc<StdMutex<Option<i32>>>,
-    // PtyHandles must be preserved because the process will receive Control+C if the
-    // slave is closed
-    _pty_handles: StdMutex<Option<PtyHandles>>,
-    // Optional resize hook for driver-backed sessions that proxy PTY control to
-    // another backend instead of owning local PTY handles.
+    // Optional resize hook for driver-backed sessions that proxy terminal
+    // control to another backend.
     resizer: StdMutex<Option<ResizeFn>>,
 }
 
@@ -142,7 +97,6 @@ impl ProcessHandle {
         wait_handle: JoinHandle<()>,
         exit_status: Arc<AtomicBool>,
         exit_code: Arc<StdMutex<Option<i32>>>,
-        pty_handles: Option<PtyHandles>,
         resizer: Option<ResizeFn>,
     ) -> Self {
         Self {
@@ -154,7 +108,6 @@ impl ProcessHandle {
             wait_handle: StdMutex::new(Some(wait_handle)),
             exit_status,
             exit_code,
-            _pty_handles: StdMutex::new(pty_handles),
             resizer: StdMutex::new(resizer),
         }
     }
@@ -182,30 +135,16 @@ impl ProcessHandle {
         self.exit_code.lock().ok().and_then(|guard| *guard)
     }
 
-    /// Resize the PTY in character cells.
+    /// Resize the terminal in character cells when the backend supports it.
     pub fn resize(&self, size: TerminalSize) -> anyhow::Result<()> {
-        {
-            let handles = self
-                ._pty_handles
-                .lock()
-                .map_err(|_| anyhow!("failed to lock PTY handles"))?;
-            if let Some(handles) = handles.as_ref() {
-                return match &handles._master {
-                    PtyMasterHandle::Resizable(master) => master.resize(size.into()),
-                    #[cfg(unix)]
-                    PtyMasterHandle::Opaque { raw_fd, .. } => resize_raw_pty(*raw_fd, size),
-                };
-            }
-        }
-
         let mut resizer = self
             .resizer
             .lock()
-            .map_err(|_| anyhow!("failed to lock PTY resizer"))?;
+            .map_err(|_| anyhow!("failed to lock process resizer"))?;
         if let Some(resizer) = resizer.as_mut() {
             resizer(size)
         } else {
-            Err(anyhow!("process is not attached to a PTY"))
+            Err(anyhow!("process backend does not support resize"))
         }
     }
 
@@ -299,21 +238,6 @@ impl ChildTerminator for ClosureTerminator {
         }
         Ok(())
     }
-}
-
-#[cfg(unix)]
-fn resize_raw_pty(raw_fd: RawFd, size: TerminalSize) -> anyhow::Result<()> {
-    let mut winsize = libc::winsize {
-        ws_row: size.rows,
-        ws_col: size.cols,
-        ws_xpixel: 0,
-        ws_ypixel: 0,
-    };
-    let result = unsafe { libc::ioctl(raw_fd, libc::TIOCSWINSZ, &mut winsize) };
-    if result == -1 {
-        return Err(std::io::Error::last_os_error().into());
-    }
-    Ok(())
 }
 
 /// Combine split stdout/stderr receivers into a single broadcast receiver.
@@ -468,7 +392,6 @@ pub fn spawn_from_driver(driver: ProcessDriver) -> SpawnedProcess {
         wait_handle,
         exit_status,
         exit_code,
-        /*pty_handles*/ None,
         resizer,
     );
 

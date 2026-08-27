@@ -161,7 +161,7 @@ async fn spawn_process_with_stdin_mode(
             crate::process_group::detach_from_tty()?;
             #[cfg(target_os = "linux")]
             crate::process_group::set_parent_death_signal(parent_pid)?;
-            crate::pty::close_inherited_fds_except(&inherited_fds);
+            crate::unix_fds::close_inherited_fds_except(&inherited_fds);
             Ok(())
         });
     }
@@ -312,7 +312,6 @@ async fn spawn_process_with_stdin_mode(
         wait_handle,
         exit_status,
         exit_code,
-        /*pty_handles*/ None,
         /*resizer*/ None,
     );
 

@@ -7,7 +7,6 @@ use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::models::PermissionProfile;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_pty::SpawnedProcess;
-use codex_utils_pty::TerminalSize;
 
 use crate::SandboxType;
 use crate::WindowsSandboxFilesystemOverrides;
@@ -96,18 +95,8 @@ pub async fn spawn_process(request: SpawnRequest<'_>) -> Result<SpawnedProcess> 
         .command
         .split_first()
         .context("missing program for process spawn")?;
-    if request.tty {
-        codex_utils_pty::pty::spawn_process(
-            program,
-            args,
-            request.cwd,
-            request.env,
-            request.arg0,
-            TerminalSize::default(),
-            request.inherited_fds,
-        )
-        .await
-    } else if request.stdin_open {
+    // PTY spawn was removed; tty requests degrade to pipe-backed processes.
+    if request.tty || request.stdin_open {
         codex_utils_pty::pipe::spawn_process(
             program,
             args,

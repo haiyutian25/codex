@@ -1,5 +1,7 @@
 # codex-utils-pty 彻底移除方案
 
+> ✅ **已于 2026-08-28 执行完毕**——实际执行记录与方案差异见文末附录。
+
 > 仓库：`haiyutian25/codex`（本地 `d:/Codex`，CLI/TUI 已移除）
 > 日期：2026-08-27
 > 动机：`codex-utils-pty` 依赖 `openpty` 等 PTY 机制，Android bionic 不提供，是 Android 改造的适配点之一。本文档给出彻底移除 PTY 能力的穷尽排查与执行方案。
@@ -166,3 +168,35 @@ exec-server-protocol（protocol.rs:261）与 windows-sandbox-rs 各有一条平�
 - [ ] `cargo check --tests` 覆盖 core / app-server / exec-server / sandboxing 通过
 - [ ] `unified_exec` 管道模式冒烟：起会话、写 stdin、收输出、杀进程组
 - [ ] （Android 目标）`cargo check --target aarch64-linux-android` 不再出现 openpty 相关错误
+
+---
+
+## 附录：执行记录（2026-08-28）
+
+### 实际执行内容
+
+1. **`pty.rs` 删除**：全部 PTY 启动代码（`spawn_process`/`spawn_process_portable`/`spawn_process_preserving_fds`/`open_unix_pty` 等）移除；通用的 `close_inherited_fds_except`（macOS + 通用 Unix 两版）迁入新模块 `unix_fds.rs`
+2. **`process.rs` 去 portable-pty 化**：删除 `PtyHandles`/`PtyMasterHandle`/`PtyHandleKeepAlive`/`resize_raw_pty`/`From<TerminalSize> for PtySize`；`ProcessHandle` 移除 `_pty_handles` 字段，`resize()` 仅保留 resizer 钩子路径
+3. **`sandboxing/spawn.rs`**：删除 tty 分支——`tty || stdin_open` 一律走 `pipe::spawn_process`，PTY 请求降级为管道
+4. **`lib.rs`**：移除 `spawn_pty_process` 导出；`conpty_supported` 保留（Windows 走 `win::conpty_supported`，非 Windows 恒真）；注册 `unix_fds` 模块
+5. **依赖降级**：`portable-pty` 从 `[dependencies]` 移入 `[target.'cfg(windows)'.dependencies]`——**Unix/Android 构建不再引入 portable-pty/openpty**
+6. **Windows 死代码清理**：`ConPtySystem`/`WinChild`/`WinChildKiller`/`ConPtyMasterPty`/`ConPtySlavePty`/`procthreadattr` 模块、`PsuedoCon::spawn_command` 及命令行构造辅助函数（均只服务已删除的 PTY 启动路径）
+7. **测试清理**：`tests.rs` 删除 20 个 PTY 测试块及死助手函数；`windows_tests.rs` 仅保留 2 个 JobObject 测试
+8. **消费方路径更新**：`core/spawn.rs`、`exec-server/fs_sandbox.rs`、`pipe.rs` 改用 `unix_fds::close_inherited_fds_except`
+
+### 与方案的差异（执行中发现并调整）
+
+| 方案原设想 | 实际决策 | 原因 |
+|---|---|---|
+| 移除 git-utils/hooks 的 `JobObject` | **保留** | `JobObject` 是 Windows 进程树管理原语（非 PTY），rmcp-client/git-utils/hooks/pipe 后端都在用 |
+| app-server 两处 `spawn_pty_process` 改造 | **跳过** | app-server 族已在上一轮删除 |
+| windows-sandbox-rs ConPTY 后端删除 | **保留**（仅删死代码） | Windows 专属 crate，不编译进 Android；RawConPty/PsuedoCon 仍被 windows-sandbox-rs 使用 |
+| 协议 tty 字段标 deprecated | 字段原样保留 | `SpawnRequest.tty`/exec-server 协议字段保留兼容，行为统一降级为管道 |
+
+### 验证结果（全部通过）
+
+- ✅ `cargo check -p codex-utils-pty --tests`（Windows 目标）
+- ✅ `cargo check -p codex-sandboxing -p codex-exec-server`
+- ✅ `cargo check -p codex-core-api -p codex-mcp-server -p codex-rmcp-client`（全链路）
+- ✅ `cargo check --tests -p codex-core`
+- ✅ `cargo tree -p codex-utils-pty --target x86_64-unknown-linux-gnu` 中 **portable-pty 已消失**——Android 交叉编译的 openpty 障碍归零

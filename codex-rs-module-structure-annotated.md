@@ -153,7 +153,7 @@
 | `codex-utils-path-uri` | 路径/URI 互转 | ⭐ 必需核心 | `codex-rs/utils/path-uri` | 6 | 3,363 |
 | `codex-utils-path` | 路径工具 | ⭐ 必需核心 | `codex-rs/utils/path-utils` | 3 | 354 |
 | `codex-utils-plugins` | 插件工具 | ✅ 可选（随插件系统） | `codex-rs/utils/plugins` | 4 | 452 |
-| `codex-utils-pty` | 伪终端（PTY）封装 | 🔧 必需·需适配（**剥离 PTY 部分，保留管道/进程组**，见 `pty-removal-plan.md`） | `codex-rs/utils/pty` | 18 | 5,240 |
+| `codex-utils-pty` | 进程启动封装（原 PTY 封装，已完成剥离） | ✅ 适配完成（2026-08-28：PTY/openpty 已从 Unix 构建移除、portable-pty 降为 Windows 专属，执行链全走管道；详见 `pty-removal-plan.md` 附录） | `codex-rs/utils/pty` | 18 | 5,240 |
 | `codex-utils-readiness` | 服务就绪探测 | ❌ 已删除（本就无使用者的孤儿） | `codex-rs/utils/readiness` | 1 | 336 |
 | `codex-utils-redacted-string` | 日志脱敏字符串 | ⭐ 必需核心 | `codex-rs/utils/redacted-string` | 1 | 49 |
 | `codex-utils-rustls-provider` | rustls provider 注册 | ⭐ 必需核心 | `codex-rs/utils/rustls-provider` | 3 | 81 |
@@ -4447,8 +4447,8 @@ _No module declarations._
 | 评级 | 数量 | 说明 |
 |---|---:|---|
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
-| 🔧 必需·需适配 | 9 | 必需但需 Android 平台改造（见下表） |
-| ✅ 可选功能 | 42 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
+| 🔧 必需·需适配 | 8 | 必需但需 Android 平台改造（见下表；原 9 个，`codex-utils-pty` 已完成） |
+| ✅ 可选功能 | 43 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
 | 🚫 不需要 | 23 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 5 个是 core 编译期承重依赖，必须保留：`app-server-protocol`×2、`exec-server`×3） |
 | ❌ 已删除/不可用 | 23 | 21 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
@@ -4474,7 +4474,7 @@ _No module declarations._
 - 安全兜底：`codex-execpolicy`（命令白名单）+ `codex-process-hardening`（已原生支持 Android）+ 审批流
 - **不使用**：app-server / exec-server / mcp-server / exec 等一切对外服务与 CLI 入口
 
-### 必须适配的 9 个模块（🔧）
+### 必须适配的模块（🔧，原 9 个，已完成 1 个）
 
 | 模块 | 适配内容 |
 |---|---|
@@ -4485,7 +4485,7 @@ _No module declarations._
 | `codex-login` | 采用 API Key / Device Code 流；浏览器 OAuth 回调不可用 |
 | `codex-keyring-store` | 无 keyring 后端 → 用文件存储（默认模式）或实现 Android Keystore 后端 |
 | `codex-home` / `codex-utils-home-dir` | `CODEX_HOME` 指向 App 私有目录（`Context.getFilesDir()/codex`） |
-| `codex-utils-pty` | 按 `pty-removal-plan.md` 剥离 PTY 部分，执行链全走管道（bionic 无 `openpty`） |
+| ~~`codex-utils-pty`~~ | ✅ **已完成**（2026-08-28）：PTY 剥离完毕，执行链全走管道，portable-pty 不再进入 Unix 构建 |
 
 ### 🚫 不需要模块的分组（38 个）
 
