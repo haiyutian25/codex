@@ -33,7 +33,7 @@
 | `codex-agent-identity` | Agent Identity 认证：工作负载身份令牌的签名、交换与校验 | ✅ 可选（仅用该认证模式时需要） | `codex-rs/agent-identity` | 1 | 1,000 |
 | `codex-agent-roles` | Agent 角色配置的发现、解析与加载 | ✅ 可选（自定义智能体角色） | `codex-rs/agent-roles` | 4 | 592 |
 | `codex-analytics` | 分析事件采集与上报 | 🚫 建议禁用（遥测；仍在 core 编译图中，配置关闭即可） | `codex-rs/analytics` | 9 | 14,324 |
-| `codex-ansi-escape` | ANSI 转义序列 → ratatui 样式文本 | 🚫 不需要（TUI 渲染专用；Android 前端自行渲染） | `codex-rs/ansi-escape` | 1 | 58 |
+| `codex-ansi-escape` | ANSI 转义序列 → ratatui 样式文本 | ❌ 已删除（TUI 渲染专用；连带移除 ansi-to-tui/ratatui/crossterm） | `codex-rs/ansi-escape` | 1 | 58 |
 | `codex-app-server` | app-server 主服务：面向桌面 IDE/App 客户端的 JSON-RPC 服务 | 🚫 不需要（桌面/IDE 集成表面；UniFFI 进程内直连 core，不经过它） | `codex-rs/app-server` | 248 | 156,315 |
 | `codex-app-server-client` | 进程内 app-server 客户端 | 🚫 不需要（随 app-server） | `codex-rs/app-server-client` | 3 | 3,143 |
 | `codex-app-server-daemon` | app-server 本地守护进程管理 | 🚫 不需要（桌面多进程机制） | `codex-rs/app-server-daemon` | 11 | 3,552 |
@@ -4449,8 +4449,8 @@ _No module declarations._
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
 | 🔧 必需·需适配 | 9 | 必需但需 Android 平台改造（见下表） |
 | ✅ 可选功能 | 43 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
-| 🚫 不需要 | 38 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图 |
-| ❌ 已删除/不可用 | 7 | 5 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
+| 🚫 不需要 | 37 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图 |
+| ❌ 已删除/不可用 | 8 | 6 个已删除（含 `ansi-escape`）；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
 ### 目标架构（UniFFI 进程内嵌入，不连接任何桌面端）
 
@@ -4494,7 +4494,7 @@ _No module declarations._
 | 桌面/IDE 集成服务 | `app-server`、`app-server-client`、`app-server-daemon`、`app-server-protocol`(+noop-macros)、`app-server-test-client`、`app-server-transport`、`uds`、`stdio-to-uds` | UniFFI 进程内直连 core，无需 JSON-RPC 服务与 IPC |
 | CLI 与二进制入口 | `exec`、`utils/cli`、`arg0`、`install-context` | 无 CLI 形态；App 内直接调用库 |
 | 远程/对外服务 | `exec-server`(+protocol/test-support)、`mcp-server`、`utils/readiness` | 单机 Android App 不做远程环境、不对外提供服务 |
-| 桌面环境相关 | `shell-escalation`、`utils/sleep-inhibitor`、`terminal-detection`、`git-utils`、`git-attribution`、`worktree`、`ansi-escape` | 依赖桌面 shell/终端/git 生态，Android 无对应环境 |
+| 桌面环境相关 | `shell-escalation`、`utils/sleep-inhibitor`、`terminal-detection`、`git-utils`、`git-attribution`、`worktree` | 依赖桌面 shell/终端/git 生态，Android 无对应环境 |
 | 本地模型桌面客户端 | `ollama`、`lmstudio`、`code-mode` 族（4 个）、`v8-poc` | 依赖桌面本地服务或过重实验运行时 |
 | 遥测 | `analytics`、`otel` | 建议配置关闭 |
 | 其他 | `external-agent-migration`、`collaboration-mode-templates`、`test-binary-support`、`utils/cargo-bin` | 迁移工具/占位/测试专用 |

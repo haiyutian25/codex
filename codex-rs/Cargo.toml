@@ -8,7 +8,6 @@ members = [
     "backend-client",
     "bwrap",
     "build-info",
-    "ansi-escape",
     "async-utils",
     "app-server",
     "app-server-transport",
@@ -151,7 +150,6 @@ codex-analytics = { path = "analytics" }
 codex-agent-graph-store = { path = "agent-graph-store" }
 codex-agent-identity = { path = "agent-identity" }
 codex-agent-roles = { path = "agent-roles" }
-codex-ansi-escape = { path = "ansi-escape" }
 codex-api = { path = "codex-api" }
 codex-aws-auth = { path = "aws-auth" }
 codex-app-server = { path = "app-server" }
@@ -280,7 +278,6 @@ mcp_test_support = { path = "mcp-server/tests/common" }
 
 # External
 age = "0.11.1"
-ansi-to-tui = "8.0.1"
 anyhow = "1"
 arc-swap = "1.9.0"
 assert_cmd = "2"
@@ -379,11 +376,6 @@ pretty_assertions = "1.4.1"
 pulldown-cmark = { version = "0.10", default-features = false }
 quick-xml = "0.41.0"
 rand = "0.9"
-ratatui = { version = "0.30.2", default-features = false, features = [
-    "crossterm",
-    "layout-cache",
-    "underline-color",
-] }
 rcgen = { version = "0.14.7", default-features = false, features = [
     "aws_lc_rs",
     "pem",
@@ -577,7 +569,6 @@ inherits = "test"
 opt-level = 0
 
 [patch.crates-io]
-crossterm = { git = "https://github.com/openai-oss-forks/crossterm", rev = "45fecb9508105988f42fe6ff0441783ed3717f92" }
 tokio-tungstenite = { git = "https://github.com/openai-oss-forks/tokio-tungstenite", rev = "0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186" }
 tungstenite = { git = "https://github.com/openai-oss-forks/tungstenite-rs", rev = "4fffad30fe373adbdcffab9545e9e9bf4f2fc19f" }
 
