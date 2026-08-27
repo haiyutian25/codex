@@ -1,9 +1,12 @@
 #![allow(clippy::expect_used)]
 
+mod auth_fixtures;
 mod mcp_process;
 mod mock_model_server;
 mod responses;
 
+pub use auth_fixtures::ChatGptAuthFixture;
+pub use auth_fixtures::write_chatgpt_auth;
 pub use core_test_support::format_with_current_shell;
 pub use core_test_support::format_with_current_shell_display_non_login;
 pub use core_test_support::format_with_current_shell_non_login;

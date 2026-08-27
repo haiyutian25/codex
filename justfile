@@ -12,10 +12,6 @@ python := if os_family() == "windows" { "python" } else { "python3" }
 help:
     just -l
 
-# `codex exec` (standalone binary)
-exec *args:
-    cargo run --bin codex-exec -- {args}
-
 # Run the CLI version of the file-search crate.
 file-search *args:
     cargo run --bin codex-file-search -- {args}

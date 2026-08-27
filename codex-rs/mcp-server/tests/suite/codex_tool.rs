@@ -3,8 +3,6 @@ use std::env;
 use std::path::Path;
 use std::path::PathBuf;
 
-use app_test_support::ChatGptAuthFixture;
-use app_test_support::write_chatgpt_auth;
 use codex_config::types::AuthCredentialsStoreMode;
 use codex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
 use codex_mcp_server::CodexToolCallParam;
@@ -29,8 +27,10 @@ use wiremock::matchers::method;
 use wiremock::matchers::path;
 
 use core_test_support::skip_if_no_network;
+use mcp_test_support::ChatGptAuthFixture;
 use mcp_test_support::McpProcess;
 use mcp_test_support::create_apply_patch_sse_response;
+use mcp_test_support::write_chatgpt_auth;
 use mcp_test_support::create_command_execution_sse_response;
 use mcp_test_support::create_final_assistant_message_sse_response;
 use mcp_test_support::create_mock_responses_server;
