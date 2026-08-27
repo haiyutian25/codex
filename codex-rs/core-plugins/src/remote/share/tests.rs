@@ -32,7 +32,7 @@ fn test_config(server: &MockServer) -> RemotePluginServiceConfig {
 }
 
 fn test_auth() -> CodexAuth {
-    CodexAuth::create_dummy_chatgpt_auth_for_testing()
+    CodexAuth::from_api_key("dummy-test-api-key")
 }
 
 fn write_file(path: &Path, contents: &str) {

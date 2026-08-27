@@ -19,7 +19,6 @@ use std::sync::LazyLock;
 use std::sync::Mutex;
 use std::sync::RwLock;
 
-use crate::outbound_proxy::AuthRouteConfig;
 
 /// Set this to add a suffix to the User-Agent string.
 ///
@@ -293,6 +292,17 @@ pub async fn create_client_for_route_async(
     .map_err(std::io::Error::other)?
 }
 
+/// Builds an HTTP client for an auth endpoint without Codex default headers.
+#[cfg(test)]
+pub(crate) fn create_raw_auth_client(
+    endpoint: &str,
+    auth_route_config: &crate::outbound_proxy::AuthRouteConfig,
+) -> Result<HttpClient, BuildRouteAwareHttpClientError> {
+    auth_route_config
+        .http_client_factory()
+        .build_client_without_request_logging(endpoint, ClientRouteClass::Auth)
+}
+
 fn default_http_client_builder() -> HttpClientBuilder {
     HttpClientBuilder::new()
         .default_headers(default_headers())
@@ -308,28 +318,6 @@ fn build_default_client(builder: HttpClientBuilder) -> HttpClient {
     } else {
         builder.build_with_transport_default_proxy_and_custom_ca_fallback()
     }
-}
-
-/// Builds an HTTP client for an auth endpoint without Codex default headers.
-pub(crate) fn create_raw_auth_client(
-    endpoint: &str,
-    auth_route_config: &AuthRouteConfig,
-) -> Result<HttpClient, BuildRouteAwareHttpClientError> {
-    auth_route_config
-        .http_client_factory()
-        .build_client_without_request_logging(endpoint, ClientRouteClass::Auth)
-}
-
-/// Builds the default Codex HTTP client wrapper for an auth endpoint.
-pub(crate) fn create_default_auth_client(
-    endpoint: &str,
-    auth_route_config: &AuthRouteConfig,
-) -> Result<HttpClient, BuildRouteAwareHttpClientError> {
-    create_client_for_route(
-        auth_route_config.http_client_factory(),
-        endpoint,
-        ClientRouteClass::Auth,
-    )
 }
 
 pub fn default_headers() -> HeaderMap {

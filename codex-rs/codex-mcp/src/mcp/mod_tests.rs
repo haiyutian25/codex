@@ -446,7 +446,7 @@ async fn effective_mcp_servers_preserve_runtime_servers() {
     let codex_home = tempfile::tempdir().expect("tempdir");
     let mut config = test_mcp_config(codex_home.path().to_path_buf());
     config.apps_enabled = true;
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
 
     let mut catalog = ResolvedMcpCatalog::builder();
     catalog.register(McpServerRegistration::from_config(

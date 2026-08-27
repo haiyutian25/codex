@@ -14,7 +14,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 
-use anyhow::Context as _;
 use codex_config::types::AuthKeyringBackendKind;
 use codex_config::types::OAuthCredentialsStoreMode;
 use codex_exec_server::Environment;

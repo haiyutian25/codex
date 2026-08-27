@@ -214,11 +214,12 @@ struct RemoteInstalledPluginsAuthIdentity {
 
 impl RemoteInstalledPluginsAuthIdentity {
     fn from_auth(auth: Option<&CodexAuth>) -> Self {
+        // API-key-only build: no ChatGPT account identity is available.
         Self {
             auth_mode: auth.map(CodexAuth::api_auth_mode),
-            account_id: auth.and_then(CodexAuth::get_account_id),
-            chatgpt_user_id: auth.and_then(CodexAuth::get_chatgpt_user_id),
-            is_workspace_account: auth.map(CodexAuth::is_workspace_account),
+            account_id: None,
+            chatgpt_user_id: None,
+            is_workspace_account: None,
         }
     }
 }
@@ -297,13 +298,10 @@ struct RemoteCatalogCacheRefreshRequest {
 
 impl RemoteCatalogCacheRefreshRequest {
     fn has_same_cache_identity(&self, other: &Self) -> bool {
+        // API-key-only build: auth carries no account identity to compare.
         self.service_config == other.service_config
-            && self.auth.as_ref().and_then(CodexAuth::get_account_id)
-                == other.auth.as_ref().and_then(CodexAuth::get_account_id)
-            && self.auth.as_ref().and_then(CodexAuth::get_chatgpt_user_id)
-                == other.auth.as_ref().and_then(CodexAuth::get_chatgpt_user_id)
-            && self.auth.as_ref().map(CodexAuth::is_workspace_account)
-                == other.auth.as_ref().map(CodexAuth::is_workspace_account)
+            && self.auth.as_ref().map(CodexAuth::api_auth_mode)
+                == other.auth.as_ref().map(CodexAuth::api_auth_mode)
     }
 }
 
@@ -373,11 +371,12 @@ fn featured_plugin_ids_cache_key(
     config: &PluginsConfigInput,
     auth: Option<&CodexAuth>,
 ) -> FeaturedPluginIdsCacheKey {
+    let _ = auth;
     FeaturedPluginIdsCacheKey {
         chatgpt_base_url: config.chatgpt_base_url.clone(),
-        account_id: auth.and_then(CodexAuth::get_account_id),
-        chatgpt_user_id: auth.and_then(CodexAuth::get_chatgpt_user_id),
-        is_workspace_account: auth.is_some_and(CodexAuth::is_workspace_account),
+        account_id: None,
+        chatgpt_user_id: None,
+        is_workspace_account: false,
     }
 }
 
@@ -1133,21 +1132,10 @@ impl PluginsManager {
         if !config.plugins_enabled || !config.remote_plugin_enabled {
             return Vec::new();
         }
-        let Some(auth) = auth.filter(|auth| auth.uses_codex_backend()) else {
-            return Vec::new();
-        };
-        let Some(account_id) = auth.get_account_id() else {
-            return Vec::new();
-        };
-        if account_id.is_empty() {
-            return Vec::new();
-        }
-
-        crate::remote::cached_global_remote_discoverable_plugins(
-            self.codex_home.as_path(),
-            &remote_plugin_service_config(config),
-            auth,
-        )
+        // Remote discoverable plugins require ChatGPT account auth, which was
+        // removed in this API-key-only build.
+        let _ = auth;
+        Vec::new()
     }
 
     pub async fn build_and_cache_remote_installed_plugin_marketplaces(

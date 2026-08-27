@@ -21,12 +21,10 @@ use codex_api::build_session_headers;
 use codex_extension_api::ContextualUserFragment;
 use codex_extension_api::ExtensionMetrics;
 use codex_http_client::HttpClientFactory;
-use codex_login::AgentIdentityAuthPolicy;
 use codex_login::CodexAuth;
 use codex_login::UnauthorizedRecovery;
 use codex_login::default_client::add_originator_header;
 use codex_login::default_client::default_headers;
-use codex_model_provider::AgentIdentitySessionFallback;
 use codex_model_provider::ProviderAuthScope;
 use codex_model_provider::SharedModelProvider;
 use codex_protocol::ThreadId;
@@ -34,7 +32,6 @@ use codex_protocol::error::CodexErr;
 use codex_protocol::models::ContentItem;
 use codex_protocol::models::ResponseItem;
 use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::TokenUsage;
 use http::HeaderValue;
 use http::StatusCode;
@@ -66,10 +63,6 @@ pub struct LunaSamplerConfig {
     pub provider: SharedModelProvider,
     /// Effective proxy, custom-CA, and cookie configuration.
     pub http_client_factory: HttpClientFactory,
-    /// Agent-identity policy selected for the owning thread.
-    pub agent_identity_policy: AgentIdentityAuthPolicy,
-    /// Host-resolved source used to scope agent-identity authentication.
-    pub session_source: SessionSource,
     /// Owning runtime session identifier.
     pub session_id: String,
     /// Owning thread identifier.
@@ -264,11 +257,7 @@ impl LunaSampler {
         let auth = self
             .config
             .provider
-            .api_auth_for_scope(ProviderAuthScope {
-                agent_identity_policy: self.config.agent_identity_policy,
-                session_source: self.config.session_source.clone(),
-                agent_identity_session_fallback: AgentIdentitySessionFallback::default(),
-            })
+            .api_auth_for_scope(ProviderAuthScope::default())
             .await
             .map_err(LunaSamplerError::Provider)?
             .auth;

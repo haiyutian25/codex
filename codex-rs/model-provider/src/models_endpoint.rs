@@ -32,7 +32,6 @@ use codex_response_debug_context::telemetry_transport_error_message;
 use http::HeaderMap;
 use tokio::time::timeout;
 
-use crate::auth::agent_identity_telemetry;
 use crate::auth::resolve_provider_auth;
 use crate::provider::enforce_managed_residency;
 
@@ -88,11 +87,8 @@ impl OpenAiModelsEndpoint {
         let request_url =
             ModelsClient::<ReqwestTransport>::request_url(&api_provider, client_version);
         let auth_telemetry = auth_header_telemetry(api_auth.as_ref());
-        let agent_identity_telemetry = if let Some(CodexAuth::AgentIdentity(auth)) = auth.as_ref() {
-            Some(agent_identity_telemetry(auth))
-        } else {
-            None
-        };
+        // Agent identity telemetry was removed with ChatGPT account auth.
+        let agent_identity_telemetry = None;
         let request_telemetry: Arc<dyn RequestTelemetry> = Arc::new(ModelsRequestTelemetry {
             auth_mode: auth_mode.map(|mode| TelemetryAuthMode::from(mode).to_string()),
             auth_header_attached: auth_telemetry.attached,
@@ -218,7 +214,6 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.env_codex_api_key_enabled = self.auth_env.codex_api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
-            auth.env_refresh_token_url_override_present = self.auth_env.refresh_token_url_override_present,
             auth.request_id = response_debug.request_id.as_deref(),
             auth.cf_ray = response_debug.cf_ray.as_deref(),
             auth.error = response_debug.auth_error.as_deref(),
@@ -244,7 +239,6 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.env_codex_api_key_enabled = self.auth_env.codex_api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
-            auth.env_refresh_token_url_override_present = self.auth_env.refresh_token_url_override_present,
             auth.request_id = response_debug.request_id.as_deref(),
             auth.cf_ray = response_debug.cf_ray.as_deref(),
             auth.error = response_debug.auth_error.as_deref(),

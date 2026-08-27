@@ -29,7 +29,7 @@ async fn contributes_hosted_plugin_runtime_without_an_executor() -> TestResult {
         ])
         .build()
         .await?;
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let manager = installed_manager(&config, Some(auth.clone()));
 
     let servers = manager.effective_servers(&config, Some(&auth)).await;
@@ -61,7 +61,7 @@ async fn runtime_overlay_preserves_disabled_server() -> TestResult {
         ])
         .build()
         .await?;
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let manager = installed_manager(&config, Some(auth.clone()));
 
     let servers = manager.effective_servers(&config, Some(&auth)).await;
@@ -88,7 +88,7 @@ async fn default_fallback_overwrites_reserved_config_without_an_extension() -> T
         ])
         .build()
         .await?;
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let manager = McpManager::new(Arc::new(plugins_manager_for_config(
         &config,
         AuthManager::from_auth_for_testing(auth.clone()),
@@ -116,7 +116,7 @@ async fn later_extension_can_remove_same_name_registration() -> TestResult {
         .cli_overrides(vec![("features.apps".to_string(), true.into())])
         .build()
         .await?;
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let mut builder = ExtensionRegistryBuilder::new();
     codex_mcp_extension::install(&mut builder);
     builder.mcp_server_contributor(Arc::new(RemoveCodexApps));

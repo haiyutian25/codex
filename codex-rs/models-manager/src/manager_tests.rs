@@ -14,7 +14,6 @@ use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_login::ExternalAuth;
 use codex_login::ExternalAuthRefreshContext;
-use codex_login::TokenData;
 use codex_protocol::auth::AuthMode;
 use codex_protocol::openai_models::ModelsResponse;
 use pretty_assertions::assert_eq;
@@ -291,7 +290,7 @@ fn openai_manager_for_tests(
         codex_home,
         endpoint_client,
         Some(AuthManager::from_auth_for_testing(
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
         )),
     )
 }
@@ -406,7 +405,7 @@ async fn manager_without_cache_fetches_on_every_refresh() {
     let manager = OpenAiModelsManager::new_without_cache(
         endpoint.clone(),
         Some(AuthManager::from_auth_for_testing(
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
         )),
     );
 
@@ -445,7 +444,7 @@ async fn injected_cache_hit_avoids_remote_fetch() {
         cache,
         endpoint.clone(),
         Some(AuthManager::from_auth_for_testing(
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
         )),
     );
 
@@ -469,7 +468,7 @@ async fn injected_cache_read_error_falls_back_and_persists_remote_models() {
         cache.clone(),
         endpoint.clone(),
         Some(AuthManager::from_auth_for_testing(
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
         )),
     );
 
@@ -503,7 +502,7 @@ async fn injected_cache_write_error_does_not_fail_remote_refresh() {
         cache,
         endpoint.clone(),
         Some(AuthManager::from_auth_for_testing(
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
         )),
     );
 
@@ -557,26 +556,10 @@ async fn injected_cache_ttl_refresh_preserves_cached_payload() {
     assert_eq!(stored_entries[0].models, cached_models);
 }
 
-async fn chatgpt_auth_tokens_for_tests(codex_home: &Path) -> CodexAuth {
+async fn stored_api_key_auth_for_tests(codex_home: &Path) -> CodexAuth {
     let auth_dot_json = codex_login::AuthDotJson {
-        auth_mode: Some(AuthMode::ChatgptAuthTokens),
-        openai_api_key: None,
-        tokens: Some(TokenData {
-            id_token: codex_login::token_data::parse_chatgpt_jwt_claims(
-                "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.\
-eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJodHRwczovL2FwaS5vcGVuYWkuY29tL2F1dGgiOnsiY2hhdGdwdF9wbGFuX3R5cGUiOiJwcm8iLCJjaGF0Z3B0X3VzZXJfaWQiOiJ1c2VyLWlkIiwiY2hhdGdwdF9hY2NvdW50X2lkIjoiYWNjb3VudC1pZCJ9fQ.\
-c2ln",
-            )
-            .expect("fake id token should parse"),
-            access_token: "Access Token".to_string(),
-            refresh_token: "test".to_string(),
-            account_id: Some("account_id".to_string()),
-        }),
-        last_refresh: Some(Utc::now()),
-        agent_identity: None,
-        personal_access_token: None,
-        bedrock_api_key: None,
-        bedrock_access_keys: None,
+        auth_mode: Some(AuthMode::ApiKey),
+        openai_api_key: Some("test-api-key".to_string()),
     };
     std::fs::create_dir_all(codex_home).expect("codex home should be created");
     std::fs::write(
@@ -586,11 +569,9 @@ c2ln",
     .expect("auth.json should be written");
 
     CodexAuth::from_auth_storage(
-        codex_home,
+        codex_home.to_path_buf(),
         AuthCredentialsStoreMode::File,
-        /*chatgpt_base_url*/ None,
         AuthKeyringBackendKind::default(),
-        &codex_login::test_support::transport_default_auth_route_config(),
     )
     .await
     .expect("auth should load")
@@ -1166,7 +1147,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
         )),
         endpoint.clone(),
         Some(AuthManager::from_auth_for_testing(
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
         )),
     );
 
@@ -1303,11 +1284,10 @@ async fn refresh_available_models_skips_network_when_external_api_key_overrides_
     let dynamic_slug = "dynamic-model-only-for-test-external-api-key";
     let codex_home = tempdir().expect("temp dir");
     let auth_manager =
-        AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
+        AuthManager::from_auth_for_testing(CodexAuth::from_api_key("dummy-test-api-key"));
     auth_manager
         .set_external_auth(Arc::new(TestExternalApiKeyAuth))
-        .await
-        .expect("external API key auth should resolve");
+        .await;
     let endpoint = TestAuthAwareModelsEndpoint::new(
         Some(Arc::clone(&auth_manager)),
         vec![vec![remote_model(
@@ -1346,11 +1326,10 @@ async fn refresh_available_models_uses_cached_chatgpt_when_external_api_key_is_u
     let dynamic_slug = "dynamic-model-only-for-test-unresolved-external-api-key";
     let codex_home = tempdir().expect("temp dir");
     let auth_manager =
-        AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
+        AuthManager::from_auth_for_testing(CodexAuth::from_api_key("dummy-test-api-key"));
     auth_manager
         .set_external_auth(Arc::new(TestUnresolvedExternalApiKeyAuth))
-        .await
-        .expect_err("unresolved external auth should be rejected");
+        .await;
     let endpoint = TestAuthAwareModelsEndpoint::new(
         Some(Arc::clone(&auth_manager)),
         vec![vec![remote_model(
@@ -1394,7 +1373,7 @@ async fn refresh_available_models_fetches_with_chatgpt_auth_tokens() {
         "ChatGPT Auth Tokens",
         /*priority*/ 1,
     )]]);
-    let auth = chatgpt_auth_tokens_for_tests(codex_home.path()).await;
+    let auth = stored_api_key_auth_for_tests(codex_home.path()).await;
     let manager = openai_manager_for_tests_with_auth(
         codex_home.path().to_path_buf(),
         endpoint.clone(),
@@ -1442,7 +1421,7 @@ fn build_available_models_picks_default_after_hiding_hidden_models() {
 #[tokio::test]
 async fn static_manager_reads_latest_auth_mode() {
     let auth_manager =
-        AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
+        AuthManager::from_auth_for_testing(CodexAuth::from_api_key("dummy-test-api-key"));
     let chatgpt_only_model = {
         let mut model = remote_model("chatgpt-only", "ChatGPT Only", /*priority*/ 0);
         model.supported_in_api = false;
@@ -1469,8 +1448,7 @@ async fn static_manager_reads_latest_auth_mode() {
 
     auth_manager
         .set_external_auth(Arc::new(TestExternalApiKeyAuth))
-        .await
-        .expect("external API key auth should resolve");
+        .await;
     let api_models = manager
         .list_models(RefreshStrategy::Online, DEFAULT_HTTP_CLIENT_FACTORY)
         .await;

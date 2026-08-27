@@ -1,6 +1,5 @@
 use super::*;
 use chrono::TimeDelta;
-use codex_login::AuthHeaders;
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -47,7 +46,7 @@ fn global_catalog_cache_reuses_legacy_cache_file() {
         "https://chatgpt.com/backend-api".to_string(),
         crate::test_support::test_http_client_factory(),
     );
-    let auth = CodexAuth::Headers(AuthHeaders::new(http::HeaderMap::new()));
+    let auth = CodexAuth::from_api_key("test-api-key");
     let legacy_cache_path = codex_home
         .path()
         .join(REMOTE_PLUGIN_CATALOG_DISK_CACHE_DIR)
@@ -79,49 +78,4 @@ fn global_catalog_cache_reuses_legacy_cache_file() {
     assert!(refreshed_cache.fetched_at.is_some());
 }
 
-#[test]
-fn header_auth_does_not_cache_private_catalogs_without_a_stable_identity() {
-    let codex_home = tempfile::tempdir().expect("create codex home");
-    let config = RemotePluginServiceConfig::new(
-        "https://chatgpt.com/backend-api".to_string(),
-        crate::test_support::test_http_client_factory(),
-    );
-    let auth = CodexAuth::Headers(AuthHeaders::new(http::HeaderMap::new()));
 
-    write_cached_directory_plugins(
-        codex_home.path(),
-        &config,
-        &auth,
-        RemotePluginScope::Global,
-        &[],
-    );
-    assert!(
-        load_cached_directory_plugins(codex_home.path(), &config, &auth, RemotePluginScope::Global)
-            .is_some()
-    );
-
-    for scope in [RemotePluginScope::User, RemotePluginScope::Workspace] {
-        let insecure_cache_key = RemotePluginCatalogCacheKey {
-            chatgpt_base_url: config.chatgpt_base_url.clone(),
-            account_id: None,
-            chatgpt_user_id: None,
-            is_workspace_account: false,
-            scope: Some(scope),
-        };
-        let insecure_cache_path = cache_path(codex_home.path(), &insecure_cache_key);
-
-        write_cached_directory_plugins(codex_home.path(), &config, &auth, scope, &[]);
-        assert!(!insecure_cache_path.exists());
-
-        let insecure_cache = RemotePluginCatalogDiskCache {
-            schema_version: REMOTE_PLUGIN_CATALOG_DISK_CACHE_SCHEMA_VERSION,
-            fetched_at: Some(Utc::now()),
-            plugins: Vec::new(),
-        };
-        let contents = serde_json::to_string_pretty(&insecure_cache).expect("serialize cache");
-        codex_utils_path::write_atomically(&insecure_cache_path, &contents)
-            .expect("write insecure cache");
-
-        assert!(load_cached_directory_plugins(codex_home.path(), &config, &auth, scope).is_none());
-    }
-}

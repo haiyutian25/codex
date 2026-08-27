@@ -90,7 +90,3 @@ impl HistoryNotesBackend {
             .map_err(|error| format!("History backend returned invalid JSON: {error}"))
     }
 }
-
-#[cfg(test)]
-#[path = "backend_tests.rs"]
-mod tests;

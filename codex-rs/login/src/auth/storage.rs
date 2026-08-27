@@ -1,5 +1,3 @@
-use chrono::DateTime;
-use chrono::Utc;
 use serde::Deserialize;
 use serde::Serialize;
 use sha2::Digest;
@@ -18,16 +16,10 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use tracing::warn;
 
-use super::BedrockAccessKeysAuth;
-use super::BedrockApiKeyAuth;
-use crate::token_data::TokenData;
-use codex_agent_identity::AgentIdentityJwtClaims;
-use codex_agent_identity::decode_agent_identity_jwt;
 use codex_config::types::AuthCredentialsStoreMode;
 pub use codex_config::types::AuthKeyringBackendKind;
 use codex_keyring_store::DefaultKeyringStore;
 use codex_keyring_store::KeyringStore;
-use codex_protocol::account::PlanType as AccountPlanType;
 use codex_protocol::auth::AuthMode;
 use codex_secrets::LocalSecretsNamespace;
 use codex_secrets::SecretName;
@@ -37,6 +29,10 @@ use codex_secrets::SecretsManager;
 use once_cell::sync::Lazy;
 
 /// Expected structure for $CODEX_HOME/auth.json.
+///
+/// API-key-only build: legacy account-mode fields (tokens, agent identity,
+/// personal access tokens, Bedrock credentials) are ignored on read via
+/// serde's default handling of unknown fields.
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct AuthDotJson {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -44,111 +40,6 @@ pub struct AuthDotJson {
 
     #[serde(rename = "OPENAI_API_KEY")]
     pub openai_api_key: Option<String>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tokens: Option<TokenData>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub last_refresh: Option<DateTime<Utc>>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub agent_identity: Option<AgentIdentityStorage>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub personal_access_token: Option<String>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub bedrock_api_key: Option<BedrockApiKeyAuth>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub bedrock_access_keys: Option<BedrockAccessKeysAuth>,
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum AgentIdentityStorage {
-    Jwt(String),
-    Record(AgentIdentityAuthRecord),
-}
-
-impl AgentIdentityStorage {
-    pub fn has_auth_material(&self) -> bool {
-        match self {
-            Self::Jwt(jwt) => !jwt.trim().is_empty(),
-            Self::Record(record) => {
-                !record.agent_runtime_id.trim().is_empty()
-                    && !record.agent_private_key.trim().is_empty()
-            }
-        }
-    }
-
-    pub(crate) fn as_record(&self) -> Option<&AgentIdentityAuthRecord> {
-        match self {
-            Self::Jwt(_) => None,
-            Self::Record(record) => Some(record),
-        }
-    }
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
-pub struct AgentIdentityAuthRecord {
-    pub agent_runtime_id: String,
-    pub agent_private_key: String,
-    pub account_id: String,
-    pub chatgpt_user_id: String,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_optional_non_empty_string",
-        serialize_with = "serialize_optional_string_as_empty"
-    )]
-    pub email: Option<String>,
-    pub plan_type: AccountPlanType,
-    pub chatgpt_account_is_fedramp: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub task_id: Option<String>,
-}
-
-fn deserialize_optional_non_empty_string<'de, D>(
-    deserializer: D,
-) -> Result<Option<String>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    Option::<String>::deserialize(deserializer).map(|value| value.filter(|value| !value.is_empty()))
-}
-
-fn serialize_optional_string_as_empty<S>(
-    value: &Option<String>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    value.as_deref().unwrap_or_default().serialize(serializer)
-}
-
-impl AgentIdentityAuthRecord {
-    pub(crate) fn from_agent_identity_jwt(jwt: &str) -> std::io::Result<Self> {
-        let claims =
-            decode_agent_identity_jwt(jwt, /*jwks*/ None).map_err(std::io::Error::other)?;
-
-        Ok(claims.into())
-    }
-}
-
-impl From<AgentIdentityJwtClaims> for AgentIdentityAuthRecord {
-    fn from(claims: AgentIdentityJwtClaims) -> Self {
-        Self {
-            agent_runtime_id: claims.agent_runtime_id,
-            agent_private_key: claims.agent_private_key,
-            account_id: claims.account_id,
-            chatgpt_user_id: claims.chatgpt_user_id,
-            email: claims.email,
-            plan_type: claims.plan_type.into(),
-            chatgpt_account_is_fedramp: claims.chatgpt_account_is_fedramp,
-            task_id: None,
-        }
-    }
 }
 
 pub(super) fn get_auth_file(codex_home: &Path) -> PathBuf {
@@ -542,7 +433,3 @@ fn create_keyring_auth_storage(
         }
     }
 }
-
-#[cfg(test)]
-#[path = "storage_tests.rs"]
-mod tests;

@@ -229,15 +229,7 @@ impl McpServerConnectionIdentity {
 
     pub(crate) fn has_same_connection_config(&self, other: &Self) -> bool {
         let same_runtime_auth = match (&self.runtime_auth, &other.runtime_auth) {
-            (Some(CodexAuth::AgentIdentity(left)), Some(CodexAuth::AgentIdentity(right))) => {
-                left.record() == right.record()
-            }
-            (Some(left), Some(right)) => {
-                left == right
-                    && left.get_account_id() == right.get_account_id()
-                    && left.get_chatgpt_user_id() == right.get_chatgpt_user_id()
-                    && left.is_fedramp_account() == right.is_fedramp_account()
-            }
+            (Some(left), Some(right)) => left == right,
             (None, None) => true,
             (Some(_), None) | (None, Some(_)) => false,
         };

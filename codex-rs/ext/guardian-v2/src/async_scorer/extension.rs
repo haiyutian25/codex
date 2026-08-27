@@ -31,7 +31,6 @@ use codex_extension_api::ToolPayload;
 use codex_extension_api::ToolStartInput;
 use codex_features::Feature;
 use codex_history::RolloutItem;
-use codex_login::AgentIdentityAuthPolicy;
 use codex_login::AuthManager;
 use codex_model_provider::create_model_provider;
 use codex_protocol::ThreadId;
@@ -312,12 +311,6 @@ impl ThreadLifecycleContributor<Config> for GuardianV2Extension {
                     Some(Arc::clone(&self.auth_manager)),
                 ),
                 http_client_factory: input.config.http_client_factory(),
-                agent_identity_policy: if input.config.features.enabled(Feature::UseAgentIdentity) {
-                    AgentIdentityAuthPolicy::ChatGptAuth
-                } else {
-                    AgentIdentityAuthPolicy::JwtOnly
-                },
-                session_source: input.session_source.clone(),
                 session_id: input.session_store.level_id().to_string(),
                 thread_id: thread_id.clone(),
                 originator: input

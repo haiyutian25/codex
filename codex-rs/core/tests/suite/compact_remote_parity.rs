@@ -49,7 +49,7 @@ enum AuthCase {
 impl AuthCase {
     fn build(self) -> CodexAuth {
         match self {
-            AuthCase::ChatGpt => CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            AuthCase::ChatGpt => CodexAuth::from_api_key("dummy-test-api-key"),
             AuthCase::ApiKey => CodexAuth::from_api_key("dummy"),
         }
     }

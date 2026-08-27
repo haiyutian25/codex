@@ -618,7 +618,7 @@ async fn conversation_webrtc_frameless_chatgpt_sends_codex_headers_to_backend(
     let backend_base_url = format!("{}/backend-api/codex", server.uri());
     let realtime_ws_base_url = realtime_server.uri().to_string();
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config(move |config| {
             config.model_provider.base_url = Some(backend_base_url);
             config.experimental_realtime_ws_backend_prompt = Some("backend prompt".to_string());
@@ -1795,7 +1795,7 @@ async fn conversation_start_uses_openai_env_key_fallback_with_chatgpt_auth() -> 
     ])
     .await;
 
-    let mut builder = test_codex().with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing());
+    let mut builder = test_codex().with_auth(CodexAuth::from_api_key("dummy-test-api-key"));
     let test = builder.build_with_websocket_server(&server).await?;
     assert!(
         server
@@ -2021,7 +2021,7 @@ async fn conversation_start_preflight_failure_emits_realtime_error_only() -> Res
     skip_if_no_network!(Ok(()));
 
     let server = start_websocket_server(vec![]).await;
-    let mut builder = test_codex().with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing());
+    let mut builder = test_codex().with_auth(CodexAuth::from_api_key("dummy-test-api-key"));
     let test = builder.build_with_websocket_server(&server).await?;
 
     test.codex

@@ -1,4 +1,5 @@
 use codex_http_client::HttpClientFactory;
+use codex_http_client::OutboundProxyPolicy;
 
 /// Auth-layer adapter around client-owned proxy policy.
 ///
@@ -7,6 +8,12 @@ use codex_http_client::HttpClientFactory;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AuthRouteConfig {
     http_client_factory: HttpClientFactory,
+}
+
+impl Default for AuthRouteConfig {
+    fn default() -> Self {
+        Self::from_http_client_factory(HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault))
+    }
 }
 
 impl AuthRouteConfig {

@@ -22,10 +22,6 @@ impl Config {
             codex_home: self.codex_home.to_path_buf(),
             auth_credentials_store_mode: self.cli_auth_credentials_store_mode,
             keyring_backend_kind: self.auth_keyring_backend_kind(),
-            forced_login_method: self.forced_login_method,
-            chatgpt_base_url: Some(self.chatgpt_base_url.clone()),
-            forced_chatgpt_workspace_id: self.forced_chatgpt_workspace_id.clone(),
-            managed_auth_policy: self.config_layer_stack.requirements().managed_auth_policy(),
             auth_route_config: self.auth_route_config(),
         }
     }
@@ -42,27 +38,10 @@ pub fn bootstrap_auth_config(
 ) -> std::io::Result<AuthConfig> {
     let config = &bootstrap_config.config_toml;
     let requirements = bootstrap_config.config_layer_stack.requirements();
-    // Empty legacy workspace settings mean unrestricted, not an empty allowlist.
-    let forced_chatgpt_workspace_id = config
-        .forced_chatgpt_workspace_id
-        .clone()
-        .map(|workspaces| {
-            workspaces
-                .into_vec()
-                .into_iter()
-                .map(|workspace| workspace.trim().to_string())
-                .filter(|workspace| !workspace.is_empty())
-                .collect::<Vec<_>>()
-        })
-        .filter(|workspaces| !workspaces.is_empty());
     let mut auth_config = AuthConfig {
         codex_home: codex_home.to_path_buf(),
         auth_credentials_store_mode: config.cli_auth_credentials_store.unwrap_or_default(),
         keyring_backend_kind: resolve_bootstrap_auth_keyring_backend_kind(bootstrap_config)?,
-        forced_login_method: config.forced_login_method,
-        chatgpt_base_url: config.chatgpt_base_url.clone(),
-        forced_chatgpt_workspace_id,
-        managed_auth_policy: requirements.managed_auth_policy(),
         auth_route_config: resolve_bootstrap_auth_route_config(
             config,
             requirements.feature_requirements.as_ref(),
@@ -70,9 +49,6 @@ pub fn bootstrap_auth_config(
     };
     if let Some(required) = requirements.cli_auth_credentials_store.as_ref() {
         auth_config.auth_credentials_store_mode = required.value;
-    }
-    if let Some(required) = requirements.chatgpt_base_url.as_ref() {
-        auth_config.chatgpt_base_url = Some(required.value.clone());
     }
     auth_config.validate()?;
     Ok(auth_config)

@@ -17,7 +17,6 @@ use codex_history::RolloutLine;
 use codex_login::AuthKeyringBackendKind;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
-use codex_login::auth::AgentIdentityAuthPolicy;
 use codex_login::default_client::originator;
 use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
 use codex_model_provider_info::ModelProviderInfo;
@@ -636,7 +635,7 @@ async fn response_item_ids_are_sent_for_all_remote_v2_compaction_requests() -> a
     )
     .await;
     let test = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config(|config| {
             let _ = config.features.enable(Feature::RemoteCompactionV2);
         })
@@ -1559,7 +1558,6 @@ async fn send_request_with_provider(provider: ModelProviderInfo) {
         Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
             "unused-api-key",
         ))),
-        AgentIdentityAuthPolicy::JwtOnly,
         thread_id,
         provider,
         SessionSource::Exec,
@@ -1782,11 +1780,9 @@ async fn prefers_apikey_when_config_prefers_apikey_even_with_chatgpt_tokens() {
     config.model_provider = model_provider;
 
     let auth = CodexAuth::from_auth_storage(
-        codex_home.path(),
+        codex_home.path().to_path_buf(),
         AuthCredentialsStoreMode::File,
-        /*chatgpt_base_url*/ None,
         AuthKeyringBackendKind::default(),
-        &codex_login::test_support::transport_default_auth_route_config(),
     )
     .await
     .expect("Failed to load CodexAuth")
@@ -2504,7 +2500,7 @@ async fn sequential_cutoff_is_omitted_for_non_openai_provider() -> anyhow::Resul
     )
     .await;
     let TestCodex { codex, .. } = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config(|config| {
             config.model_provider.name = "mock".to_string();
             let _ = config
@@ -3045,7 +3041,6 @@ async fn azure_responses_request_does_not_store_and_preserves_prefixed_item_ids(
 
     let client = ModelClient::new(
         /*auth_manager*/ None,
-        AgentIdentityAuthPolicy::JwtOnly,
         thread_id,
         provider.clone(),
         SessionSource::Exec,
@@ -3765,7 +3760,7 @@ async fn env_var_overrides_loaded_auth() {
 }
 
 fn create_dummy_codex_auth() -> CodexAuth {
-    CodexAuth::create_dummy_chatgpt_auth_for_testing()
+    CodexAuth::from_api_key("dummy-test-api-key")
 }
 
 /// Scenario:

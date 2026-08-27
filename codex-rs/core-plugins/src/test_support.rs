@@ -21,14 +21,11 @@ use codex_http_client::HttpClientFactory;
 use codex_http_client::OutboundProxyPolicy;
 use codex_http_client::RouteAwareClientPool;
 use codex_http_client::RouteAwareRequestBuilder;
-use codex_login::AuthHeaders;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_login::ExternalAuth;
 use codex_login::ExternalAuthFuture;
 use codex_login::ExternalAuthRefreshContext;
-use codex_login::auth::BedrockAccessKeysAuth;
-use codex_login::auth::BedrockApiKeyAuth;
 use codex_login::test_support::auth_manager_from_optional_auth;
 use codex_protocol::auth::AuthMode;
 use codex_protocol::protocol::Product;
@@ -100,34 +97,12 @@ pub(crate) async fn set_test_auth(auth_manager: &AuthManager, auth: Option<Codex
     };
     auth_manager
         .set_external_auth(Arc::new(StaticExternalAuth(auth)))
-        .await
-        .expect("test auth should update");
+        .await;
 }
 
 fn test_codex_auth(auth_mode: Option<AuthMode>) -> Option<CodexAuth> {
-    auth_mode.map(|auth_mode| match auth_mode {
-        AuthMode::ApiKey => CodexAuth::from_api_key("test-api-key"),
-        AuthMode::Chatgpt => CodexAuth::create_dummy_chatgpt_auth_for_testing(),
-        AuthMode::ChatgptAuthTokens => CodexAuth::from_external_chatgpt_tokens(
-            "header.e30.test",
-            "test-account",
-            /*chatgpt_plan_type*/ None,
-        )
-        .expect("test ChatGPT tokens should parse"),
-        AuthMode::Headers => CodexAuth::Headers(AuthHeaders::new(http::HeaderMap::new())),
-        AuthMode::BedrockApiKey => CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
-            api_key: "test-api-key".to_string(),
-            region: "us-east-1".to_string(),
-        }),
-        AuthMode::BedrockAccessKeys => CodexAuth::BedrockAccessKeys(BedrockAccessKeysAuth {
-            access_key_id: "test-access-key-id".to_string(),
-            secret_access_key: "test-secret-access-key".to_string(),
-            session_token: None,
-        }),
-        AuthMode::AgentIdentity | AuthMode::PersonalAccessToken => {
-            panic!("test auth mode requires a purpose-built CodexAuth")
-        }
-    })
+    // API-key-only build: every requested mode degrades to API-key auth.
+    auth_mode.map(|_auth_mode| CodexAuth::from_api_key("test-api-key"))
 }
 
 struct StaticExternalAuth(CodexAuth);

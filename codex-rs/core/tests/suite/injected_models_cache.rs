@@ -141,7 +141,7 @@ fn models_manager(
         cache,
         endpoint,
         Some(AuthManager::from_auth_for_testing(
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
         )),
     ))
 }
@@ -158,7 +158,7 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
     )
     .await;
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_models_manager(models_manager);
     let test = builder.build(&server).await?;
     let available_models = test

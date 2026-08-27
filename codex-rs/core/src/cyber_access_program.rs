@@ -6,7 +6,8 @@ pub(crate) fn for_auth(
     auth: Option<&CodexAuth>,
     program: Option<CyberAccessProgram>,
 ) -> Option<AccessPrograms> {
-    program
-        .filter(|_| auth.is_some_and(CodexAuth::is_chatgpt_auth))
-        .map(AccessPrograms::from)
+    // Cyber access programs were bound to ChatGPT account auth, which was
+    // removed in this API-key-only build.
+    let _ = (auth, program);
+    None
 }

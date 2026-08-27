@@ -148,7 +148,7 @@ async fn build_test(
     apps_server: &AppsTestServer,
 ) -> Result<TestCodex> {
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config({
             let apps_base_url = apps_server.chatgpt_base_url.clone();
             move |config| {
@@ -170,7 +170,7 @@ async fn build_gated_step_preparation_test(
     let environment_id = remote_aware_environment_id();
     let apps_base_url = apps_server.chatgpt_base_url.clone();
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config(move |config| {
             config
                 .permissions
@@ -627,7 +627,7 @@ async fn local_plugin_skill_availability_reaches_tool_suggestion_candidates(
     .await;
     let mut builder = test_codex()
         .with_home(codex_home)
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config({
             let apps_base_url = apps_server.chatgpt_base_url.clone();
             move |config| {
@@ -1124,7 +1124,7 @@ async fn endpoint_mode_with_no_eligible_candidates_exposes_no_suggestion_tools()
     )
     .await;
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config({
             let apps_base_url = apps_server.chatgpt_base_url.clone();
             move |config| {

@@ -16,7 +16,6 @@ use codex_config::ConfigRequirements;
 use codex_config::ConfigRequirementsToml;
 use codex_config::ConstrainedWithSource;
 use codex_config::FeatureRequirementsToml;
-use codex_config::ManagedAuthPolicy;
 use codex_config::McpServerRequirement;
 use codex_config::PluginRequirementsToml;
 use codex_config::ProfileV2Name;
@@ -1324,22 +1323,6 @@ impl AuthManagerConfig for Config {
 
     fn auth_keyring_backend_kind(&self) -> AuthKeyringBackendKind {
         Config::auth_keyring_backend_kind(self)
-    }
-
-    fn forced_login_method(&self) -> Option<ForcedLoginMethod> {
-        self.forced_login_method
-    }
-
-    fn forced_chatgpt_workspace_id(&self) -> Option<Vec<String>> {
-        self.forced_chatgpt_workspace_id.clone()
-    }
-
-    fn managed_auth_policy(&self) -> ManagedAuthPolicy {
-        self.config_layer_stack.requirements().managed_auth_policy()
-    }
-
-    fn chatgpt_base_url(&self) -> String {
-        self.chatgpt_base_url.clone()
     }
 
     fn auth_route_config(&self) -> AuthRouteConfig {

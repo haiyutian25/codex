@@ -3157,7 +3157,7 @@ async fn approve_mode_skips_guardian_in_every_permission_mode() {
     ] {
         let (mut session, mut turn_context) = make_session_and_context().await;
         turn_context.auth_manager = Some(crate::test_support::auth_manager_from_auth(
-            codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            codex_login::CodexAuth::from_api_key("dummy-test-api-key"),
         ));
         Arc::make_mut(&mut turn_context.config)
             .permissions

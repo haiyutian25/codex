@@ -8,8 +8,6 @@ use std::time::Instant;
 pub use codex_connectors::AppBranding;
 pub use codex_connectors::AppInfo;
 pub use codex_connectors::AppMetadata;
-use codex_connectors::ConnectorDirectoryCacheContext;
-use codex_connectors::ConnectorDirectoryCacheKey;
 use codex_connectors::apps_config_from_layer_stack;
 use codex_connectors::connector_runtime_context_key;
 use codex_exec_server::EnvironmentManager;
@@ -346,14 +344,13 @@ fn accessible_connectors_cache_key(
     config: &Config,
     auth: Option<&CodexAuth>,
 ) -> AccessibleConnectorsCacheKey {
-    let account_id = auth.and_then(CodexAuth::get_account_id);
-    let chatgpt_user_id = auth.and_then(CodexAuth::get_chatgpt_user_id);
-    let is_workspace_account = auth.is_some_and(CodexAuth::is_workspace_account);
+    // API-key-only build: no ChatGPT account identity is available.
+    let _ = auth;
     AccessibleConnectorsCacheKey {
         chatgpt_base_url: config.chatgpt_base_url.clone(),
-        account_id,
-        chatgpt_user_id,
-        is_workspace_account,
+        account_id: None,
+        chatgpt_user_id: None,
+        is_workspace_account: false,
     }
 }
 
@@ -439,26 +436,13 @@ async fn cached_directory_connectors_for_tool_suggest_with_auth(
         loaded_auth = auth_manager.auth().await;
         loaded_auth.as_ref()
     };
-    let Some(auth) = auth.filter(|auth| auth.uses_codex_backend()) else {
+    let Some(_auth) = auth.filter(|auth| auth.uses_codex_backend()) else {
         return Vec::new();
     };
 
-    let account_id = match auth.get_account_id() {
-        Some(account_id) if !account_id.is_empty() => account_id,
-        _ => return Vec::new(),
-    };
-    let is_workspace_account = auth.is_workspace_account();
-    let cache_context = ConnectorDirectoryCacheContext::new(
-        config.codex_home.to_path_buf(),
-        ConnectorDirectoryCacheKey::new(
-            config.chatgpt_base_url.clone(),
-            Some(account_id),
-            auth.get_chatgpt_user_id(),
-            is_workspace_account,
-        ),
-    );
-
-    codex_connectors::cached_directory_connectors(&cache_context).unwrap_or_default()
+    // API-key-only build: backend auth is never active, so no directory
+    // connectors are available.
+    Vec::new()
 }
 
 pub(crate) fn accessible_connectors_from_mcp_tools(mcp_tools: &[ToolInfo]) -> Vec<AppInfo> {

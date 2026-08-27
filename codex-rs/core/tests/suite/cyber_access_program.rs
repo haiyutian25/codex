@@ -36,7 +36,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
             body: responses::sse(vec![responses::ev_completed("resp-initial")]),
         }]])
         .await;
-    let mut builder = test_codex().with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing());
+    let mut builder = test_codex().with_auth(CodexAuth::from_api_key("dummy-test-api-key"));
     let initial = builder.build_with_streaming_server(&initial_server).await?;
     let TurnInputSubmission::Started { turn_id } = initial
         .codex
@@ -163,7 +163,7 @@ async fn cyber_access_program_omits_api_key_and_spoofed_custom_provider() -> Res
     core_test_support::skip_if_no_network!(Ok(()));
     for (auth, provider_id) in [
         (CodexAuth::from_api_key("test-key"), "openai"),
-        (CodexAuth::create_dummy_chatgpt_auth_for_testing(), "custom"),
+        (CodexAuth::from_api_key("dummy-test-api-key"), "custom"),
     ] {
         let server = responses::start_mock_server().await;
         let request = responses::mount_sse_once(
@@ -207,7 +207,7 @@ async fn cyber_access_program_survives_mid_turn_remote_compaction() -> Result<()
     let compact =
         responses::mount_compact_user_history_with_summary_once(&server, "compacted history").await;
     let test = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config(|config| {
             let _ = config.features.disable(Feature::RemoteCompactionV2);
         })
@@ -259,7 +259,7 @@ async fn cyber_access_program_survives_mid_turn_remote_compaction_v2() -> Result
     )
     .await;
     let test = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config(|config| {
             let _ = config.features.enable(Feature::RemoteCompactionV2);
             config.model_auto_compact_token_limit = Some(200);
@@ -331,7 +331,7 @@ async fn cyber_access_program_is_inherited_by_child_turns() -> Result<()> {
         )
         .await;
         let test = test_codex()
-            .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+            .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
             .with_model(if is_v2 { "gpt-5.6-sol" } else { "gpt-5.1" })
             .with_config(move |config| {
                 config
@@ -451,7 +451,7 @@ async fn cyber_access_program_changes_on_one_websocket_with_response_reuse() -> 
     ])
     .await;
     let test = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .build_with_websocket_server(&server)
         .await?;
     for program in [

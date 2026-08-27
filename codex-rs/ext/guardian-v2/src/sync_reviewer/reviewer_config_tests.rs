@@ -38,7 +38,7 @@ use super::super::GuardianExtension;
 async fn reviewer_test_codex() -> Result<TestCodex> {
     let server = responses::start_mock_server().await;
     test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_model_info_override("codex-auto-review", |_| {})
         .with_model("gpt-5.5")
         .build_with_auto_env(&server)
@@ -211,7 +211,7 @@ async fn read_only_permissions_preserve_parent_environments_and_denied_reads() -
 async fn honors_parent_models_auto_review_override() -> Result<()> {
     let server = responses::start_mock_server().await;
     let test = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_model_info_override("gpt-5.5", |model| {
             model.auto_review_model_override = Some("gpt-5.2".to_string());
         })
@@ -236,7 +236,7 @@ async fn falls_back_to_parent_model_and_effective_reasoning() -> Result<()> {
         .supported_reasoning_levels
         .retain(|effort| effort.effort != ReasoningEffort::Low);
     parent_model.default_reasoning_level = Some(ReasoningEffort::Medium);
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let auth_manager = AuthManager::from_auth_for_testing(auth.clone());
     let models_manager = StaticModelsManager::new(
         Some(auth_manager),

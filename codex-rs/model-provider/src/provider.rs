@@ -24,7 +24,6 @@ use codex_protocol::error::CodexErr;
 use codex_protocol::openai_models::ModelsResponse;
 use http::HeaderValue;
 
-use crate::amazon_bedrock::AmazonBedrockModelProvider;
 use crate::auth::ProviderAuthScope;
 use crate::auth::ResolvedProviderAuth;
 use crate::auth::auth_manager_for_provider;
@@ -309,11 +308,7 @@ pub fn create_model_provider(
     provider_info: ModelProviderInfo,
     auth_manager: Option<Arc<AuthManager>>,
 ) -> SharedModelProvider {
-    if provider_info.is_amazon_bedrock() {
-        Arc::new(AmazonBedrockModelProvider::new(provider_info, auth_manager))
-    } else {
-        Arc::new(ConfiguredModelProvider::new(provider_info, auth_manager))
-    }
+    Arc::new(ConfiguredModelProvider::new(provider_info, auth_manager))
 }
 
 /// Runtime model provider backed by configured `ModelProviderInfo`.
@@ -371,10 +366,8 @@ impl ModelProvider for ConfiguredModelProvider {
     }
 
     fn supports_attestation(&self) -> bool {
-        self.auth_manager
-            .as_ref()
-            .and_then(|auth_manager| auth_manager.auth_cached())
-            .is_some_and(|auth| auth.is_chatgpt_auth())
+        // Attestation was tied to ChatGPT account auth, which was removed.
+        false
     }
 
     fn auth(&self) -> ModelProviderFuture<'_, Option<CodexAuth>> {
@@ -390,34 +383,8 @@ impl ModelProvider for ConfiguredModelProvider {
         let account = if self.info.requires_openai_auth {
             self.auth_manager
                 .as_ref()
-                .and_then(|auth_manager| {
-                    let auth = auth_manager.auth_cached()?;
-                    if auth_manager.refresh_failure_for_auth(&auth).is_some() {
-                        return None;
-                    }
-                    if matches!(auth, CodexAuth::Headers(_)) {
-                        return None;
-                    }
-                    Some(auth)
-                })
-                .map(|auth| match &auth {
-                    CodexAuth::ApiKey(_) => Ok(ProviderAccount::ApiKey),
-                    CodexAuth::BedrockApiKey(_) | CodexAuth::BedrockAccessKeys(_) => {
-                        Err(ProviderAccountError::UnsupportedBedrockApiKeyAuth)
-                    }
-                    CodexAuth::Chatgpt(_)
-                    | CodexAuth::ChatgptAuthTokens(_)
-                    | CodexAuth::Headers(_)
-                    | CodexAuth::AgentIdentity(_)
-                    | CodexAuth::PersonalAccessToken(_) => {
-                        let email = auth.get_account_email();
-                        let plan_type = auth.account_plan_type();
-
-                        plan_type
-                            .map(|plan_type| ProviderAccount::Chatgpt { email, plan_type })
-                            .ok_or(ProviderAccountError::MissingChatgptAccountDetails)
-                    }
-                })
+                .and_then(|auth_manager| auth_manager.auth_cached())
+                .map(|_| Ok(ProviderAccount::ApiKey))
                 .transpose()?
         } else {
             None
@@ -506,20 +473,11 @@ mod tests {
 
     use codex_http_client::HttpClientFactory;
     use codex_http_client::OutboundProxyPolicy;
-    use codex_login::auth::AgentIdentityAuthPolicy;
-    use codex_login::auth::BedrockApiKeyAuth;
-    use codex_model_provider_info::AwsAuthRefreshConfig;
-    use codex_model_provider_info::ModelProviderAwsAuthInfo;
     use codex_model_provider_info::WireApi;
-    use codex_model_provider_info::create_oss_provider_with_base_url;
-    use codex_models_manager::ModelsManagerConfig;
     use codex_models_manager::manager::RefreshStrategy;
-    use codex_protocol::account::PlanType;
     use codex_protocol::config_types::ModelProviderAuthInfo;
     use codex_protocol::openai_models::ModelInfo;
     use codex_protocol::openai_models::ModelsResponse;
-    use codex_protocol::protocol::SessionSource;
-    use codex_utils_redacted_string::RedactedString;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use wiremock::Mock;
@@ -530,8 +488,6 @@ mod tests {
     use wiremock::matchers::path;
 
     use super::*;
-    use crate::auth::AgentIdentitySessionFallback;
-    use crate::shared_state::process_shared_state;
 
     fn provider_info_with_command_auth() -> ModelProviderInfo {
         ModelProviderInfo {
@@ -600,33 +556,6 @@ mod tests {
         }))
         .expect("valid model")
     }
-
-    fn bedrock_api_key_auth() -> CodexAuth {
-        CodexAuth::BedrockApiKey(BedrockApiKeyAuth {
-            api_key: "bedrock-api-key-test".to_string(),
-            region: "us-east-1".to_string(),
-        })
-    }
-
-    #[tokio::test]
-    async fn scoped_auth_ignores_scope_for_non_openai_provider() {
-        let provider = create_model_provider(
-            create_oss_provider_with_base_url("http://localhost:11434/v1", WireApi::Responses),
-            /*auth_manager*/ None,
-        );
-
-        let auth = provider
-            .api_auth_for_scope(ProviderAuthScope {
-                agent_identity_policy: AgentIdentityAuthPolicy::JwtOnly,
-                session_source: SessionSource::Cli,
-                agent_identity_session_fallback: AgentIdentitySessionFallback::default(),
-            })
-            .await
-            .expect("auth should resolve");
-
-        assert!(auth.auth.to_auth_headers().is_empty());
-    }
-
     #[test]
     fn openai_provider_enables_remote_compaction() {
         let provider = create_model_provider(
@@ -702,22 +631,6 @@ mod tests {
 
         assert_eq!(provider.approval_review_preferred_model(), "gpt-5.6-luna");
     }
-
-    #[test]
-    fn configured_provider_uses_default_approval_review_model_with_chatgpt_auth() {
-        let provider = create_model_provider(
-            ModelProviderInfo::create_openai_provider(/*base_url*/ None),
-            Some(AuthManager::from_auth_for_testing(
-                CodexAuth::create_dummy_chatgpt_auth_for_testing(),
-            )),
-        );
-
-        assert_eq!(
-            provider.approval_review_preferred_model(),
-            DEFAULT_APPROVAL_REVIEW_PREFERRED_MODEL
-        );
-    }
-
     #[tokio::test]
     async fn configured_provider_runtime_base_url_uses_configured_base_url() {
         let provider = create_model_provider(
@@ -747,178 +660,6 @@ mod tests {
 
         assert!(auth_manager.has_external_auth());
     }
-
-    #[test]
-    fn create_model_provider_does_not_use_openai_auth_manager_for_amazon_bedrock_provider() {
-        let provider = create_model_provider(
-            ModelProviderInfo::create_amazon_bedrock_provider(Some(ModelProviderAwsAuthInfo {
-                profile: Some("codex-bedrock".to_string()),
-                region: None,
-                auth_refresh: None,
-            })),
-            Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
-                "openai-api-key",
-            ))),
-        );
-
-        assert!(provider.auth_manager().is_none());
-    }
-
-    #[tokio::test]
-    async fn shared_bedrock_auth_refresh_is_reused_only_for_matching_configuration() {
-        const TEST_NAME: &str = "provider::tests::shared_bedrock_auth_refresh_is_reused_only_for_matching_configuration";
-        const HELPER_ARG: &str = "CODEX_BEDROCK_SHARED_AUTH_REFRESH_COMMAND";
-        const SUBPROCESS_ARG: &str = "CODEX_BEDROCK_SHARED_AUTH_REFRESH_SUBPROCESS";
-        let arguments = std::env::args().collect::<Vec<_>>();
-        if let Some(index) = arguments.iter().position(|argument| argument == HELPER_ARG) {
-            let counter = &arguments[index + 2];
-            std::thread::sleep(std::time::Duration::from_millis(50));
-            let mut counter = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(counter)
-                .expect("refresh invocation counter should open");
-            std::io::Write::write_all(&mut counter, b"1").expect("write invocation counter");
-            return;
-        }
-
-        let counter = std::env::temp_dir().join(format!("bedrock-refresh-{}", std::process::id()));
-        if !arguments.iter().any(|argument| argument == SUBPROCESS_ARG) {
-            std::fs::create_dir(&counter).expect("AWS command directory should be created");
-            let executable = std::env::current_exe().expect("test executable should be available");
-            let aws = counter.join(format!("aws{}", std::env::consts::EXE_SUFFIX));
-            std::fs::hard_link(&executable, &aws)
-                .or_else(|_| std::fs::copy(&executable, &aws).map(|_| ()))
-                .expect("test executable should be installed as aws");
-            let existing_path = std::env::var_os("PATH").unwrap_or_default();
-            let path = std::env::join_paths(
-                std::iter::once(counter.clone()).chain(std::env::split_paths(&existing_path)),
-            )
-            .expect("test executable PATH should be valid");
-            let output = tokio::process::Command::new(executable)
-                .args(["--exact", TEST_NAME, "--skip", SUBPROCESS_ARG])
-                .env("PATH", path)
-                .env_remove("AWS_ACCESS_KEY_ID")
-                .env_remove("AWS_SECRET_ACCESS_KEY")
-                .output()
-                .await
-                .expect("isolated AWS refresh test should run");
-            std::fs::remove_dir_all(&counter).expect("AWS command directory should be removed");
-            assert!(output.status.success(), "{output:?}");
-            return;
-        }
-        let _ = std::fs::remove_file(&counter);
-        let aws = ModelProviderAwsAuthInfo {
-            profile: Some("codex-bedrock".to_string()),
-            region: Some("us-west-2".to_string()),
-            auth_refresh: Some(AwsAuthRefreshConfig {
-                command: "aws".to_string(),
-                args: Vec::from(
-                    [
-                        "--exact",
-                        TEST_NAME,
-                        "--skip",
-                        HELPER_ARG,
-                        "--skip",
-                        counter.to_str().expect("counter path should be UTF-8"),
-                    ]
-                    .map(RedactedString::from),
-                ),
-                timeout_ms: NonZeroU64::new(10_000).expect("timeout should be non-zero"),
-            }),
-        };
-        let provider_info = ModelProviderInfo::create_amazon_bedrock_provider(Some(aws.clone()));
-
-        let first = create_model_provider(
-            provider_info.clone(),
-            Some(AuthManager::from_auth_for_testing(CodexAuth::from_api_key(
-                "openai-api-key",
-            ))),
-        );
-        let second = create_model_provider(provider_info.clone(), /*auth_manager*/ None);
-        let shared_state = process_shared_state();
-        let shared_recovery = shared_state
-            .aws_auth_recovery(&aws)
-            .expect("test provider should have refresh configured");
-        assert_eq!(Arc::strong_count(&shared_recovery), 3);
-        assert!(first.auth_manager().is_none() && second.auth_manager().is_none());
-
-        for provider in [&first, &second] {
-            for (status, body, recoverable) in [
-                (http::StatusCode::UNAUTHORIZED, "ExpiredToken", true),
-                (http::StatusCode::FORBIDDEN, "InvalidClientTokenId", true),
-                (http::StatusCode::FORBIDDEN, "AccessDeniedException", false),
-            ] {
-                let error = TransportError::Http {
-                    status,
-                    url: None,
-                    headers: None,
-                    body: Some(body.to_string()),
-                };
-                assert_eq!(provider.is_recoverable_auth_error(&error), recoverable);
-            }
-        }
-
-        let mut invalid_aws = aws.clone();
-        invalid_aws.auth_refresh.as_mut().expect("refresh").command = "not-aws".into();
-        let invalid_provider = create_model_provider(
-            ModelProviderInfo::create_amazon_bedrock_provider(Some(invalid_aws)),
-            /*auth_manager*/ None,
-        );
-        let error = invalid_provider
-            .recover_from_unauthorized()
-            .await
-            .expect_err("non-aws command should be rejected");
-        assert!(!error.is_retryable());
-        assert_eq!(error.to_string(), "AWS auth refresh command must be `aws`");
-
-        let (first_result, second_result) = tokio::join!(
-            first.recover_from_unauthorized(),
-            second.recover_from_unauthorized()
-        );
-        assert_eq!(
-            [first_result, second_result].map(|result| result.expect("provider should recover")),
-            [ProviderUnauthorizedRecovery::Recovered; 2]
-        );
-        let read_counter = || std::fs::read_to_string(&counter).expect("read counter");
-        assert_eq!(read_counter(), "1");
-
-        assert_eq!(
-            first
-                .recover_from_unauthorized()
-                .await
-                .expect("later generation should recover"),
-            ProviderUnauthorizedRecovery::Recovered
-        );
-        assert_eq!(read_counter(), "11");
-        std::fs::remove_file(&counter).expect("refresh invocation counter should be removed");
-
-        let different_profile = ModelProviderAwsAuthInfo {
-            profile: Some("another-bedrock-profile".to_string()),
-            ..aws.clone()
-        };
-        let other_recovery = shared_state
-            .aws_auth_recovery(&different_profile)
-            .expect("test provider should have refresh configured");
-        assert!(!Arc::ptr_eq(&shared_recovery, &other_recovery));
-
-        let released_recovery = Arc::downgrade(&shared_recovery);
-        drop((first, second, shared_recovery));
-        assert!(released_recovery.upgrade().is_none());
-        assert!(shared_state.aws_auth_recovery(&aws).is_some());
-    }
-
-    #[tokio::test]
-    async fn create_model_provider_uses_managed_auth_for_amazon_bedrock_provider() {
-        let auth = bedrock_api_key_auth();
-        let provider = create_model_provider(
-            ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
-            Some(AuthManager::from_auth_for_testing(auth.clone())),
-        );
-
-        assert_eq!(provider.auth().await, Some(auth));
-    }
-
     #[test]
     fn openai_provider_returns_unauthenticated_openai_account_state() {
         let provider = create_model_provider(
@@ -952,41 +693,6 @@ mod tests {
             })
         );
     }
-
-    #[test]
-    fn openai_provider_returns_chatgpt_account_state_without_email() {
-        let provider = create_model_provider(
-            ModelProviderInfo::create_openai_provider(/*base_url*/ None),
-            Some(AuthManager::from_auth_for_testing(
-                CodexAuth::create_dummy_chatgpt_auth_for_testing(),
-            )),
-        );
-
-        assert_eq!(
-            provider.account_state(),
-            Ok(ProviderAccountState {
-                account: Some(ProviderAccount::Chatgpt {
-                    email: None,
-                    plan_type: PlanType::Unknown,
-                }),
-                requires_openai_auth: true,
-            })
-        );
-    }
-
-    #[test]
-    fn openai_provider_rejects_bedrock_api_key_account_state() {
-        let provider = create_model_provider(
-            ModelProviderInfo::create_openai_provider(/*base_url*/ None),
-            Some(AuthManager::from_auth_for_testing(bedrock_api_key_auth())),
-        );
-
-        assert_eq!(
-            provider.account_state(),
-            Err(ProviderAccountError::UnsupportedBedrockApiKeyAuth)
-        );
-    }
-
     #[test]
     fn custom_non_openai_provider_returns_no_account_state() {
         let provider = create_model_provider(
@@ -1008,148 +714,6 @@ mod tests {
             })
         );
     }
-
-    #[test]
-    fn amazon_bedrock_provider_returns_bedrock_account_state() {
-        let provider = create_model_provider(
-            ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
-            /*auth_manager*/ None,
-        );
-
-        assert_eq!(
-            provider.account_state(),
-            Ok(ProviderAccountState {
-                account: Some(ProviderAccount::AmazonBedrock {
-                    uses_codex_managed_credentials: false,
-                }),
-                requires_openai_auth: false,
-            })
-        );
-    }
-
-    #[tokio::test]
-    async fn amazon_bedrock_provider_creates_static_models_manager() {
-        let provider = create_model_provider(
-            ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
-            /*auth_manager*/ None,
-        );
-        let manager =
-            provider.models_manager(test_codex_home(), /*config_model_catalog*/ None);
-        let uncached_manager =
-            provider.models_manager_without_cache(/*config_model_catalog*/ None);
-
-        let catalog = manager
-            .raw_model_catalog(
-                RefreshStrategy::Online,
-                HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-            )
-            .await;
-        let uncached_catalog = uncached_manager
-            .raw_model_catalog(
-                RefreshStrategy::Online,
-                HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-            )
-            .await;
-        assert_eq!(uncached_catalog, catalog);
-        let model_info = manager
-            .get_model_info(
-                "openai.gpt-5.6-sol",
-                &ModelsManagerConfig {
-                    model_context_window: Some(1_000_000),
-                    ..Default::default()
-                },
-            )
-            .await;
-        let mut expected_model_info = manager
-            .get_model_info("openai.gpt-5.6-sol", &ModelsManagerConfig::default())
-            .await;
-        expected_model_info.context_window = Some(872_000);
-        assert_eq!(model_info, expected_model_info);
-
-        let models = catalog
-            .models
-            .iter()
-            .map(|model| (model.slug.as_str(), model.display_name.as_str()))
-            .collect::<Vec<_>>();
-
-        assert_eq!(
-            models,
-            vec![
-                ("openai.gpt-5.6-sol", "GPT-5.6 Sol"),
-                ("openai.gpt-5.6-terra", "GPT-5.6 Terra"),
-                ("openai.gpt-5.6-luna", "GPT-5.6 Luna"),
-                ("openai.gpt-5.5", "GPT-5.5"),
-                ("openai.gpt-5.4", "GPT-5.4"),
-            ]
-        );
-
-        let available_models = manager
-            .list_models(
-                RefreshStrategy::Online,
-                HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-            )
-            .await;
-        assert_eq!(
-            available_models
-                .iter()
-                .map(|preset| preset.model.as_str())
-                .collect::<Vec<_>>(),
-            vec![
-                "openai.gpt-5.6-sol",
-                "openai.gpt-5.6-terra",
-                "openai.gpt-5.6-luna",
-                "openai.gpt-5.5",
-                "openai.gpt-5.4",
-            ]
-        );
-
-        let default_model = available_models
-            .iter()
-            .find(|preset| preset.is_default)
-            .expect("Bedrock catalog should have a default model");
-
-        assert_eq!(default_model.model, "openai.gpt-5.6-sol");
-    }
-
-    #[tokio::test]
-    async fn configured_bedrock_catalog_only_allows_default_service_tier() {
-        let configured_model = codex_models_manager::bundled_models_response()
-            .expect("bundled models should parse")
-            .models
-            .into_iter()
-            .find(|model| model.slug == "gpt-5.5")
-            .expect("bundled models should include GPT-5.5");
-        assert!(!configured_model.additional_speed_tiers.is_empty());
-        assert!(!configured_model.service_tiers.is_empty());
-
-        let provider = create_model_provider(
-            ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
-            /*auth_manager*/ None,
-        );
-        let manager = provider.models_manager(
-            test_codex_home(),
-            Some(ModelsResponse {
-                models: vec![configured_model],
-            }),
-        );
-
-        let catalog = manager
-            .raw_model_catalog(
-                RefreshStrategy::Online,
-                HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-            )
-            .await;
-
-        assert_eq!(catalog.models.len(), 1);
-        assert_eq!(catalog.models[0].slug, "gpt-5.5");
-        assert_eq!(
-            catalog.models[0].additional_speed_tiers,
-            Vec::<String>::new()
-        );
-        assert_eq!(catalog.models[0].service_tiers, Vec::new());
-        assert_eq!(catalog.models[0].default_service_tier, None);
-    }
-
     #[tokio::test]
     async fn configured_provider_models_manager_uses_provider_bearer_token() {
         let server = MockServer::start().await;
@@ -1174,7 +738,7 @@ mod tests {
         let provider = create_model_provider(
             provider_info,
             Some(AuthManager::from_auth_for_testing(
-                CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+                CodexAuth::from_api_key("dummy-test-api-key"),
             )),
         );
 

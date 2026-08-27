@@ -69,7 +69,7 @@ async fn extension_tool_receives_turn_environment_sandbox() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let extensions = image_generation_extensions(&auth, |config| Some(config.codex_home.clone()));
     let mut builder = test_codex()
         .with_auth(auth)
@@ -165,7 +165,7 @@ async fn extension_tool_uses_granted_turn_permissions_without_host_local_persist
         .mount(&server)
         .await;
 
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let extensions = image_generation_extensions(&auth, |_config| None);
     let base_permission_profile = PermissionProfile::workspace_write_with(
         &[],

@@ -49,7 +49,6 @@ use codex_config::SkillConfigRules;
 use codex_config::compose_requirements;
 use codex_config::types::McpServerTransportConfig;
 use codex_login::CodexAuth;
-use codex_login::test_support::auth_manager_with_agent_identity;
 use codex_model_provider::AMAZON_BEDROCK_PROVIDER_ID;
 use codex_plugin::AppDeclaration;
 use codex_plugin::PluginId;
@@ -515,32 +514,6 @@ async fn plugin_auth_projection_hides_matching_mcp_with_chatgpt_apps_route() {
         .expect("docs plugin summary should exist");
     assert_eq!(docs.mcp_server_names, vec!["docs".to_string()]);
     assert!(docs.app_connector_ids.is_empty());
-}
-
-#[tokio::test]
-async fn plugin_auth_projection_hides_dual_surface_mcp_with_agent_identity_apps_route() {
-    let codex_home = TempDir::new().unwrap();
-    write_auth_projection_plugin(codex_home.path(), "sample", /*include_app*/ true);
-    write_auth_projection_plugin(codex_home.path(), "docs", /*include_app*/ false);
-    let config = auth_projection_config(codex_home.path()).await;
-    let manager = test_plugins_manager_with_auth_manager(
-        codex_home.path().to_path_buf(),
-        Some(Product::Codex),
-        auth_manager_with_agent_identity()
-            .await
-            .expect("create test Agent Identity auth manager"),
-    );
-
-    let outcome = manager.plugins_for_config(&config).await;
-
-    assert_eq!(
-        outcome.effective_apps(),
-        vec![AppConnectorId("connector_sample".to_string())]
-    );
-    assert_eq!(
-        sorted_effective_mcp_server_names(&outcome),
-        vec!["docs".to_string()]
-    );
 }
 
 #[tokio::test]
@@ -3195,12 +3168,7 @@ async fn plugins_for_config_discards_in_flight_load_after_account_change() {
         futures::poll!(load.as_mut()),
         std::task::Poll::Pending
     ));
-    let account_b = CodexAuth::from_external_chatgpt_tokens(
-        "header.e30.other",
-        "other-account",
-        /*chatgpt_plan_type*/ None,
-    )
-    .expect("build second ChatGPT auth");
+    let account_b = CodexAuth::from_api_key("other-test-api-key");
     set_test_auth(&auth_manager, Some(account_b)).await;
     drop(load_permit);
     assert_eq!(load.await, PluginLoadOutcome::default());
@@ -5700,7 +5668,7 @@ plugins = true
     let featured_plugin_ids = manager
         .featured_plugin_ids_for_config(
             &config,
-            Some(&CodexAuth::create_dummy_chatgpt_auth_for_testing()),
+            Some(&CodexAuth::from_api_key("dummy-test-api-key")),
         )
         .await
         .unwrap();
@@ -5767,7 +5735,7 @@ plugins = true
     let mut config = load_config(tmp.path(), tmp.path()).await;
     config.chatgpt_base_url = server.uri();
     let manager = std::sync::Arc::new(test_plugins_manager(tmp.path().to_path_buf()));
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let cache_key = recommended_plugins_cache_key(&config);
 
     manager.maybe_start_remote_plugin_caches_refresh(
@@ -5845,7 +5813,7 @@ plugins = true
     let mut config = load_config(tmp.path(), tmp.path()).await;
     config.chatgpt_base_url = server.uri();
     let manager = test_plugins_manager(tmp.path().to_path_buf());
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let expected = RecommendedPluginsMode::Endpoint {
         plugins: vec![
             RecommendedPlugin {
@@ -5916,7 +5884,7 @@ plugins = true
     let mut installed_linear = remote_installed_plugin("linear");
     installed_linear.id = "plugin_linear".to_string();
     manager.write_remote_installed_plugins_cache(vec![installed_linear]);
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let disabled_tools = [ToolSuggestDisabledTool::plugin(
         "github@openai-curated-remote",
     )];
@@ -5970,7 +5938,7 @@ plugins = true
     let mut config = load_config(tmp.path(), tmp.path()).await;
     config.chatgpt_base_url = server.uri();
     let manager = test_plugins_manager(tmp.path().to_path_buf());
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     assert_eq!(
         manager
             .recommended_plugins_mode_for_config(&config, Some(&auth))
@@ -6006,7 +5974,7 @@ plugins = true
     let mut config = load_config(tmp.path(), tmp.path()).await;
     config.chatgpt_base_url = server.uri();
     let manager = test_plugins_manager(tmp.path().to_path_buf());
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     assert_eq!(
         manager
             .recommended_plugins_mode_for_config(&config, Some(&auth))
@@ -7060,7 +7028,7 @@ remote_plugin = true
         Some(Product::Codex),
         Some(AuthMode::Chatgpt),
     ));
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
 
     first_manager.maybe_start_remote_installed_plugin_bundle_sync(
         &config,

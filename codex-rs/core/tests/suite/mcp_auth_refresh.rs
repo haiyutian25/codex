@@ -52,11 +52,7 @@ async fn hosted_plugin_runtime_ps_mcp_tool_calls_use_current_auth_manager_token(
     let server = start_mock_server().await;
     let apps_server = AppsTestServer::mount_hosted_plugin_runtime_searchable(&server).await?;
     let home = Arc::new(TempDir::new()?);
-    let expected_auth = CodexAuth::from_external_chatgpt_tokens(
-        "header.e30.first",
-        "test-account",
-        /*chatgpt_plan_type*/ None,
-    )?;
+    let expected_auth = CodexAuth::from_api_key("external-api-key-first");
     let auth_manager = AuthManager::from_auth_for_testing_with_home(
         expected_auth.clone(),
         home.path().to_path_buf(),
@@ -117,14 +113,10 @@ async fn hosted_plugin_runtime_ps_mcp_tool_calls_use_current_auth_manager_token(
     // regression focused on core MCP wiring by updating the same shared
     // manager after the MCP client has been created.
     auth_manager
-        .set_external_auth(Arc::new(StaticExternalAuth(
-            CodexAuth::from_external_chatgpt_tokens(
-                "header.e30.reloaded",
-                "test-account",
-                /*chatgpt_plan_type*/ None,
-            )?,
-        )))
-        .await?;
+        .set_external_auth(Arc::new(StaticExternalAuth(CodexAuth::from_api_key(
+            "external-api-key-reloaded",
+        ))))
+        .await;
 
     // The manager and its static fallback were created before the auth update,
     // so this tool call only sees the new token if the Codex Apps provider

@@ -356,7 +356,7 @@ mod tests {
             .await;
 
         let (session, mut turn_context) = make_session_and_context().await;
-        let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+        let auth = CodexAuth::from_api_key("dummy-test-api-key");
         let dir = tempdir().expect("temp dir");
         let local_path = dir.path().join("file_report.csv");
         tokio::fs::write(&local_path, b"hello")
@@ -426,7 +426,7 @@ mod tests {
     #[tokio::test]
     async fn build_uploaded_argument_value_rejects_oversized_file_before_reading() {
         let (session, mut turn_context) = make_session_and_context().await;
-        let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+        let auth = CodexAuth::from_api_key("dummy-test-api-key");
         let dir = tempdir().expect("temp dir");
         let file_path = dir.path().join("oversized.bin");
         let file = std::fs::File::create(&file_path).expect("create sparse file");
@@ -500,7 +500,7 @@ mod tests {
             .await;
 
         let (session, mut turn_context) = make_session_and_context().await;
-        let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+        let auth = CodexAuth::from_api_key("dummy-test-api-key");
         let dir = tempdir().expect("temp dir");
         let local_path = dir.path().join("file_report.csv");
         tokio::fs::write(&local_path, b"hello")
@@ -612,7 +612,7 @@ mod tests {
             .await;
 
         let (session, mut turn_context) = make_session_and_context().await;
-        let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+        let auth = CodexAuth::from_api_key("dummy-test-api-key");
         let dir = tempdir().expect("temp dir");
         tokio::fs::write(dir.path().join("one.csv"), b"one")
             .await
@@ -657,7 +657,7 @@ mod tests {
     async fn rewrite_mcp_tool_arguments_for_openai_files_surfaces_upload_failures() {
         let (mut session, turn_context) = make_session_and_context().await;
         session.services.auth_manager = crate::test_support::auth_manager_from_auth(
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
         );
         let step_context = StepContext::for_test(Arc::new(turn_context));
         let error = rewrite_mcp_tool_arguments_for_openai_files(

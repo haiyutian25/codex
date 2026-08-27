@@ -129,9 +129,9 @@ impl TimeProvider for RecordingTimeProvider {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[test_case(CodexAuth::from_api_key("test-api-key"), "/v1", true, "/v1/responses"; "api_key_uses_responses")]
-#[test_case(CodexAuth::create_dummy_chatgpt_auth_for_testing(), "/backend-api/codex", false, "/backend-api/codex/responses"; "chatgpt_uses_responses_by_default")]
-#[test_case(CodexAuth::create_dummy_chatgpt_auth_for_testing(), "/backend-api/codex", true, "/backend-api/codex/guardian"; "chatgpt_uses_guardian_when_enabled")]
-#[test_case(CodexAuth::create_dummy_chatgpt_auth_for_testing(), "/v1", true, "/v1/responses"; "custom_openai_url_uses_responses")]
+#[test_case(CodexAuth::from_api_key("dummy-test-api-key"), "/backend-api/codex", false, "/backend-api/codex/responses"; "chatgpt_uses_responses_by_default")]
+#[test_case(CodexAuth::from_api_key("dummy-test-api-key"), "/backend-api/codex", true, "/backend-api/codex/guardian"; "chatgpt_uses_guardian_when_enabled")]
+#[test_case(CodexAuth::from_api_key("dummy-test-api-key"), "/v1", true, "/v1/responses"; "custom_openai_url_uses_responses")]
 async fn guardian_session_inherits_parent_http_fallback(
     auth: CodexAuth,
     base_path: &str,
@@ -236,7 +236,7 @@ async fn guardian_session_inherits_parent_http_fallback(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[test_case(CodexAuth::from_api_key("test-api-key"), "gpt-5.6-luna"; "api_key_uses_luna_with_responses_lite")]
-#[test_case(CodexAuth::create_dummy_chatgpt_auth_for_testing(), "codex-auto-review"; "chatgpt_uses_codex_auto_review")]
+#[test_case(CodexAuth::from_api_key("dummy-test-api-key"), "codex-auto-review"; "chatgpt_uses_codex_auto_review")]
 async fn guardian_session_prewarms_and_is_reused_for_first_review(
     auth: CodexAuth,
     expected_model: &str,

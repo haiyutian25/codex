@@ -277,7 +277,7 @@ async fn build_analytics_plugin_test_codex(
     let chatgpt_base_url = server.uri();
     let mut builder = test_codex()
         .with_home(codex_home)
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_model("gpt-5.2")
         .with_config(move |config| {
             config.chatgpt_base_url = chatgpt_base_url;
@@ -292,7 +292,7 @@ async fn build_apps_enabled_plugin_test_codex(
 ) -> Result<TestCodex> {
     let mut builder = test_codex()
         .with_home(codex_home)
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config(move |config| {
             config
                 .features
@@ -415,7 +415,7 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
     let chatgpt_base_url = server.uri();
     let mut builder = builder
         .with_home(Arc::clone(&codex_home))
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_model("gpt-5.2")
         .with_config(move |config| config.chatgpt_base_url = chatgpt_base_url);
     let test_codex = builder.build_with_auto_env(&server).await?;
@@ -1018,7 +1018,7 @@ enabled = true
         let mut builder = test_codex()
             .with_home(Arc::clone(&codex_home))
             .with_extensions(skills_extensions())
-            .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing());
+            .with_auth(CodexAuth::from_api_key("dummy-test-api-key"));
         let test_codex = builder.build_with_auto_env(&server).await?;
         let initial_skills = loaded_plugin_skills_for_config(&test_codex, &test_codex.config).await;
         assert_loaded_plugin_skills(
@@ -1049,15 +1049,10 @@ enabled = true
                 Some(AuthMode::ApiKey)
             }
             TargetAuth::BedrockApiKey => {
-                codex_login::login_with_bedrock_api_key(
-                    codex_home.path(),
-                    "test-bedrock-api-key",
-                    "us-east-1",
-                    codex_login::AuthCredentialsStoreMode::File,
-                    codex_login::AuthKeyringBackendKind::default(),
-                )?;
-                test_codex.thread_manager.auth_manager().reload().await;
-                Some(AuthMode::BedrockApiKey)
+                // Bedrock auth was removed in this API-key-only build;
+                // treat the case as unauthenticated.
+                test_codex.thread_manager.auth_manager().logout().await?;
+                None
             }
             TargetAuth::NoCodexAuth => {
                 test_codex.thread_manager.auth_manager().logout().await?;

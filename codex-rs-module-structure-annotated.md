@@ -30,7 +30,7 @@
 | Crate | 功能说明 | Android 独立 App 必要性 | 路径 | 文件数 | 行数 |
 |---|---|---|---|---:|---:|
 | `codex-agent-graph-store` | 存储子智能体（thread-spawned agents）的父子拓扑关系 | ⭐ 必需核心 | `codex-rs/agent-graph-store` | 5 | 479 |
-| `codex-agent-identity` | Agent Identity 认证：工作负载身份令牌的签名、交换与校验 | ✅ 可选（仅用该认证模式时需要） | `codex-rs/agent-identity` | 1 | 1,000 |
+| `codex-agent-identity` | Agent Identity 认证：工作负载身份令牌的签名、交换与校验 | ❌ 已删除（2026-08-28 认证手术：账号模式永久弃用） | `codex-rs/agent-identity` | 1 | 1,000 |
 | `codex-agent-roles` | Agent 角色配置的发现、解析与加载 | ✅ 可选（自定义智能体角色） | `codex-rs/agent-roles` | 4 | 592 |
 | `codex-analytics` | 分析事件采集与上报 | 🚫 建议禁用（遥测；仍在 core 编译图中，配置关闭即可） | `codex-rs/analytics` | 9 | 14,324 |
 | `codex-ansi-escape` | ANSI 转义序列 → ratatui 样式文本 | ❌ 已删除（TUI 渲染专用；连带移除 ansi-to-tui/ratatui/crossterm） | `codex-rs/ansi-escape` | 1 | 58 |
@@ -44,7 +44,7 @@
 | `codex-apply-patch` | `apply_patch` 补丁引擎：应用模型生成的代码补丁 | ⭐ 必需核心（代码编辑能力） | `codex-rs/apply-patch` | 16 | 5,929 |
 | `codex-arg0` | argv[0] 多角色分发（沙箱/补丁助手二进制机制） | 🚫 不需要（桌面多二进制机制；沙箱降级后无用途） | `codex-rs/arg0` | 1 | 810 |
 | `codex-async-utils` | 异步小工具 | ⭐ 必需核心 | `codex-rs/async-utils` | 1 | 86 |
-| `codex-aws-auth` | AWS Bedrock SigV4 签名 | ✅ 可选（仅接 Bedrock 时需要） | `codex-rs/aws-auth` | 4 | 522 |
+| `codex-aws-auth` | AWS Bedrock SigV4 签名 | ❌ 已删除（2026-08-28 认证手术：Bedrock 随账号模式一并弃用） | `codex-rs/aws-auth` | 4 | 522 |
 | `codex-backend-client` | OpenAI 后端 REST API 客户端（账户/用量/云端功能） | ❌ 已删除（2026-08-28：仅服务 ChatGPT 账号模式；本项目只用 API key，账号授权路径永久弃用） | `codex-rs/backend-client` | 9 | 2,750 |
 | `codex-build-info` | 构建信息注入 | ⭐ 必需核心 | `codex-rs/build-info` | 2 | 256 |
 | `codex-bwrap` | 捆绑的 bubblewrap 启动器 | ❌ 不可用（Android 无 user namespaces） | `codex-rs/bwrap` | 2 | 151 |
@@ -104,7 +104,7 @@
 | `codex-keyring-store` | 系统钥匙串存储抽象 | 🔧 必需·需适配（Android 用文件存储模式或接 Android Keystore） | `codex-rs/keyring-store` | 1 | 226 |
 | `codex-linux-sandbox` | Linux 沙箱助手（Landlock/bwrap/seccomp） | ❌ 不可用（Android 内核机制缺失） | `codex-rs/linux-sandbox` | 21 | 9,846 |
 | `codex-lmstudio` | LM Studio 自动准备工具（`--oss` 模式） | ❌ 已删除（2026-08-28：CLI 死后遗留孤儿；LM Studio 提供方定义仍在 `model-provider-info`，配置 `oss_provider = "lmstudio"` 依然可用） | `codex-rs/lmstudio` | 2 | 470 |
-| `codex-login` | 认证登录（OAuth/API Key/Device Code） | 🔧 必需·需适配（用 API Key 或 Device Code；浏览器回调不可用） | `codex-rs/login` | 42 | 16,330 |
+| `codex-login` | 认证管理（已重写为 API-key-only） | ✅ 适配完成（2026-08-28 认证手术：16k→4k 行，只剩 API Key 路径 + ExternalAuth 宿主注入通道；见 `auth-api-key-only-surgery-plan.md`） | `codex-rs/login` | 42 | 16,330 |
 | `codex-mcp-server` | 把 Codex 暴露为 MCP 服务器 | 🚫 不需要（供外部桌面客户端调用；Android App 不对外提供服务） | `codex-rs/mcp-server` | 20 | 4,165 |
 | `codex-memories-read` | 记忆读取路径 | ✅ 可选（记忆功能） | `codex-rs/memories/read` | 5 | 232 |
 | `codex-memories-write` | 记忆写入路径 | ✅ 可选 | `codex-rs/memories/write` | 23 | 4,891 |
@@ -164,7 +164,7 @@
 | `codex-utils-template` | 模板渲染 | ⭐ 必需核心 | `codex-rs/utils/template` | 1 | 442 |
 | `codex-v8-poc` | V8 实验占位 | ❌ 已删除（实验占位 crate） | `codex-rs/v8-poc` | 1 | 92 |
 | `codex-websocket-client` | WebSocket 客户端 | ⭐ 必需核心（Responses API 流式通道可能用到） | `codex-rs/websocket-client` | 3 | 1,160 |
-| `codex-workload-identity` | Workload Identity 认证交换 | ✅ 可选（仅该认证模式） | `codex-rs/workload-identity` | 4 | 870 |
+| `codex-workload-identity` | Workload Identity 认证交换 | ❌ 已删除（2026-08-28 认证手术：账号模式永久弃用） | `codex-rs/workload-identity` | 4 | 870 |
 | `codex-worktree` | Git worktree 管理 | 🚫 不需要（Android 无 git） | `codex-rs/worktree` | 6 | 621 |
 
 ## Module trees
@@ -4447,10 +4447,10 @@ _No module declarations._
 | 评级 | 数量 | 说明 |
 |---|---:|---|
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
-| 🔧 必需·需适配 | 8 | 必需但需 Android 平台改造（见下表；原 9 个，`codex-utils-pty` 已完成） |
-| ✅ 可选功能 | 40 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
+| 🔧 必需·需适配 | 7 | 必需但需 Android 平台改造（见下表；原 9 个，`codex-utils-pty`、`codex-login` 已完成） |
+| ✅ 可选功能 | 38 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
 | 🚫 不需要 | 20 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 5 个是 core 编译期承重依赖，必须保留：`app-server-protocol`×2、`exec-server`×3） |
-| ❌ 已删除/不可用 | 29 | 27 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
+| ❌ 已删除/不可用 | 32 | 30 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
 ### 目标架构（UniFFI 进程内嵌入，不连接任何桌面端）
 

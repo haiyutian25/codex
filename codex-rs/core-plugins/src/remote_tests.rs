@@ -27,7 +27,7 @@ async fn remote_plugin_list_routes_the_complete_query_url() {
         .await;
     let (config, selected_urls) =
         recording_remote_plugin_service_config(format!("{}/backend-api", server.uri()));
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
 
     get_remote_plugin_list_page(
         &config,
@@ -63,7 +63,7 @@ async fn recommended_plugins_requests_codex_suggestions_endpoint() {
         .await;
     let (config, selected_urls) =
         recording_remote_plugin_service_config(format!("{}/backend-api", server.uri()));
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
 
     let mode = fetch_recommended_plugins(&config, Some(&auth))
         .await
@@ -133,7 +133,7 @@ async fn remote_installed_plugins_paginate_across_all_scopes_without_download_ur
         .await;
     let (config, selected_urls) =
         recording_remote_plugin_service_config(format!("{}/backend-api", server.uri()));
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
 
     let installed_plugins = fetch_remote_installed_plugins(&config, Some(&auth))
         .await
@@ -169,7 +169,7 @@ fn cached_remote_plugin_catalog_scopes_returns_existing_scopes() {
         "https://chatgpt.com/backend-api".to_string(),
         crate::test_support::test_http_client_factory(),
     );
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     for scope in [RemotePluginScope::Global, RemotePluginScope::Workspace] {
         catalog_cache::write_cached_directory_plugins(
             codex_home.path(),

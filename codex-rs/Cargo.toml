@@ -1,9 +1,7 @@
 [workspace]
 members = [
-    "aws-auth",
     "analytics",
     "agent-graph-store",
-    "agent-identity",
     "agent-roles",
     "bwrap",
     "build-info",
@@ -75,7 +73,6 @@ members = [
     "tools",
     "websocket-client",
     "worktree",
-    "workload-identity",
     "utils/absolute-path",
     "utils/audio",
     "utils/path-uri",
@@ -125,10 +122,8 @@ license = "Apache-2.0"
 # Internal
 codex-analytics = { path = "analytics" }
 codex-agent-graph-store = { path = "agent-graph-store" }
-codex-agent-identity = { path = "agent-identity" }
 codex-agent-roles = { path = "agent-roles" }
 codex-api = { path = "codex-api" }
-codex-aws-auth = { path = "aws-auth" }
 codex-app-server-protocol = { path = "app-server-protocol" }
 codex-app-server-protocol-noop-macros = { path = "app-server-protocol-noop-macros" }
 codex-apply-patch = { path = "apply-patch" }
@@ -228,7 +223,6 @@ codex-utils-sleep-inhibitor = { path = "utils/sleep-inhibitor" }
 codex-utils-stream-parser = { path = "utils/stream-parser" }
 codex-utils-string = { path = "utils/string" }
 codex-utils-template = { path = "utils/template" }
-codex-workload-identity = { path = "workload-identity" }
 codex-windows-sandbox = { path = "windows-sandbox-rs" }
 core_test_support = { path = "core/tests/common" }
 mcp_test_support = { path = "mcp-server/tests/common" }
@@ -300,7 +294,6 @@ insta = "1.46.3"
 inventory = "0.3.19"
 itertools = "0.14.0"
 jsonptr = { version = "0.7.1", default-features = false }
-jsonwebtoken = "9.3.1"
 keyring = { version = "3.6", default-features = false }
 landlock = "0.4.4"
 lazy_static = "1"

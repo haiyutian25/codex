@@ -200,7 +200,7 @@ async fn spawn_agent_description_lists_visible_models_and_reasoning_efforts() ->
     .await;
 
     let mut builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_model("visible-model")
         .with_config(|config| {
             config

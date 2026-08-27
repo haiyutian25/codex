@@ -13,7 +13,6 @@ use codex_core::test_support::with_parent_turn;
 use codex_features::Feature;
 use codex_http_client::OutboundProxyPolicy;
 use codex_login::CodexAuth;
-use codex_login::auth::AgentIdentityAuthPolicy;
 use codex_model_provider_info::ModelProviderInfo;
 use codex_model_provider_info::WireApi;
 use codex_otel::MetricsClient;
@@ -281,7 +280,7 @@ async fn responses_websocket_omits_routing_hint_for_provider_with_own_credential
         /*runtime_metrics_enabled*/ false,
         /*concurrent_reasoning_summaries_enabled*/ false,
         /*enabled_features*/ &[],
-        Some(CodexAuth::create_dummy_chatgpt_auth_for_testing()),
+        Some(CodexAuth::from_api_key("dummy-test-api-key")),
     )
     .await;
     let mut client_session = harness.client.new_session();
@@ -2520,7 +2519,7 @@ async fn websocket_harness_for_codex_backend(server: &WebSocketTestServer) -> We
         /*runtime_metrics_enabled*/ false,
         /*concurrent_reasoning_summaries_enabled*/ false,
         /*enabled_features*/ &[],
-        Some(CodexAuth::create_dummy_chatgpt_auth_for_testing()),
+        Some(CodexAuth::from_api_key("dummy-test-api-key")),
     )
     .await
 }
@@ -2630,7 +2629,6 @@ async fn websocket_harness_with_provider_options_and_auth(
     let summary = ReasoningSummary::Auto;
     let client = ModelClient::new(
         client_auth_manager,
-        AgentIdentityAuthPolicy::JwtOnly,
         thread_id,
         provider.clone(),
         SessionSource::Exec,

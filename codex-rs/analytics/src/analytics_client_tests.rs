@@ -1380,7 +1380,7 @@ async fn analytics_flush_delivers_completed_turn_with_file_diff() {
         std::process::id()
     ));
     let auth_manager = codex_login::AuthManager::from_auth_for_testing(
-        codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+        codex_login::CodexAuth::from_api_key("dummy-test-api-key"),
     );
     let client = AnalyticsEventsClient::new_for_capture_file(auth_manager, capture_path.clone());
 

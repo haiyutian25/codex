@@ -537,7 +537,7 @@ discoverables = [
         .build()
         .await
         .expect("config should load");
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let plugins_manager =
         plugins_manager_for_config(&config, AuthManager::from_auth_for_testing(auth.clone()));
 
@@ -575,7 +575,7 @@ apps = true
         .build()
         .await
         .expect("config should load");
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let loaded_plugin_app_connector_ids = vec!["asdk_app_databricks_workspace".to_string()];
     let plugins_manager =
         plugins_manager_for_config(&config, AuthManager::from_auth_for_testing(auth.clone()));

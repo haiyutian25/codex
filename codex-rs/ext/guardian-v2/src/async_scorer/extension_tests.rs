@@ -174,7 +174,7 @@ async fn installed_extension_reconnects_after_auth_refresh() -> Result<()> {
     let auth_manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("original"));
     auth_manager
         .set_external_auth(Arc::new(RefreshableAuth(std::sync::Mutex::new("original"))))
-        .await?;
+        .await;
     let mut config = test.config.clone();
     config.model_provider = ModelProviderInfo::create_openai_provider(Some(format!(
         "http://{}/v1",
@@ -835,7 +835,7 @@ async fn sample_configured_conversation_history_with_source(
     );
     let has_model_defaults = model_defaults.is_some();
     let builder = test_codex()
-        .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_model_info_override("codex-auto-review", |model_info| {
             model_info
                 .model_messages

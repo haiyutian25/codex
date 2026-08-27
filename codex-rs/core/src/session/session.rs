@@ -17,7 +17,6 @@ use crate::state::ActiveTurn;
 use codex_extension_api::ExtensionDataInit;
 use codex_http_client::ClientRouteClass;
 use codex_http_client::RouteAwareClientPool;
-use codex_login::auth::AgentIdentityAuthPolicy;
 use codex_model_provider::SharedModelProvider;
 use codex_protocol::SessionId;
 use codex_protocol::capabilities::SelectedCapabilityRoot;
@@ -1039,8 +1038,9 @@ impl Session {
             let auth_mode = telemetry_auth
                 .map(CodexAuth::auth_mode)
                 .map(TelemetryAuthMode::from);
-            let account_id = telemetry_auth.and_then(CodexAuth::get_account_id);
-            let account_email = telemetry_auth.and_then(CodexAuth::get_account_email);
+            // API-key-only build: no ChatGPT account identity is available.
+            let account_id = Option::<String>::None;
+            let account_email = Option::<String>::None;
             let originator = session_configuration.originator.clone();
             let terminal_type = user_agent();
             let session_model = session_configuration.step_settings.collaboration_mode.model().to_string();
@@ -1401,11 +1401,6 @@ impl Session {
                 time_provider,
                 model_client: ModelClient::new(
                     Some(Arc::clone(&auth_manager)),
-                    if config.features.enabled(Feature::UseAgentIdentity) {
-                        AgentIdentityAuthPolicy::ChatGptAuth
-                    } else {
-                        AgentIdentityAuthPolicy::JwtOnly
-                    },
                     thread_id,
                     session_configuration.provider.info().clone(),
                     session_configuration.session_source.clone(),

@@ -61,7 +61,7 @@ remote_plugin = false
         Some(Product::Codex),
         Some(AuthMode::Chatgpt),
     );
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let discoverable_plugins = list_discoverable_plugins(
         &plugins_manager,
         discovery_input(plugins, &[], &[], &[]),
@@ -191,7 +191,7 @@ source = {bundled_marketplace_root:?}
         Some(Product::Codex),
         Some(AuthMode::Chatgpt),
     );
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let discoverable_plugins = list_discoverable_plugins(
         &plugins_manager,
         discovery_input(plugins, &[], &[], &[]),
@@ -943,7 +943,7 @@ plugins = true
         .mount(&server)
         .await;
 
-    let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = CodexAuth::from_api_key("dummy-test-api-key");
     let mut plugins = load_plugins_config(codex_home.path(), codex_home.path()).await;
     plugins.chatgpt_base_url = format!("{}/backend-api", server.uri());
     let plugins_manager = test_plugins_manager_with_options(

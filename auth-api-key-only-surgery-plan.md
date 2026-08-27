@@ -2,7 +2,16 @@
 
 > 目标：将认证体系砍到只剩 **OpenAI API Key** 一条路径，永久移除 ChatGPT 账号/OAuth/设备码/Agent Identity/Workload Identity/PAT/Headers 等全部账号模式机制。
 > 日期：2026-08-28（研究完成）
-> 状态：**研究 + 阶段 2 复查已完成**（第十节为复查结论），进入执行阶段。
+> 状态：**✅ 执行完成（2026-08-28）**。
+>
+> **最终验证**：`cargo check --tests --workspace` 零错误零警告通过。
+>
+> **执行摘要**：
+> - 步骤 1-3：`codex-login` 重写（16k→4k 行）；`workload-identity`/`agent-identity`/`aws-auth` 整删；`jsonwebtoken` 工作区依赖移除
+> - 步骤 4：传播修复 15+ 个消费方 crate：`model-provider`（amazon_bedrock 整模块删除）、`models-manager`、`codex-mcp`（trusted_access 掏空）、`core`（client/session/config/connectors/spec_plan/cyber_access）、`core-plugins`、`ext/guardian-v2`、`ext/history-notes`、`memories/write`、`otel`、`feedback`、`core-api`、`mcp-server`、`connectors`、`analytics`
+> - 步骤 5：`app-server-protocol` 无需改动（独立枚举）
+> - 步骤 6：测试清理——243 处 dummy 工厂批量替换为 API key；删除账号模式专属测试文件 8 个（compact_remote、external_auth、daybreak_access、trusted_access_tests、history-notes ×2 等）+ 测试函数 20+ 个
+> - 保留机制：`ExternalAuth` trait 族（Android 注入通道）、命令式令牌提供者、MCP OAuth、`UnauthorizedRecovery` 桩（恒空）
 > 前置事实：`codex-backend-client` 已删除（账号模式的服务端调用链已断）；本项目只通过 API key 使用核心。
 
 ---

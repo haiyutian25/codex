@@ -124,7 +124,8 @@ pub(crate) async fn sync_remote_installed_plugin_bundles_once_with_snapshot(
     auth: Option<&CodexAuth>,
 ) -> Result<RemoteInstalledPluginBundleSyncResult, RemoteInstalledPluginBundleSyncError> {
     let auth = ensure_chatgpt_auth(auth)?;
-    let authenticated_account_id = auth.get_account_id();
+    // API-key-only build: no account identity is available.
+    let authenticated_account_id = Option::<String>::None;
     let fetched_installed_plugins = fetch_installed_plugins(
         config,
         auth,
@@ -523,7 +524,7 @@ mod tests {
             format!("{}/backend-api", server.uri()),
             crate::test_support::test_http_client_factory(),
         );
-        let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+        let auth = CodexAuth::from_api_key("dummy-test-api-key");
 
         let outcome = sync_remote_installed_plugin_bundles_once(
             codex_home.path().to_path_buf(),
@@ -674,7 +675,7 @@ mod tests {
         let (config, selected_urls) = crate::test_support::recording_remote_plugin_service_config(
             format!("{}/backend-api", server.uri()),
         );
-        let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
+        let auth = CodexAuth::from_api_key("dummy-test-api-key");
 
         let outcome = sync_remote_installed_plugin_bundles_once(
             codex_home.path().to_path_buf(),

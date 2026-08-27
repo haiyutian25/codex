@@ -34,11 +34,13 @@ impl RemotePluginCatalogCacheKey {
         auth: &CodexAuth,
         scope: RemotePluginScope,
     ) -> Option<Self> {
+        // API-key-only build: no ChatGPT account identity is available.
+        let _ = auth;
         let cache_key = Self {
             chatgpt_base_url: config.chatgpt_base_url.clone(),
-            account_id: auth.get_account_id(),
-            chatgpt_user_id: auth.get_chatgpt_user_id(),
-            is_workspace_account: auth.is_workspace_account(),
+            account_id: None,
+            chatgpt_user_id: None,
+            is_workspace_account: false,
             scope: (scope != RemotePluginScope::Global).then_some(scope),
         };
         // Preserve global catalog caching for existing header-auth clients, but never share

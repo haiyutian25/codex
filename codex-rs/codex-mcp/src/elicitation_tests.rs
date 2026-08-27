@@ -302,7 +302,7 @@ async fn reused_elicitation_senders_follow_each_servers_latest_permission_author
     config.approval_policy = codex_config::Constrained::allow_any(AskForApproval::Never);
     config.permission_profile = PermissionProfile::Disabled;
     config.apps_enabled = true;
-    let auth = codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = codex_login::CodexAuth::from_api_key("dummy-test-api-key");
 
     let hosted_server = crate::codex_apps_mcp_server_config(
         "https://example.com",

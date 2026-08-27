@@ -62,7 +62,6 @@ pub async fn run_main(
     arg0_paths: Arg0DispatchPaths,
     strict_config: bool,
 ) -> IoResult<()> {
-    reject_workload_identity(codex_login::is_workload_identity_selected())?;
     let config = ConfigBuilder::default()
         .strict_config(strict_config)
         .build()
@@ -196,20 +195,6 @@ pub async fn run_main(
 
     Ok(())
 }
-
-fn reject_workload_identity(workload_identity_selected: bool) -> IoResult<()> {
-    if workload_identity_selected {
-        return Err(std::io::Error::new(
-            ErrorKind::Unsupported,
-            "workload identity is not supported by `codex mcp-server`",
-        ));
-    }
-    Ok(())
-}
-
-#[cfg(test)]
-#[path = "workload_identity_tests.rs"]
-mod workload_identity_tests;
 
 #[cfg(test)]
 mod tests {

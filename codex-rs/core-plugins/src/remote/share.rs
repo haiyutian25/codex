@@ -339,7 +339,9 @@ fn ensure_unlisted_workspace_target(
     if discoverability != Some(RemotePluginShareDiscoverability::Unlisted) {
         return Ok(targets);
     }
-    let account_id = auth.get_account_id().ok_or_else(|| {
+    // API-key-only build: no account identity is available for workspace shares.
+    let _ = auth;
+    let account_id = Option::<String>::None.ok_or_else(|| {
         RemotePluginCatalogError::UnexpectedResponse(
             "workspace plugin share requires an account id".to_string(),
         )

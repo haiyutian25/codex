@@ -14,7 +14,6 @@ use codex_core::resolve_installation_id;
 use codex_features::Feature;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
-use codex_login::auth::AgentIdentityAuthPolicy;
 use codex_login::auth_env_telemetry::collect_auth_env_telemetry;
 use codex_login::default_client::originator;
 use codex_model_provider::ModelProvider;
@@ -87,8 +86,9 @@ fn build_session_telemetry(
     let auth = auth_manager.auth_cached();
     let auth = auth.as_ref();
     let auth_mode = auth.map(CodexAuth::auth_mode).map(TelemetryAuthMode::from);
-    let account_id = auth.and_then(CodexAuth::get_account_id);
-    let account_email = auth.and_then(CodexAuth::get_account_email);
+    // API-key-only build: no ChatGPT account identity is available.
+    let account_id = Option::<String>::None;
+    let account_email = Option::<String>::None;
     let auth_env_telemetry = collect_auth_env_telemetry(
         &config.model_provider,
         auth_manager.codex_api_key_env_enabled(),
@@ -251,7 +251,6 @@ impl MemoryStartupContext {
         let session_id_string = session_id.to_string();
         let model_client = ModelClient::new(
             Some(Arc::clone(&self.auth_manager)),
-            AgentIdentityAuthPolicy::JwtOnly,
             self.thread_id,
             config.model_provider.clone(),
             session_source.clone(),

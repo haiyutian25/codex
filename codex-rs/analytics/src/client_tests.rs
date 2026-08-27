@@ -359,7 +359,7 @@ async fn capture_file_writes_exact_serialized_request() {
     };
     let event = sample_regular_track_event("thread-1");
     let expected_event = serde_json::to_value(&event).expect("serialize expected event");
-    let auth = codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = codex_login::CodexAuth::from_api_key("dummy-test-api-key");
 
     send_track_events_request(&auth, &destination, vec![event]).await;
 
@@ -380,7 +380,7 @@ async fn capture_file_writes_final_batches_as_separate_lines() {
     let destination = AnalyticsEventsDestination::CaptureFile {
         path: capture_path.clone(),
     };
-    let auth = codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing();
+    let auth = codex_login::CodexAuth::from_api_key("dummy-test-api-key");
     let events = vec![
         sample_regular_track_event("thread-1"),
         sample_accepted_line_fingerprint_event("thread-2"),
@@ -884,7 +884,7 @@ async fn flush_waits_for_preceding_fact_delivery() {
 async fn flush_is_noop_when_analytics_is_disabled() {
     let client = AnalyticsEventsClient::new(
         codex_login::AuthManager::from_auth_for_testing(
-            codex_login::CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            codex_login::CodexAuth::from_api_key("dummy-test-api-key"),
         ),
         "https://chatgpt.com/backend-api".to_string(),
         /*analytics_enabled*/ Some(false),

@@ -2,7 +2,6 @@ use anyhow::Result;
 use codex_extension_api::ExtensionMetrics;
 use codex_http_client::HttpClientFactory;
 use codex_http_client::OutboundProxyPolicy;
-use codex_login::AgentIdentityAuthPolicy;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_login::ExternalAuth;
@@ -14,7 +13,6 @@ use codex_protocol::ResponseItemId;
 use codex_protocol::ThreadId;
 use codex_protocol::models::ResponseItem;
 use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::protocol::SessionSource;
 use core_test_support::responses;
 use core_test_support::responses::WebSocketConnectionConfig;
 use core_test_support::responses::ev_assistant_message;
@@ -142,8 +140,6 @@ fn sampler_config(base_url: String) -> LunaSamplerConfig {
             ))),
         ),
         http_client_factory: HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        agent_identity_policy: AgentIdentityAuthPolicy::JwtOnly,
-        session_source: SessionSource::Exec,
         session_id: "session-1".to_owned(),
         thread_id: "thread-1".to_owned(),
         originator: Some("guardian-v2-test".to_owned()),
@@ -259,21 +255,21 @@ async fn classifier_uses_free_endpoint_only_with_codex_backend_auth() -> Result<
 
     for (auth, base_path, free_guardian, expected_path, expected_service_tier) in [
         (
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
             "/backend-api/codex",
             false,
             "/backend-api/codex/responses",
             Some("priority"),
         ),
         (
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
             "/backend-api/codex",
             true,
             "/backend-api/codex/guardian-classifier",
             None,
         ),
         (
-            CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+            CodexAuth::from_api_key("dummy-test-api-key"),
             "/v1",
             true,
             "/v1/responses",
@@ -360,7 +356,7 @@ async fn preconnected_sampler_reuses_authenticated_websocket_for_classifications
         .set_external_auth(Arc::new(RefreshableAuth(std::sync::Mutex::new(
             "test-api-key",
         ))))
-        .await?;
+        .await;
     let provider = create_model_provider(
         ModelProviderInfo::create_openai_provider(Some(base_url)),
         Some(manager.clone()),
@@ -369,8 +365,6 @@ async fn preconnected_sampler_reuses_authenticated_websocket_for_classifications
     let sampler = connect_sampler(LunaSamplerConfig {
         provider,
         http_client_factory: HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        agent_identity_policy: AgentIdentityAuthPolicy::JwtOnly,
-        session_source: SessionSource::Exec,
         session_id: "session-1".to_owned(),
         thread_id: "thread-1".to_owned(),
         originator: Some("guardian-v2-test".to_owned()),
@@ -593,8 +587,6 @@ async fn sampler_returns_classification_token_before_terminal_response_events() 
     let sampler = connect_sampler(LunaSamplerConfig {
         provider,
         http_client_factory: HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        agent_identity_policy: AgentIdentityAuthPolicy::JwtOnly,
-        session_source: SessionSource::Exec,
         session_id: "session-1".to_owned(),
         thread_id: "thread-1".to_owned(),
         originator: None,
