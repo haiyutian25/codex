@@ -176,8 +176,6 @@ impl CodexAuth {
                 };
                 Ok(Some(Self::ApiKey(ApiKeyAuth { api_key })))
             }
-            // Legacy account-mode payloads are ignored in this build.
-            Some(_) => Ok(None),
         }
     }
 

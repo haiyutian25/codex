@@ -307,8 +307,6 @@ pub enum Feature {
     ToolCallMcpElicitation,
     /// Prompt Codex Apps connector auth failures through MCP URL elicitations.
     AuthElicitation,
-    /// Offer Amazon Bedrock setup during TUI sign-in onboarding.
-    BedrockSetupWizard,
     /// Enable personality selection in the TUI.
     Personality,
     /// Enable native artifact tools.
@@ -1516,12 +1514,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         key: "auth_elicitation",
         stage: Stage::Stable,
         default_enabled: true,
-    },
-    FeatureSpec {
-        id: Feature::BedrockSetupWizard,
-        key: "bedrock_setup_wizard",
-        stage: Stage::UnderDevelopment,
-        default_enabled: false,
     },
     FeatureSpec {
         id: Feature::Personality,

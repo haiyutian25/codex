@@ -1054,7 +1054,6 @@ impl ModelClient {
             && provider.env_key.is_none()
             && provider.experimental_bearer_token.is_none()
             && provider.auth.is_none()
-            && provider.aws.is_none()
     }
 
     fn build_routing_hint_header(
@@ -2307,16 +2306,7 @@ impl AuthRequestTelemetryContext {
     ) -> Self {
         let auth_telemetry = auth_header_telemetry(api_auth);
         Self {
-            auth_mode: auth_mode.map(|mode| match mode {
-                AuthMode::ApiKey | AuthMode::BedrockApiKey | AuthMode::BedrockAccessKeys => {
-                    "ApiKey"
-                }
-                AuthMode::Chatgpt
-                | AuthMode::ChatgptAuthTokens
-                | AuthMode::Headers
-                | AuthMode::AgentIdentity
-                | AuthMode::PersonalAccessToken => "Chatgpt",
-            }),
+            auth_mode: auth_mode.map(|_mode| "ApiKey"),
             auth_header_attached: auth_telemetry.attached,
             auth_header_name: auth_telemetry.name,
             agent_identity_telemetry,

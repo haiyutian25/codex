@@ -119,7 +119,7 @@
 | `codex-prompts` | 系统提示词模板 | ⭐ 必需核心 | `codex-rs/prompts` | 9 | 1,474 |
 | `codex-protocol` | 核心协议类型（内部事件等） | ⭐ 必需核心 | `codex-rs/protocol` | 56 | 27,496 |
 | `codex-response-debug-context` | API 响应调试上下文 | ✅ 可选（排障信息） | `codex-rs/response-debug-context` | 1 | 176 |
-| `codex-responses-api-proxy` | Responses API 本地代理 | ✅ 可选 | `codex-rs/responses-api-proxy` | 4 | 1,007 |
+| `codex-responses-api-proxy` | Responses API 本地代理 | ❌ 已删除（2026-08-28 提供商清理：桌面代理工具，安卓无意义，零下游依赖） | `codex-rs/responses-api-proxy` | 4 | 1,007 |
 | `codex-rmcp-client` | RMCP 客户端（stdio/Streamable HTTP MCP） | ✅ 可选（MCP 客户端实现；在 core 编译图中） | `codex-rs/rmcp-client` | 74 | 27,536 |
 | `codex-rollout` | 会话记录 JSONL 持久化/恢复/fork | ⭐ 必需核心（会话持久化） | `codex-rs/rollout` | 28 | 15,060 |
 | `codex-rollout-trace` | rollout trace 格式与归并 | ⭐ 必需核心 | `codex-rs/rollout-trace` | 34 | 13,278 |
@@ -4448,9 +4448,9 @@ _No module declarations._
 |---|---:|---|
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
 | 🔧 必需·需适配 | 7 | 必需但需 Android 平台改造（见下表；原 9 个，`codex-utils-pty`、`codex-login` 已完成） |
-| ✅ 可选功能 | 38 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
+| ✅ 可选功能 | 37 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
 | 🚫 不需要 | 20 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 5 个是 core 编译期承重依赖，必须保留：`app-server-protocol`×2、`exec-server`×3） |
-| ❌ 已删除/不可用 | 32 | 30 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
+| ❌ 已删除/不可用 | 33 | 31 个已删除；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
 ### 目标架构（UniFFI 进程内嵌入，不连接任何桌面端）
 

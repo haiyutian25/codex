@@ -237,7 +237,6 @@ impl LunaSampler {
             && provider.env_key.is_none()
             && provider.experimental_bearer_token.is_none()
             && provider.auth.is_none()
-            && provider.aws.is_none()
         {
             ResponsesEndpoint::GuardianClassifier
         } else {

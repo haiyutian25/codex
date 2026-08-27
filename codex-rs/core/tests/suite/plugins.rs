@@ -16,7 +16,6 @@ use codex_extension_api::ExtensionRegistryBuilder;
 use codex_features::Feature;
 use codex_login::CodexAuth;
 use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
-use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
 use codex_model_provider_info::OPENAI_PROVIDER_ID;
 use codex_plugin::PluginId;
 use codex_protocol::auth::AuthMode;
@@ -848,9 +847,7 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
 
     #[derive(Clone, Copy)]
     enum TargetAuth {
-        Chatgpt,
         ApiKey,
-        BedrockApiKey,
         NoCodexAuth,
     }
 
@@ -865,37 +862,9 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
 
     const FIXTURES: &[Fixture] = &[
         Fixture {
-            name: "ChatGPT",
-            target_auth: TargetAuth::Chatgpt,
-            target_model_provider_id: OPENAI_PROVIDER_ID,
-            expected_target_loaded_plugin_skills: &[CHATGPT_CURATED_PLUGIN_SKILL],
-            expected_target_skill_description: "chatgpt description",
-        },
-        Fixture {
-            name: "ChatGPT with a custom provider",
-            target_auth: TargetAuth::Chatgpt,
-            target_model_provider_id: "ollama",
-            expected_target_loaded_plugin_skills: &[CHATGPT_CURATED_PLUGIN_SKILL],
-            expected_target_skill_description: "chatgpt description",
-        },
-        Fixture {
             name: "API key",
             target_auth: TargetAuth::ApiKey,
             target_model_provider_id: OPENAI_PROVIDER_ID,
-            expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
-            expected_target_skill_description: "api description before",
-        },
-        Fixture {
-            name: "Bedrock API key",
-            target_auth: TargetAuth::BedrockApiKey,
-            target_model_provider_id: AMAZON_BEDROCK_PROVIDER_ID,
-            expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
-            expected_target_skill_description: "api description before",
-        },
-        Fixture {
-            name: "ambient Bedrock",
-            target_auth: TargetAuth::NoCodexAuth,
-            target_model_provider_id: AMAZON_BEDROCK_PROVIDER_ID,
             expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
             expected_target_skill_description: "api description before",
         },
@@ -909,7 +878,7 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
         Fixture {
             name: "unauthenticated custom provider",
             target_auth: TargetAuth::NoCodexAuth,
-            target_model_provider_id: "ollama",
+            target_model_provider_id: "custom-provider",
             expected_target_loaded_plugin_skills: &[API_CURATED_PLUGIN_SKILL],
             expected_target_skill_description: "api description before",
         },
@@ -1037,7 +1006,6 @@ enabled = true
         )?;
 
         let expected_auth_mode = match fixture.target_auth {
-            TargetAuth::Chatgpt => Some(AuthMode::Chatgpt),
             TargetAuth::ApiKey => {
                 codex_login::login_with_api_key(
                     codex_home.path(),
@@ -1047,12 +1015,6 @@ enabled = true
                 )?;
                 test_codex.thread_manager.auth_manager().reload().await;
                 Some(AuthMode::ApiKey)
-            }
-            TargetAuth::BedrockApiKey => {
-                // Bedrock auth was removed in this API-key-only build;
-                // treat the case as unauthenticated.
-                test_codex.thread_manager.auth_manager().logout().await?;
-                None
             }
             TargetAuth::NoCodexAuth => {
                 test_codex.thread_manager.auth_manager().logout().await?;

@@ -856,12 +856,12 @@ async fn check_v2_agent_reload(route: V2ReloadRoute) {
     }
 
     let mut sender_config = harness.config.clone();
-    sender_config.model_provider_id = "ollama".to_string();
-    sender_config.model_provider = sender_config
-        .model_providers
-        .get("ollama")
-        .cloned()
-        .expect("ollama provider should be configured");
+    sender_config.model_provider_id = "custom-provider".to_string();
+    sender_config.model_provider =
+        codex_model_provider_info::create_oss_provider_with_base_url(
+            "https://custom-provider.example/v1",
+            codex_model_provider_info::WireApi::Responses,
+        );
 
     let mut parent_turn = parent_thread.session.new_default_turn().await;
     match route {

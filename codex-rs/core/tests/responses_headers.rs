@@ -77,7 +77,6 @@ async fn responses_stream_includes_subagent_header_on_review() {
         env_key_instructions: None,
         experimental_bearer_token: None,
         auth: None,
-        aws: None,
         wire_api: WireApi::Responses,
         query_params: None,
         http_headers: None,
@@ -102,7 +101,7 @@ async fn responses_stream_includes_subagent_header_on_review() {
     let config = Arc::new(config);
 
     let thread_id = ThreadId::new();
-    let auth_mode = TelemetryAuthMode::Chatgpt;
+    let auth_mode = TelemetryAuthMode::ApiKey;
     let session_source = SessionSource::SubAgent(SubAgentSource::Review);
     let model_info =
         codex_core::test_support::construct_model_info_offline(model.as_str(), &config);
@@ -213,7 +212,6 @@ async fn responses_stream_includes_subagent_header_on_other() {
         env_key_instructions: None,
         experimental_bearer_token: None,
         auth: None,
-        aws: None,
         wire_api: WireApi::Responses,
         query_params: None,
         http_headers: None,
@@ -238,7 +236,7 @@ async fn responses_stream_includes_subagent_header_on_other() {
     let config = Arc::new(config);
 
     let thread_id = ThreadId::new();
-    let auth_mode = TelemetryAuthMode::Chatgpt;
+    let auth_mode = TelemetryAuthMode::ApiKey;
     let session_source = SessionSource::SubAgent(SubAgentSource::Other("my-task".to_string()));
     let model_info =
         codex_core::test_support::construct_model_info_offline(model.as_str(), &config);
@@ -330,7 +328,6 @@ async fn responses_respects_model_info_overrides_from_config() {
         env_key_instructions: None,
         experimental_bearer_token: None,
         auth: None,
-        aws: None,
         wire_api: WireApi::Responses,
         query_params: None,
         http_headers: None,

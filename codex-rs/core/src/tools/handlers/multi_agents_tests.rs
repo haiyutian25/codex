@@ -148,7 +148,7 @@ async fn install_role_with_model_override(turn: &mut TurnContext) -> String {
     tokio::fs::write(
         &role_config_path,
         r#"model = "gpt-5-role-override"
-model_provider = "ollama"
+model_provider = "custom-provider"
 model_reasoning_effort = "minimal"
 "#,
     )
@@ -291,9 +291,11 @@ async fn spawn_agent_uses_explorer_role_and_preserves_approval_policy() {
     let manager = thread_manager();
     session.services.agent_control = manager.agent_control();
     let mut config = (*turn.config).clone();
-    let provider_info =
-        built_in_model_providers(/* openai_base_url */ /*openai_base_url*/ None)["ollama"].clone();
-    config.model_provider_id = "ollama".to_string();
+    let provider_info = codex_model_provider_info::create_oss_provider_with_base_url(
+        "https://custom-provider.example/v1",
+        codex_model_provider_info::WireApi::Responses,
+    );
+    config.model_provider_id = "custom-provider".to_string();
     config.model_provider = provider_info.clone();
     config
         .permissions
@@ -333,7 +335,7 @@ async fn spawn_agent_uses_explorer_role_and_preserves_approval_policy() {
         .config_snapshot()
         .await;
     assert_eq!(snapshot.approval_policy, AskForApproval::OnRequest);
-    assert_eq!(snapshot.model_provider_id, "ollama");
+    assert_eq!(snapshot.model_provider_id, "custom-provider");
 }
 
 #[tokio::test]

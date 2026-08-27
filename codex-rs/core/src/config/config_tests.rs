@@ -76,12 +76,9 @@ use codex_features::FeaturesToml;
 use codex_login::default_client::RESIDENCY_HEADER_NAME;
 use codex_login::test_support::auth_manager_from_optional_auth;
 use codex_model_provider::ProviderCapabilities;
-use codex_model_provider_info::LMSTUDIO_OSS_PROVIDER_ID;
-use codex_model_provider_info::OLLAMA_OSS_PROVIDER_ID;
 use codex_model_provider_info::WireApi;
 use codex_models_manager::bundled_models_response;
 use codex_network_proxy::NetworkMode;
-use codex_protocol::config_types::ModelProviderAuthInfo;
 use codex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
 use codex_protocol::config_types::ServiceTier;
 use codex_protocol::models::ActivePermissionProfile;
@@ -930,25 +927,6 @@ command = "print-token"
     );
 }
 
-#[test]
-fn rejects_provider_aws_for_custom_provider() {
-    let err = toml::from_str::<ConfigToml>(
-        r#"
-[model_providers.custom]
-name = "Custom Provider"
-
-[model_providers.custom.aws]
-profile = "codex-bedrock"
-"#,
-    )
-    .unwrap_err();
-
-    assert!(
-        err.to_string().contains(
-            "model_providers.custom: provider aws is only supported for `amazon-bedrock`"
-        )
-    );
-}
 
 #[tokio::test]
 async fn managed_residency_warns_about_provider_header_overrides_without_mutating_config()
@@ -1030,147 +1008,9 @@ env_http_headers = { "x-openai-internal-codex-residency" = "CODEX_TEST_UNSET_RES
     Ok(())
 }
 
-#[test]
-fn accepts_amazon_bedrock_aws_profile_override() {
-    let cfg = toml::from_str::<ConfigToml>(
-        r#"
-[model_providers.amazon-bedrock.aws]
-profile = "codex-bedrock"
-region = "us-west-2"
-"#,
-    )
-    .expect("Amazon Bedrock AWS overrides should deserialize");
 
-    assert_eq!(
-        cfg.model_providers
-            .get("amazon-bedrock")
-            .and_then(|provider| provider.aws.as_ref())
-            .and_then(|aws| aws.profile.as_deref()),
-        Some("codex-bedrock")
-    );
-    assert_eq!(
-        cfg.model_providers
-            .get("amazon-bedrock")
-            .and_then(|provider| provider.aws.as_ref())
-            .and_then(|aws| aws.region.as_deref()),
-        Some("us-west-2")
-    );
-}
 
-#[tokio::test]
-async fn load_config_applies_amazon_bedrock_aws_profile_override() {
-    let cfg = toml::from_str::<ConfigToml>(
-        r#"
-model_provider = "amazon-bedrock"
 
-[model_providers.amazon-bedrock.aws]
-profile = "codex-bedrock"
-region = "us-west-2"
-"#,
-    )
-    .expect("Amazon Bedrock AWS overrides should deserialize");
-
-    let config = Config::load_from_base_config_with_overrides(
-        cfg,
-        ConfigOverrides::default(),
-        tempdir().expect("tempdir").abs(),
-    )
-    .await
-    .expect("load config");
-
-    assert_eq!(config.model_provider_id, "amazon-bedrock");
-    assert_eq!(
-        config
-            .model_provider
-            .aws
-            .as_ref()
-            .and_then(|aws| aws.profile.as_deref()),
-        Some("codex-bedrock")
-    );
-    assert_eq!(
-        config
-            .model_provider
-            .aws
-            .as_ref()
-            .and_then(|aws| aws.region.as_deref()),
-        Some("us-west-2")
-    );
-}
-
-#[tokio::test]
-async fn load_config_applies_amazon_bedrock_transport_overrides() {
-    let cfg = toml::from_str::<ConfigToml>(
-        r#"
-model_provider = "amazon-bedrock"
-
-[model_providers.amazon-bedrock]
-base_url = "https://bedrock.example.com/v1"
-http_headers = { "X-Custom-Header" = "value" }
-
-[model_providers.amazon-bedrock.auth]
-command = "print-token"
-"#,
-    )
-    .expect("Amazon Bedrock transport overrides should deserialize");
-
-    let config = Config::load_from_base_config_with_overrides(
-        cfg,
-        ConfigOverrides::default(),
-        tempdir().expect("tempdir").abs(),
-    )
-    .await
-    .expect("load config");
-
-    let mut expected_provider = built_in_model_providers(/*openai_base_url*/ None)
-        .remove("amazon-bedrock")
-        .expect("Amazon Bedrock provider should be built in");
-    expected_provider.base_url = Some("https://bedrock.example.com/v1".to_string());
-    expected_provider.auth = Some(ModelProviderAuthInfo {
-        command: "print-token".to_string(),
-        args: Vec::new(),
-        timeout_ms: std::num::NonZeroU64::new(5_000).expect("timeout should be non-zero"),
-        refresh_interval_ms: 300_000,
-        cwd: std::env::current_dir()
-            .expect("current directory should be available")
-            .try_into()
-            .expect("current directory should be absolute"),
-    });
-    expected_provider
-        .http_headers
-        .get_or_insert_default()
-        .insert("X-Custom-Header".to_string(), "value".into());
-
-    assert_eq!(config.model_provider_id, "amazon-bedrock");
-    assert_eq!(config.model_provider, expected_provider);
-}
-
-#[tokio::test]
-async fn load_config_rejects_unsupported_amazon_bedrock_overrides() {
-    let cfg = toml::from_str::<ConfigToml>(
-        r#"
-model_provider = "amazon-bedrock"
-
-[model_providers.amazon-bedrock]
-name = "Custom Bedrock"
-requires_openai_auth = true
-supports_websockets = true
-"#,
-    )
-    .expect("Amazon Bedrock unsupported overrides should deserialize");
-
-    let err = Config::load_from_base_config_with_overrides(
-        cfg,
-        ConfigOverrides::default(),
-        tempdir().expect("tempdir").abs(),
-    )
-    .await
-    .unwrap_err();
-
-    assert_eq!(err.kind(), std::io::ErrorKind::InvalidData);
-    assert!(err.to_string().contains(
-        "model_providers.amazon-bedrock only supports changing `base_url`, `auth`, `http_headers`, `aws.profile`, `aws.region`, and `aws.auth_refresh`; other non-default provider fields are not supported"
-    ));
-}
 
 #[test]
 fn config_toml_deserializes_model_availability_nux() {
@@ -10083,85 +9923,8 @@ async fn active_project_does_not_match_configured_alias_for_canonical_cwd() -> a
     Ok(())
 }
 
-#[test]
-fn test_set_default_oss_provider() -> std::io::Result<()> {
-    let temp_dir = TempDir::new()?;
-    let codex_home = temp_dir.path();
-    let config_path = codex_home.join(CONFIG_TOML_FILE);
 
-    // Test setting valid provider on empty config
-    set_default_oss_provider(codex_home, OLLAMA_OSS_PROVIDER_ID)?;
-    let content = std::fs::read_to_string(&config_path)?;
-    assert!(content.contains("oss_provider = \"ollama\""));
 
-    // Test updating existing config
-    std::fs::write(&config_path, "model = \"gpt-4\"\n")?;
-    set_default_oss_provider(codex_home, LMSTUDIO_OSS_PROVIDER_ID)?;
-    let content = std::fs::read_to_string(&config_path)?;
-    assert!(content.contains("oss_provider = \"lmstudio\""));
-    assert!(content.contains("model = \"gpt-4\""));
-
-    // Test overwriting existing oss_provider
-    set_default_oss_provider(codex_home, OLLAMA_OSS_PROVIDER_ID)?;
-    let content = std::fs::read_to_string(&config_path)?;
-    assert!(content.contains("oss_provider = \"ollama\""));
-    assert!(!content.contains("oss_provider = \"lmstudio\""));
-
-    // Test invalid provider
-    let result = set_default_oss_provider(codex_home, "invalid_provider");
-    assert!(result.is_err());
-    let error = result.unwrap_err();
-    assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
-    assert!(error.to_string().contains("Invalid OSS provider"));
-    assert!(error.to_string().contains("invalid_provider"));
-
-    Ok(())
-}
-
-#[test]
-fn test_set_default_oss_provider_rejects_legacy_ollama_chat_provider() -> std::io::Result<()> {
-    let temp_dir = TempDir::new()?;
-    let codex_home = temp_dir.path();
-
-    let result = set_default_oss_provider(codex_home, LEGACY_OLLAMA_CHAT_PROVIDER_ID);
-    assert!(result.is_err());
-    let error = result.unwrap_err();
-    assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
-    assert!(
-        error
-            .to_string()
-            .contains(OLLAMA_CHAT_PROVIDER_REMOVED_ERROR)
-    );
-
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_load_config_rejects_legacy_ollama_chat_provider_with_helpful_error()
--> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let cfg = ConfigToml {
-        model_provider: Some(LEGACY_OLLAMA_CHAT_PROVIDER_ID.to_string()),
-        ..Default::default()
-    };
-
-    let result = Config::load_from_base_config_with_overrides(
-        cfg,
-        ConfigOverrides::default(),
-        codex_home.abs(),
-    )
-    .await;
-    assert!(result.is_err());
-    let error = result.unwrap_err();
-    assert_eq!(error.kind(), std::io::ErrorKind::NotFound);
-    assert!(
-        error
-            .to_string()
-            .contains(OLLAMA_CHAT_PROVIDER_REMOVED_ERROR)
-    );
-
-    Ok(())
-}
 
 #[tokio::test]
 async fn test_untrusted_project_gets_workspace_write_sandbox() -> anyhow::Result<()> {
@@ -10301,41 +10064,9 @@ async fn derive_sandbox_policy_preserves_windows_downgrade_for_unsupported_fallb
     Ok(())
 }
 
-#[test]
-fn test_resolve_oss_provider_explicit_override() {
-    let config_toml = ConfigToml::default();
-    let result = resolve_oss_provider(Some("custom-provider"), &config_toml);
-    assert_eq!(result, Some("custom-provider".to_string()));
-}
 
-#[test]
-fn test_resolve_oss_provider_from_global_config() {
-    let config_toml = ConfigToml {
-        oss_provider: Some("global-provider".to_string()),
-        ..Default::default()
-    };
 
-    let result = resolve_oss_provider(/*explicit_provider*/ None, &config_toml);
-    assert_eq!(result, Some("global-provider".to_string()));
-}
 
-#[test]
-fn test_resolve_oss_provider_none_when_not_configured() {
-    let config_toml = ConfigToml::default();
-    let result = resolve_oss_provider(/*explicit_provider*/ None, &config_toml);
-    assert_eq!(result, None);
-}
-
-#[test]
-fn test_resolve_oss_provider_explicit_overrides_global() {
-    let config_toml = ConfigToml {
-        oss_provider: Some("global-provider".to_string()),
-        ..Default::default()
-    };
-
-    let result = resolve_oss_provider(Some("explicit-provider"), &config_toml);
-    assert_eq!(result, Some("explicit-provider".to_string()));
-}
 
 #[test]
 fn config_toml_deserializes_mcp_oauth_callback_port() {

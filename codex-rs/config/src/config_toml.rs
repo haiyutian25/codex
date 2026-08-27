@@ -31,13 +31,7 @@ use crate::types::Tui;
 use crate::types::UriBasedFileOpener;
 use crate::types::WindowsToml;
 use codex_features::FeaturesToml;
-use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
-use codex_model_provider_info::LEGACY_OLLAMA_CHAT_PROVIDER_ID;
-use codex_model_provider_info::LMSTUDIO_OSS_PROVIDER_ID;
 use codex_model_provider_info::ModelProviderInfo;
-use codex_model_provider_info::OLLAMA_CHAT_PROVIDER_REMOVED_ERROR;
-use codex_model_provider_info::OLLAMA_OSS_PROVIDER_ID;
 use codex_model_provider_info::OPENAI_PROVIDER_ID;
 use codex_protocol::config_types::AutoCompactTokenLimitScope;
 use codex_protocol::config_types::ForcedLoginMethod;
@@ -62,13 +56,7 @@ use serde::Serialize;
 use serde::de::Error as SerdeError;
 use serde_json::Value as JsonValue;
 
-const RESERVED_MODEL_PROVIDER_IDS: [&str; 5] = [
-    AMAZON_BEDROCK_PROVIDER_ID,
-    AMAZON_BEDROCK_RUNTIME_PROVIDER_ID,
-    OPENAI_PROVIDER_ID,
-    OLLAMA_OSS_PROVIDER_ID,
-    LMSTUDIO_OSS_PROVIDER_ID,
-];
+const RESERVED_MODEL_PROVIDER_IDS: [&str; 1] = [OPENAI_PROVIDER_ID];
 
 pub const DEFAULT_PROJECT_DOC_MAX_BYTES: usize = 32 * 1024;
 
@@ -515,8 +503,6 @@ pub struct ConfigToml {
 
     pub experimental_compact_prompt_file: Option<AbsolutePathBuf>,
     pub experimental_use_unified_exec_tool: Option<bool>,
-    /// Preferred OSS provider for local models, e.g. "lmstudio" or "ollama".
-    pub oss_provider: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema)]
@@ -887,12 +873,7 @@ pub fn validate_reserved_model_provider_ids(
 ) -> Result<(), String> {
     let mut conflicts = model_providers
         .keys()
-        .filter(|key| {
-            !matches!(
-                key.as_str(),
-                AMAZON_BEDROCK_PROVIDER_ID | AMAZON_BEDROCK_RUNTIME_PROVIDER_ID
-            ) && RESERVED_MODEL_PROVIDER_IDS.contains(&key.as_str())
-        })
+        .filter(|key| RESERVED_MODEL_PROVIDER_IDS.contains(&key.as_str()))
         .map(|key| format!("`{key}`"))
         .collect::<Vec<_>>();
     conflicts.sort_unstable();
@@ -912,21 +893,10 @@ pub fn validate_model_providers(
 ) -> Result<(), String> {
     validate_reserved_model_provider_ids(model_providers)?;
     for (key, provider) in model_providers {
-        if !matches!(
-            key.as_str(),
-            AMAZON_BEDROCK_PROVIDER_ID | AMAZON_BEDROCK_RUNTIME_PROVIDER_ID
-        ) {
-            if provider.aws.is_some() {
-                return Err(format!(
-                    "model_providers.{key}: provider aws is only supported for \
-`{AMAZON_BEDROCK_PROVIDER_ID}` or `{AMAZON_BEDROCK_RUNTIME_PROVIDER_ID}`"
-                ));
-            }
-            if provider.name.trim().is_empty() {
-                return Err(format!(
-                    "model_providers.{key}: provider name must not be empty"
-                ));
-            }
+        if provider.name.trim().is_empty() {
+            return Err(format!(
+                "model_providers.{key}: provider name must not be empty"
+            ));
         }
         provider
             .validate()
@@ -946,25 +916,7 @@ where
     Ok(model_providers)
 }
 
-#[cfg(test)]
-#[path = "bedrock_runtime_tests.rs"]
-mod bedrock_runtime_tests;
 
-pub fn validate_oss_provider(provider: &str) -> std::io::Result<()> {
-    match provider {
-        LMSTUDIO_OSS_PROVIDER_ID | OLLAMA_OSS_PROVIDER_ID => Ok(()),
-        LEGACY_OLLAMA_CHAT_PROVIDER_ID => Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            OLLAMA_CHAT_PROVIDER_REMOVED_ERROR,
-        )),
-        _ => Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            format!(
-                "Invalid OSS provider '{provider}'. Must be one of: {LMSTUDIO_OSS_PROVIDER_ID}, {OLLAMA_OSS_PROVIDER_ID}"
-            ),
-        )),
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -1019,19 +971,18 @@ mod tests {
     }
 
     #[test]
-    fn amazon_bedrock_auth_command_must_not_be_empty() {
+    fn provider_auth_command_must_not_be_empty() {
         let err = toml::from_str::<ConfigToml>(
             r#"
-[model_providers.amazon-bedrock.auth]
+[model_providers.custom-provider.auth]
 command = "   "
 "#,
         )
-        .expect_err("empty Amazon Bedrock auth command should be rejected");
+        .expect_err("empty provider auth command should be rejected");
 
         assert!(
-            err.to_string().contains(
-                "model_providers.amazon-bedrock: provider auth.command must not be empty"
-            )
+            err.to_string()
+                .contains("model_providers.custom-provider: provider auth.command must not be empty")
         );
     }
 }

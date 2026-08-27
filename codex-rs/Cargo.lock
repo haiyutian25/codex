@@ -2750,23 +2750,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codex-responses-api-proxy"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "codex-process-hardening",
- "ctor 0.6.3",
- "libc",
- "pretty_assertions",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "tiny_http",
- "zeroize",
-]
-
-[[package]]
 name = "codex-rmcp-client"
 version = "0.0.0"
 dependencies = [

@@ -352,35 +352,6 @@
       },
       "type": "object"
     },
-    "AwsAuthRefreshConfig": {
-      "additionalProperties": false,
-      "description": "Command used to refresh AWS credentials for a model provider.",
-      "properties": {
-        "args": {
-          "default": [],
-          "description": "Arguments passed to the refresh command.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "command": {
-          "description": "Executable to invoke directly, without a shell.",
-          "type": "string"
-        },
-        "timeout_ms": {
-          "default": 300000,
-          "description": "Maximum time to wait for the refresh command to complete.",
-          "format": "uint64",
-          "minimum": 1.0,
-          "type": "integer"
-        }
-      },
-      "required": [
-        "command"
-      ],
-      "type": "object"
-    },
     "BrowserUseConfigToml": {
       "additionalProperties": false,
       "properties": {
@@ -599,9 +570,6 @@
               "type": "boolean"
             },
             "background_paginated_rollout_migration": {
-              "type": "boolean"
-            },
-            "bedrock_setup_wizard": {
               "type": "boolean"
             },
             "browser_use": {
@@ -1043,9 +1011,6 @@
         },
         "model_verbosity": {
           "$ref": "#/definitions/Verbosity"
-        },
-        "oss_provider": {
-          "type": "string"
         },
         "personality": {
           "$ref": "#/definitions/Personality"
@@ -2076,29 +2041,6 @@
       ],
       "type": "object"
     },
-    "ModelProviderAwsAuthInfo": {
-      "additionalProperties": false,
-      "description": "AWS SigV4 auth configuration for a model provider.",
-      "properties": {
-        "auth_refresh": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AwsAuthRefreshConfig"
-            }
-          ],
-          "description": "Optional command used to reauthenticate after a refreshable AWS auth failure."
-        },
-        "profile": {
-          "description": "AWS profile name to use. When unset, the AWS SDK default chain decides.",
-          "type": "string"
-        },
-        "region": {
-          "description": "AWS region to use for provider-specific endpoints.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "ModelProviderInfo": {
       "additionalProperties": false,
       "description": "Serializable representation of a provider definition.",
@@ -2110,14 +2052,6 @@
             }
           ],
           "description": "Command-backed bearer-token configuration for this provider."
-        },
-        "aws": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/ModelProviderAwsAuthInfo"
-            }
-          ],
-          "description": "AWS SigV4 auth configuration for this provider."
         },
         "base_url": {
           "description": "Base URL for the provider's OpenAI-compatible API.",
@@ -5754,9 +5688,6 @@
         "background_paginated_rollout_migration": {
           "type": "boolean"
         },
-        "bedrock_setup_wizard": {
-          "type": "boolean"
-        },
         "browser_use": {
           "type": "boolean"
         },
@@ -6391,10 +6322,6 @@
         }
       ],
       "description": "Orchestrator-owned feature settings."
-    },
-    "oss_provider": {
-      "description": "Preferred OSS provider for local models, e.g. \"lmstudio\" or \"ollama\".",
-      "type": "string"
     },
     "otel": {
       "allOf": [

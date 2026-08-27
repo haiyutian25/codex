@@ -7,11 +7,6 @@ use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_mcp::ToolInfo;
 use codex_model_provider::create_model_provider;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_5_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_SOL_MODEL_ID;
-use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
-use codex_model_provider_info::ModelProviderInfo;
 use codex_protocol::AgentPath;
 use codex_protocol::ThreadId;
 use codex_protocol::config_types::WebSearchMode;
@@ -296,10 +291,13 @@ fn use_chatgpt_auth(turn: &mut TurnContext) {
     );
 }
 
-fn use_bedrock_provider(turn: &mut TurnContext) {
-    let provider_info = ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None);
+fn use_custom_provider(turn: &mut TurnContext) {
+    let provider_info = codex_model_provider_info::create_oss_provider_with_base_url(
+        "https://custom-provider.example/v1",
+        codex_model_provider_info::WireApi::Responses,
+    );
     update_config(turn, |config| {
-        config.model_provider_id = AMAZON_BEDROCK_PROVIDER_ID.to_string();
+        config.model_provider_id = "custom-provider".to_string();
         config.model_provider = provider_info.clone();
     });
     turn.provider = create_model_provider(provider_info, turn.auth_manager.clone());
@@ -1348,17 +1346,17 @@ async fn mcp_and_tool_search_follow_direct_and_deferred_tool_exposure() {
         "read_mcp_resource",
     ]);
 
-    let bedrock_namespace_capability = probe_with(
+    let custom_namespace_capability = probe_with(
         |turn| {
             update_turn_settings_for_test(turn, |settings| {
                 Arc::make_mut(&mut settings.model_info).supports_search_tool = true;
             });
-            use_bedrock_provider(turn);
+            use_custom_provider(turn);
         },
         searchable_mcp(),
     )
     .await;
-    bedrock_namespace_capability.assert_visible_contains(&["tool_search"]);
+    custom_namespace_capability.assert_visible_contains(&["tool_search"]);
 
     let enabled = probe_with(
         |turn| {
@@ -2795,13 +2793,13 @@ async fn multi_agent_v2_can_use_configured_tool_namespace() {
 }
 
 #[tokio::test]
-async fn multi_agent_v2_namespace_is_supported_by_bedrock_provider() {
+async fn multi_agent_v2_namespace_is_supported_by_custom_provider() {
     let plan = probe(|turn| {
         set_feature(turn, Feature::MultiAgentV2, /*enabled*/ true);
         update_config(turn, |config| {
             config.multi_agent_v2.tool_namespace = Some("agents".to_string());
         });
-        use_bedrock_provider(turn);
+        use_custom_provider(turn);
     })
     .await;
 
@@ -2819,26 +2817,26 @@ async fn multi_agent_v2_namespace_is_supported_by_bedrock_provider() {
 }
 
 #[tokio::test]
-async fn multi_agent_v2_bedrock_workers_only_delegate_when_model_supports_v2() {
+async fn multi_agent_v2_custom_provider_workers_only_delegate_when_model_supports_v2() {
     for (model, model_multi_agent_version, supports_delegation) in [
         (
-            AMAZON_BEDROCK_GPT_5_6_SOL_MODEL_ID,
+            "gpt-5.6-sol",
             Some(MultiAgentVersion::V2),
             true,
         ),
         (
-            AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID,
+            "gpt-5.6-luna",
             Some(MultiAgentVersion::V1),
             false,
         ),
-        (AMAZON_BEDROCK_GPT_5_5_MODEL_ID, None, false),
+        ("gpt-5.5", None, false),
     ] {
         let plan = probe(|turn| {
             set_feature(turn, Feature::MultiAgentV2, /*enabled*/ true);
             update_config(turn, |config| {
                 config.multi_agent_v2.tool_namespace = Some("agents".to_string());
             });
-            use_bedrock_provider(turn);
+            use_custom_provider(turn);
             update_turn_settings_for_test(turn, |settings| {
                 Arc::make_mut(&mut settings.model_info).slug = model.to_string();
                 Arc::make_mut(&mut settings.model_info).multi_agent_version =
@@ -3005,7 +3003,7 @@ async fn hosted_web_search_and_standalone_image_generation_follow_runtime_gates(
 
     let unsupported_provider = probe_with(
         |turn| {
-            use_bedrock_provider(turn);
+            use_custom_provider(turn);
             update_turn_settings_for_test(turn, |settings| {
                 Arc::make_mut(&mut settings.model_info).input_modalities =
                     vec![InputModality::Image];
@@ -3120,15 +3118,15 @@ async fn hosted_web_search_and_standalone_image_generation_follow_runtime_gates(
     .await;
     standalone_web_search.assert_visible_lacks(&["web_search"]);
 
-    let bedrock_cached_web_search = probe(|turn| {
-        use_bedrock_provider(turn);
+    let custom_cached_web_search = probe(|turn| {
+        use_custom_provider(turn);
         update_turn_settings_for_test(turn, |settings| {
             Arc::make_mut(&mut settings.model_info).web_search_tool_type = WebSearchToolType::Text;
         });
     })
     .await;
     assert_eq!(
-        bedrock_cached_web_search.visible_spec("web_search"),
+        custom_cached_web_search.visible_spec("web_search"),
         &ToolSpec::WebSearch {
             external_web_access: Some(false),
             indexed_web_access: None,
@@ -3139,15 +3137,15 @@ async fn hosted_web_search_and_standalone_image_generation_follow_runtime_gates(
         }
     );
 
-    let bedrock_with_standalone_web_search = probe(|turn| {
+    let custom_with_standalone_web_search = probe(|turn| {
         set_feature(turn, Feature::StandaloneWebSearch, /*enabled*/ true);
         set_web_search_mode(turn, WebSearchMode::Cached);
-        use_bedrock_provider(turn);
+        use_custom_provider(turn);
         update_turn_settings_for_test(turn, |settings| {
             Arc::make_mut(&mut settings.model_info).web_search_tool_type = WebSearchToolType::Text;
         });
     })
     .await;
-    bedrock_with_standalone_web_search.assert_visible_contains(&["web_search"]);
-    bedrock_with_standalone_web_search.assert_visible_lacks(&["web"]);
+    custom_with_standalone_web_search.assert_visible_contains(&["web_search"]);
+    custom_with_standalone_web_search.assert_visible_lacks(&["web"]);
 }

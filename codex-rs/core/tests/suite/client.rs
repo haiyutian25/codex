@@ -18,7 +18,6 @@ use codex_login::AuthKeyringBackendKind;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_login::default_client::originator;
-use codex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
 use codex_model_provider_info::ModelProviderInfo;
 use codex_model_provider_info::WireApi;
 use codex_model_provider_info::built_in_model_providers;
@@ -1460,45 +1459,6 @@ async fn provider_auth_command_recovers_after_initial_resolution_failure() {
     send_provider_auth_request(&server, auth_fixture.auth()).await;
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn amazon_bedrock_proxy_uses_command_auth_and_custom_headers() {
-    skip_if_no_network!();
-
-    let server = MockServer::start().await;
-    let response = mount_sse_once(
-        &server,
-        sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
-    )
-    .await;
-    let auth_fixture = ProviderAuthCommandFixture::new(&["command-token"]).unwrap();
-    let mut provider = built_in_model_providers(/*openai_base_url*/ None)
-        .remove(AMAZON_BEDROCK_PROVIDER_ID)
-        .expect("Amazon Bedrock provider should be built in");
-    provider.base_url = Some(format!("{}/v1", server.uri()));
-    provider.auth = Some(auth_fixture.auth());
-    provider.aws = None;
-    provider
-        .http_headers
-        .get_or_insert_default()
-        .insert("x-some-header".to_string(), "foo".into());
-
-    send_request_with_provider(provider).await;
-
-    let request = response.single_request();
-    assert_eq!(request.path(), "/v1/responses");
-    assert_eq!(
-        request.header("authorization"),
-        Some("Bearer command-token".to_string())
-    );
-    assert_eq!(request.header("x-amz-date"), None);
-    assert_eq!(request.header("x-some-header"), Some("foo".to_string()));
-    assert_eq!(
-        request.header("x-amzn-mantle-client-agent"),
-        Some("codex".to_string())
-    );
-    assert_eq!(request.body_json()["store"], false);
-}
-
 /// Issues one streamed Responses request through a provider configured with command-backed auth.
 ///
 /// The caller owns the server-side assertions, so this helper only validates that the request
@@ -1511,7 +1471,6 @@ async fn send_provider_auth_request(server: &MockServer, auth: ModelProviderAuth
         env_key_instructions: None,
         experimental_bearer_token: None,
         auth: Some(auth),
-        aws: None,
         wire_api: WireApi::Responses,
         query_params: None,
         http_headers: None,
@@ -2998,7 +2957,6 @@ async fn azure_responses_request_does_not_store_and_preserves_prefixed_item_ids(
         env_key_instructions: None,
         experimental_bearer_token: None,
         auth: None,
-        aws: None,
         wire_api: WireApi::Responses,
         query_params: None,
         http_headers: None,
@@ -3622,7 +3580,6 @@ async fn azure_overrides_assign_properties_used_for_responses_url() {
         env_key: Some(EXISTING_ENV_VAR_WITH_NON_EMPTY_VALUE.to_string()),
         experimental_bearer_token: None,
         auth: None,
-        aws: None,
         query_params: Some(std::collections::HashMap::from([(
             "api-version".to_string(),
             "2025-04-01-preview".into(),
@@ -3711,7 +3668,6 @@ async fn env_var_overrides_loaded_auth() {
         env_key_instructions: None,
         experimental_bearer_token: None,
         auth: None,
-        aws: None,
         wire_api: WireApi::Responses,
         http_headers: Some(std::collections::HashMap::from([(
             "Custom-Header".to_string(),

@@ -92,25 +92,14 @@ pub enum ProviderUnauthorizedRecovery {
 }
 
 /// Error returned when a provider cannot construct its app-visible account state.
+///
+/// API-key-only providers always succeed; this type is uninhabited.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ProviderAccountError {
-    MissingChatgptAccountDetails,
-    UnsupportedBedrockApiKeyAuth,
-}
+pub enum ProviderAccountError {}
 
 impl fmt::Display for ProviderAccountError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::MissingChatgptAccountDetails => {
-                write!(f, "plan type is required for chatgpt authentication")
-            }
-            Self::UnsupportedBedrockApiKeyAuth => {
-                write!(
-                    f,
-                    "Bedrock API key auth is only supported by the Amazon Bedrock model provider"
-                )
-            }
-        }
+    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {}
     }
 }
 
@@ -300,7 +289,6 @@ fn provider_uses_first_party_auth_path(provider: &ModelProviderInfo) -> bool {
         && provider.env_key.is_none()
         && provider.experimental_bearer_token.is_none()
         && provider.auth.is_none()
-        && provider.aws.is_none()
 }
 
 /// Creates the default runtime model provider for configured provider metadata.
@@ -518,7 +506,6 @@ mod tests {
             env_key_instructions: None,
             experimental_bearer_token: None,
             auth: None,
-            aws: None,
             wire_api: WireApi::Responses,
             query_params: None,
             http_headers: None,

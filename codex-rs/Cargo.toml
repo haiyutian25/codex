@@ -66,7 +66,6 @@ members = [
     "rollout",
     "rollout-trace",
     "rmcp-client",
-    "responses-api-proxy",
     "response-debug-context",
     "sandboxing",
     "otel",
@@ -185,7 +184,6 @@ codex-process-hardening = { path = "process-hardening" }
 codex-protocol = { path = "protocol" }
 codex-prompts = { path = "prompts" }
 codex-queue-extension = { path = "ext/queue" }
-codex-responses-api-proxy = { path = "responses-api-proxy" }
 codex-response-debug-context = { path = "response-debug-context" }
 codex-rmcp-client = { path = "rmcp-client" }
 codex-rollout = { path = "rollout" }

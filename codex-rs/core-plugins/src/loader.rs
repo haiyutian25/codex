@@ -489,20 +489,6 @@ pub fn curated_plugin_cache_version(plugin_version: &str) -> String {
     }
 }
 
-#[cfg(test)]
-pub(crate) fn refresh_non_curated_plugin_cache(
-    codex_home: &Path,
-    additional_roots: &[AbsolutePathBuf],
-    configured_plugin_keys: &[String],
-) -> Result<bool, String> {
-    collapse_non_curated_cache_refresh(refresh_non_curated_plugin_cache_detailed(
-        codex_home,
-        additional_roots,
-        configured_plugin_keys,
-        PluginGitMode::Automatic,
-    ))
-}
-
 pub(crate) fn refresh_non_curated_plugin_cache_detailed(
     codex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
@@ -516,20 +502,6 @@ pub(crate) fn refresh_non_curated_plugin_cache_detailed(
         NonCuratedCacheRefreshMode::IfVersionChanged,
         git_mode,
     )
-}
-
-#[cfg(test)]
-pub(crate) fn refresh_non_curated_plugin_cache_force_reinstall(
-    codex_home: &Path,
-    additional_roots: &[AbsolutePathBuf],
-    configured_plugin_keys: &[String],
-) -> Result<bool, String> {
-    collapse_non_curated_cache_refresh(refresh_non_curated_plugin_cache_force_reinstall_detailed(
-        codex_home,
-        additional_roots,
-        configured_plugin_keys,
-        PluginGitMode::Automatic,
-    ))
 }
 
 pub(crate) fn refresh_non_curated_plugin_cache_force_reinstall_detailed(
@@ -700,23 +672,6 @@ fn refresh_non_curated_plugin_cache_with_mode(
         cache_refreshed,
         errors: refresh_errors,
     })
-}
-
-#[cfg(test)]
-fn collapse_non_curated_cache_refresh(
-    outcome: Result<NonCuratedCacheRefreshOutcome, String>,
-) -> Result<bool, String> {
-    let outcome = outcome?;
-    if outcome.errors.is_empty() {
-        Ok(outcome.cache_refreshed)
-    } else {
-        Err(outcome
-            .errors
-            .into_iter()
-            .map(|error| error.message)
-            .collect::<Vec<_>>()
-            .join("; "))
-    }
 }
 
 fn is_full_git_sha(value: &str) -> bool {
