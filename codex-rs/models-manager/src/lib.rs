@@ -1,4 +1,5 @@
 pub mod cache;
+pub(crate) mod collaboration_mode_templates;
 pub mod collaboration_mode_presets;
 pub(crate) mod config;
 pub mod manager;

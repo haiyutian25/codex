@@ -64,7 +64,7 @@
 | `codex-experimental-api-macros` | 实验性 API 过程宏 | ✅ 可选 | `codex-rs/codex-experimental-api-macros` | 1 | 310 |
 | `codex-home` | `CODEX_HOME` 目录解析 | 🔧 必需·需适配（指向 App 私有目录 `getFilesDir()/codex`） | `codex-rs/codex-home` | 3 | 227 |
 | `codex-mcp` | MCP 连接管理（作为客户端连接外部 MCP 服务器） | ✅ 可选（在 core 编译图中；配置了 MCP 服务器才启用） | `codex-rs/codex-mcp` | 43 | 20,476 |
-| `codex-collaboration-mode-templates` | 协作模式模板（占位 crate，无实际内容） | 🚫 不需要（占位；若在编译图中保留即可） | `codex-rs/collaboration-mode-templates` | 1 | 2 |
+| `codex-collaboration-mode-templates` | 协作模式模板（Plan/Default 提示词） | ❌ 已删除（模板内联进 `models-manager/templates/`，功能保留） | `codex-rs/collaboration-mode-templates` | 1 | 2 |
 | `codex-config` | 配置系统：config.toml、profiles、覆盖与校验 | ⭐ 必需核心 | `codex-rs/config` | 72 | 25,451 |
 | `codex-connectors` | 连接器运行时（OpenAI 生态第三方应用集成） | ✅ 可选 | `codex-rs/connectors` | 20 | 4,961 |
 | `codex-context-fragments` | 上下文片段类型（附加上下文/标注内容） | ⭐ 必需核心 | `codex-rs/context-fragments` | 4 | 346 |
@@ -4450,8 +4450,8 @@ _No module declarations._
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
 | 🔧 必需·需适配 | 9 | 必需但需 Android 平台改造（见下表） |
 | ✅ 可选功能 | 43 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
-| 🚫 不需要 | 36 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图 |
-| ❌ 已删除/不可用 | 9 | 7 个已删除（含 `ansi-escape`、`v8-poc`）；平台不兼容的仅 `bwrap`、`linux-sandbox` |
+| 🚫 不需要 | 35 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图 |
+| ❌ 已删除/不可用 | 10 | 8 个已删除（含 `ansi-escape`、`v8-poc`、`collaboration-mode-templates`）；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
 ### 目标架构（UniFFI 进程内嵌入，不连接任何桌面端）
 
@@ -4498,7 +4498,7 @@ _No module declarations._
 | 桌面环境相关 | `shell-escalation`、`utils/sleep-inhibitor`、`terminal-detection`、`git-utils`、`git-attribution`、`worktree` | 依赖桌面 shell/终端/git 生态，Android 无对应环境 |
 | 本地模型桌面客户端 | `ollama`、`lmstudio`、`code-mode` 族（4 个） | 依赖桌面本地服务或过重实验运行时 |
 | 遥测 | `analytics`、`otel` | 建议配置关闭 |
-| 其他 | `external-agent-migration`、`collaboration-mode-templates`、`test-binary-support`、`utils/cargo-bin` | 迁移工具/占位/测试专用 |
+| 其他 | `external-agent-migration`、`test-binary-support`、`utils/cargo-bin` | 迁移工具/测试专用 |
 
 > 注：`git-utils`、`terminal-detection`、`ollama`、`lmstudio`、`analytics`、`otel` 等在 core 的编译依赖图内，不能单独删除；运行时自动降级/空转，通过配置关闭，不影响 Android 产物功能。
 
