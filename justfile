@@ -20,10 +20,6 @@ exec *args:
 file-search *args:
     cargo run --bin codex-file-search -- {args}
 
-# Run the standalone code-mode host from source.
-code-mode-host *args:
-    cargo run --bin codex-code-mode-host -- {args}
-
 # Format the justfile, Rust, Bazel/Starlark, Python SDK code, and Python scripts.
 fmt:
     @{{ python }} ../scripts/format.py
@@ -82,16 +78,6 @@ bench *args:
 # Run benchmark targets once to ensure they start successfully.
 bench-smoke:
     just bench -- --test
-
-# Build and run the standalone code-mode host from source using Bazel.
-[no-cd]
-[unix]
-bazel-code-mode-host *args:
-    bazel run //codex-rs/code-mode-host:codex-code-mode-host --run_under="cd $PWD &&" -- "$@"
-
-[windows]
-bazel-code-mode-host *args:
-    bazel run //codex-rs/code-mode-host:codex-code-mode-host --run_under='cd /d "{{ invocation_directory_native() }}" &&' -- @($args | Select-Object -Skip 1)
 
 [no-cd]
 bazel-lock-update:

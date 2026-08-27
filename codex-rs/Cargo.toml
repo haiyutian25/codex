@@ -23,9 +23,7 @@ members = [
     "install-context",
     "codex-backend-openapi-models",
     "code-mode",
-    "code-mode-host",
     "code-mode-protocol",
-    "code-mode-runtime",
     "codex-home",
     "cloud-config",
     "connectors",
@@ -166,7 +164,6 @@ codex-client = { path = "codex-client" }
 codex-cloud-config = { path = "cloud-config" }
 codex-code-mode = { path = "code-mode" }
 codex-code-mode-protocol = { path = "code-mode-protocol" }
-codex-code-mode-runtime = { path = "code-mode-runtime" }
 codex-home = { path = "codex-home" }
 codex-http-client = { path = "http-client" }
 codex-websocket-client = { path = "websocket-client" }
@@ -307,7 +304,6 @@ constant_time_eq = "0.3.1"
 crossbeam-channel = "0.5.15"
 crypto_box = { version = "0.9.1", features = ["seal"] }
 ctor = "0.6.3"
-deno_core_icudata = "0.77.0"
 derive_more = "2"
 diffy = "0.4.2"
 dirs = "6"
@@ -466,7 +462,6 @@ unicode-width = "0.2"
 url = "2"
 urlencoding = "2.1"
 uuid = "1"
-v8 = "=150.4.0"
 vt100 = "0.16.2"
 walkdir = "2.5.0"
 webbrowser = "1.2.2"

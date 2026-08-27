@@ -54,10 +54,10 @@
 | `codex-cloud-tasks` | 云端任务管理 TUI | ❌ 已删除 | `codex-rs/cloud-tasks` | 11 | 5,329 |
 | `codex-cloud-tasks-client` | 云端任务 API 客户端 | ❌ 已删除 | `codex-rs/cloud-tasks-client` | 3 | 1,117 |
 | `codex-cloud-tasks-mock-client` | 云端任务 mock 客户端 | ❌ 已删除 | `codex-rs/cloud-tasks-mock-client` | 2 | 270 |
-| `codex-code-mode` | Code Mode 会话提供方 | 🚫 不需要（实验性功能，V8 运行时过重） | `codex-rs/code-mode` | 30 | 8,635 |
-| `codex-code-mode-host` | Code Mode 宿主进程 | 🚫 不需要 | `codex-rs/code-mode-host` | 28 | 8,125 |
-| `codex-code-mode-protocol` | Code Mode 协议（protobuf） | 🚫 不需要 | `codex-rs/code-mode-protocol` | 18 | 4,332 |
-| `codex-code-mode-runtime` | Code Mode 运行时 | 🚫 不需要 | `codex-rs/code-mode-runtime` | 21 | 7,121 |
+| `codex-code-mode` | Code Mode 会话提供方（接口层） | 🚫 不需要但保留（core/tools/rollout-trace 编译依赖；默认 `DisabledCodeModeSessionProvider`，Android 上永不启用） | `codex-rs/code-mode` | 30 | 8,635 |
+| `codex-code-mode-host` | Code Mode 宿主进程（V8 二进制） | ❌ 已删除（实验性 V8 宿主；连带移除 v8 依赖） | `codex-rs/code-mode-host` | 28 | 8,125 |
+| `codex-code-mode-protocol` | Code Mode 协议（protobuf） | 🚫 不需要但保留（code-mode 接口层的依赖） | `codex-rs/code-mode-protocol` | 18 | 4,332 |
+| `codex-code-mode-runtime` | Code Mode 运行时（V8） | ❌ 已删除（仅 host 使用；连带移除 deno_core_icudata） | `codex-rs/code-mode-runtime` | 21 | 7,121 |
 | `codex-api` | OpenAI Responses API 客户端（SSE/WebSocket 流式） | ⭐ 必需核心（模型调用通道） | `codex-rs/codex-api` | 46 | 15,484 |
 | `codex-backend-openapi-models` | 后端 OpenAPI 数据模型 | ✅ 可选（随 backend-client） | `codex-rs/codex-backend-openapi-models` | 21 | 1,021 |
 | `codex-client` | HTTP 客户端基础：重试、SSE 流、请求遥测 | ⭐ 必需核心 | `codex-rs/codex-client` | 4 | 183 |
@@ -4450,8 +4450,8 @@ _No module declarations._
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
 | 🔧 必需·需适配 | 9 | 必需但需 Android 平台改造（见下表） |
 | ✅ 可选功能 | 43 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
-| 🚫 不需要 | 35 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图 |
-| ❌ 已删除/不可用 | 10 | 8 个已删除（含 `ansi-escape`、`v8-poc`、`collaboration-mode-templates`）；平台不兼容的仅 `bwrap`、`linux-sandbox` |
+| 🚫 不需要 | 33 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图（其中 2 个因 core 编译依赖暂保留） |
+| ❌ 已删除/不可用 | 12 | 10 个已删除（含 `ansi-escape`、`v8-poc`、`collaboration-mode-templates`、`code-mode-host`、`code-mode-runtime`）；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
 ### 目标架构（UniFFI 进程内嵌入，不连接任何桌面端）
 
@@ -4496,7 +4496,7 @@ _No module declarations._
 | CLI 与二进制入口 | `exec`、`utils/cli`、`arg0`、`install-context` | 无 CLI 形态；App 内直接调用库 |
 | 远程/对外服务 ⏸️ | `exec-server`(+protocol/test-support)、`mcp-server`、`utils/readiness` | 单机 Android App 不做远程环境、不对外提供服务。**exec-server 族（3 个）暂保留、不处理** |
 | 桌面环境相关 | `shell-escalation`、`utils/sleep-inhibitor`、`terminal-detection`、`git-utils`、`git-attribution`、`worktree` | 依赖桌面 shell/终端/git 生态，Android 无对应环境 |
-| 本地模型桌面客户端 | `ollama`、`lmstudio`、`code-mode` 族（4 个） | 依赖桌面本地服务或过重实验运行时 |
+| 本地模型桌面客户端 | `ollama`、`lmstudio`、`code-mode`/`code-mode-protocol`（接口层暂留） | 依赖桌面本地服务或过重实验运行时；V8 宿主/运行时已删除 |
 | 遥测 | `analytics`、`otel` | 建议配置关闭 |
 | 其他 | `external-agent-migration`、`test-binary-support`、`utils/cargo-bin` | 迁移工具/测试专用 |
 
