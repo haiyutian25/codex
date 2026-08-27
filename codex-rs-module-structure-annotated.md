@@ -163,7 +163,7 @@
 | `codex-utils-stream-parser` | 流式输出解析 | ⭐ 必需核心 | `codex-rs/utils/stream-parser` | 8 | 1,485 |
 | `codex-utils-string` | 字符串工具 | ⭐ 必需核心 | `codex-rs/utils/string` | 4 | 560 |
 | `codex-utils-template` | 模板渲染 | ⭐ 必需核心 | `codex-rs/utils/template` | 1 | 442 |
-| `codex-v8-poc` | V8 实验占位 | 🚫 不需要（实验占位） | `codex-rs/v8-poc` | 1 | 92 |
+| `codex-v8-poc` | V8 实验占位 | ❌ 已删除（实验占位 crate） | `codex-rs/v8-poc` | 1 | 92 |
 | `codex-websocket-client` | WebSocket 客户端 | ⭐ 必需核心（Responses API 流式通道可能用到） | `codex-rs/websocket-client` | 3 | 1,160 |
 | `codex-workload-identity` | Workload Identity 认证交换 | ✅ 可选（仅该认证模式） | `codex-rs/workload-identity` | 4 | 870 |
 | `codex-worktree` | Git worktree 管理 | 🚫 不需要（Android 无 git） | `codex-rs/worktree` | 6 | 621 |
@@ -4450,8 +4450,8 @@ _No module declarations._
 | ⭐ 必需核心 | 40 | harness 核心链路：智能体循环、工具、上下文、持久化、模型接入、基础 utils |
 | 🔧 必需·需适配 | 9 | 必需但需 Android 平台改造（见下表） |
 | ✅ 可选功能 | 43 | 技能/记忆/钩子/扩展/MCP 客户端等，按需保留或配置关闭 |
-| 🚫 不需要 | 37 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图 |
-| ❌ 已删除/不可用 | 8 | 6 个已删除（含 `ansi-escape`）；平台不兼容的仅 `bwrap`、`linux-sandbox` |
+| 🚫 不需要 | 36 | 桌面/PC 集成导向或 Android 无意义；不进入 UniFFI 构建图 |
+| ❌ 已删除/不可用 | 9 | 7 个已删除（含 `ansi-escape`、`v8-poc`）；平台不兼容的仅 `bwrap`、`linux-sandbox` |
 
 ### 目标架构（UniFFI 进程内嵌入，不连接任何桌面端）
 
@@ -4496,7 +4496,7 @@ _No module declarations._
 | CLI 与二进制入口 | `exec`、`utils/cli`、`arg0`、`install-context` | 无 CLI 形态；App 内直接调用库 |
 | 远程/对外服务 ⏸️ | `exec-server`(+protocol/test-support)、`mcp-server`、`utils/readiness` | 单机 Android App 不做远程环境、不对外提供服务。**exec-server 族（3 个）暂保留、不处理** |
 | 桌面环境相关 | `shell-escalation`、`utils/sleep-inhibitor`、`terminal-detection`、`git-utils`、`git-attribution`、`worktree` | 依赖桌面 shell/终端/git 生态，Android 无对应环境 |
-| 本地模型桌面客户端 | `ollama`、`lmstudio`、`code-mode` 族（4 个）、`v8-poc` | 依赖桌面本地服务或过重实验运行时 |
+| 本地模型桌面客户端 | `ollama`、`lmstudio`、`code-mode` 族（4 个） | 依赖桌面本地服务或过重实验运行时 |
 | 遥测 | `analytics`、`otel` | 建议配置关闭 |
 | 其他 | `external-agent-migration`、`collaboration-mode-templates`、`test-binary-support`、`utils/cargo-bin` | 迁移工具/占位/测试专用 |
 
