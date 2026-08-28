@@ -1,8 +1,0 @@
-﻿cargo :     Checking codex-core v0.0.0 (D:\Codex\codex-rs\core)
-所在位置 C:\Users\Administrator\AppData\Local\Temp\genie-ps-1787880228152-xi0jdb.ps1:558 字符: 23
-+ ...  d:/Codex/codex-rs; cargo check --tests --workspace -j 4 2>&1 | Out-F ...
-+                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (    Checking co...\codex-rs\core):String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 14s
