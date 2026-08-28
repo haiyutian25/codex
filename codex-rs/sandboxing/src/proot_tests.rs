@@ -277,3 +277,110 @@ fn capability_check_rejects_full_disk_profiles() {
         &PermissionProfile::Disabled
     ));
 }
+
+#[test]
+fn readiness_without_config_is_not_configured() {
+    assert_eq!(check_proot_readiness(None), ProotReadiness::NotConfigured);
+    assert!(!ProotReadiness::NotConfigured.is_ready());
+}
+
+#[test]
+fn readiness_is_ready_when_executable_and_rootfs_exist() {
+    let temp = tempfile::tempdir().expect("temp dir");
+    let executable = temp.path().join("proot");
+    std::fs::write(&executable, "#!/bin/sh\n").expect("write executable");
+    make_executable(&executable);
+    let rootfs = temp.path().join("rootfs");
+    std::fs::create_dir_all(&rootfs).expect("create rootfs");
+    let config = ProotConfig::new(
+        AbsolutePathBuf::try_from(executable).expect("absolute executable"),
+        AbsolutePathBuf::try_from(rootfs).expect("absolute rootfs"),
+        None,
+        /*fake_root*/ true,
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+    );
+    assert_eq!(
+        check_proot_readiness(Some(&config)),
+        ProotReadiness::Ready
+    );
+    assert!(ProotReadiness::Ready.is_ready());
+}
+
+#[test]
+fn readiness_reports_missing_executable() {
+    let temp = tempfile::tempdir().expect("temp dir");
+    let rootfs = temp.path().join("rootfs");
+    std::fs::create_dir_all(&rootfs).expect("create rootfs");
+    let config = ProotConfig::new(
+        AbsolutePathBuf::try_from(temp.path().join("no-such-proot")).expect("absolute"),
+        AbsolutePathBuf::try_from(rootfs).expect("absolute rootfs"),
+        None,
+        /*fake_root*/ true,
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+    );
+    assert_eq!(
+        check_proot_readiness(Some(&config)),
+        ProotReadiness::MissingExecutable
+    );
+}
+
+#[test]
+fn readiness_reports_missing_rootfs() {
+    let temp = tempfile::tempdir().expect("temp dir");
+    let executable = temp.path().join("proot");
+    std::fs::write(&executable, "#!/bin/sh\n").expect("write executable");
+    make_executable(&executable);
+    let config = ProotConfig::new(
+        AbsolutePathBuf::try_from(executable).expect("absolute executable"),
+        AbsolutePathBuf::try_from(temp.path().join("no-such-rootfs")).expect("absolute"),
+        None,
+        /*fake_root*/ true,
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+    );
+    assert_eq!(
+        check_proot_readiness(Some(&config)),
+        ProotReadiness::MissingRootfs
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn readiness_rejects_non_executable_file() {
+    use std::os::unix::fs::PermissionsExt;
+    let temp = tempfile::tempdir().expect("temp dir");
+    let executable = temp.path().join("proot");
+    std::fs::write(&executable, "not executable").expect("write file");
+    std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o644))
+        .expect("set permissions");
+    let rootfs = temp.path().join("rootfs");
+    std::fs::create_dir_all(&rootfs).expect("create rootfs");
+    let config = ProotConfig::new(
+        AbsolutePathBuf::try_from(executable).expect("absolute executable"),
+        AbsolutePathBuf::try_from(rootfs).expect("absolute rootfs"),
+        None,
+        /*fake_root*/ true,
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+    );
+    assert_eq!(
+        check_proot_readiness(Some(&config)),
+        ProotReadiness::MissingExecutable
+    );
+}
+
+#[cfg(unix)]
+fn make_executable(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755))
+        .expect("set executable bit");
+}
+
+#[cfg(not(unix))]
+fn make_executable(_path: &Path) {}

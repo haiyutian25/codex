@@ -35,6 +35,8 @@ pub use proot::ProotBind;
 pub use proot::ProotConfig;
 pub use proot::ProotPathMapper;
 pub use proot::ProotPreparationError;
+pub use proot::ProotReadiness;
+pub use proot::check_proot_readiness;
 pub use proot::create_proot_command_args;
 pub use proot::permission_profile_supports_proot_sandbox;
 pub use proot::unsupported_proot_sandbox_reason;

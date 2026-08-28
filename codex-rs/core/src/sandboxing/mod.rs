@@ -207,6 +207,13 @@ impl ExecRequest {
     }
 }
 
+/// Readiness probe for the PRoot backend, mirroring the Windows sandbox
+/// readiness surface. Host apps call this before the first turn to decide
+/// whether sandboxed guest execution is available (executable + rootfs).
+pub fn proot_readiness(config: &crate::config::Config) -> codex_sandboxing::ProotReadiness {
+    codex_sandboxing::check_proot_readiness(config.proot.as_ref())
+}
+
 pub async fn execute_env(
     exec_request: ExecRequest,
     stdout_stream: Option<StdoutStream>,

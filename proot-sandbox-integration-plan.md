@@ -337,3 +337,106 @@ pub enum SandboxType { None, Proot }
 | syscall 兼容个案 | 低 | 按案例升级 proot 构建 |
 | 与旧后端移除合并的回归 | 中 | 分阶段提交，每阶段全工作区测试编译 |
 | 性能不及预期 | 低 | PRoot 固有特性；绑定精简 + `-k` 调优 |
+
+---
+
+## 十二、开发记录（阶段 1-4 实施中解决的关键问题）
+
+### 12.1 关键技术问题与解法
+
+| # | 问题 | 解法 |
+|---|---|---|
+| 1 | **过期快照陷阱**：会话早期的文件读取与磁盘实际不符（多个文件已被先前手术修改），按旧快照编辑会失败或改错 | 全部以重读现状为准修正；编辑前强制重读目标区域 |
+| 2 | **测试平台自适应**：单测需在 Windows 开发机与安卓真机双平台运行 | 宿主路径用 `C:` 前缀构造（`AbsolutePathBuf` 跨平台有效），guest 侧断言用 POSIX 字符串；平台相关断言分离为独立测试 |
+| 3 | **`-0` 独立标志破坏参数配对**：argv 窗口式解析（`--` 后取命令）遇到无值标志会错位 | 解析器跳过已知独立标志（`-0` 等），只对有值选项做配对 |
+| 4 | **能力检查过严**：最初拒绝全盘读配置，但 `workspace_write`（默认配置）含全盘读，导致默认配置被拒 | 只拒全盘写（`has_full_disk_write_access`），全盘读允许优雅降级（guest 只看到绑定路径，宿主其余部分天然不可见） |
+
+### 12.2 保守降级点（已标注 TODO）
+
+| 位置 | 降级行为 | 说明 |
+|---|---|---|
+| `apply_patch.rs::prepare_apply_patch` | `assess_patch_safety` 传 `proot_enabled=false` | 安卓上 apply_patch 自动审批降级为**询问用户**（安全侧）；待 `StepContext` 打通 Config 后接真实值 |
+| `exec-server`（process_sandbox/fs_sandbox） | `select_initial` 传 `false`、transform 传 `proot: None` | PRoot 是 core 侧 argv 包装，不经 exec-server；exec-server 收到的是原生命令 |
+| `unix_escalation.rs` | 同上 | shell 提权链路不走 PRoot 包装 |
+| `env_for_exec_server`（tools/sandboxing.rs） | `proot: None` | 远程执行器自行实施沙箱策略 |
+
+### 12.3 剩余工作（阶段 5，设备就绪后另行安排）
+
+- 真机联调：proot 二进制 + rootfs 实际派生验证
+- shell 探测 guest 化：`tools/runtimes` 的 shell 选择在 Proot 启用时改用 guest 内 `/bin/sh`
+- `-p`/`-n` 端口隔离预留能力的启用评估
+
+---
+
+## 十三、Windows 沙箱注册面全量盘点（PRoot 对齐基准）
+
+> 2026-08-28 全库排查结果。Windows 沙箱从配置到执行共 8 层注册面；PRoot 逐层对齐情况见第十四节。
+
+### 层 1：配置关键词
+- `config/src/types.rs:158-172`——`WindowsSandboxModeToml`（elevated/unelevated）+ `WindowsToml`（`[windows]` 表：`sandbox` + `sandbox_private_desktop`）
+- `config/src/config_toml.rs:499`——`ConfigToml.windows` 字段
+- `config/src/config_requirements.rs`（174-175、800-806、1470-1478、1756-1802 等）——**托管需求**：requirements.toml 可强制沙箱模式
+- `core/config.schema.json`——schema 条目 ×4 组
+
+### 层 2：功能开关（灰度发布）
+- `features/src/lib.rs:349,351`——`Feature::WindowsSandbox`（键 `experimental_windows_sandbox`）、`Feature::WindowsSandboxElevated`（键 `elevated_windows_sandbox`）
+- `core/config/mod.rs:3256-3278`——features 作为配置解析回退来源（`from_features`）
+
+### 层 3：协议类型（对外表面）
+- `protocol/src/config_types.rs:297,308`——`WindowsSandboxLevel`、`WindowsSandboxProxySettingsMode`
+- `protocol/src/environment.rs:36-38`——**`EnvironmentConfig` 携带**沙箱级别（每环境状态）
+- `protocol/src/protocol.rs:527`——**`UpdateTurnContextParams.windows_sandbox_level`**（客户端运行时更新通道）
+
+### 层 4：core 配置解析链
+- `config/mod.rs:3256-3317`——配置 → features 回退 → 托管约束 → mode→level 映射
+- `config/permissions.rs:48-59`——**默认权限档案联动**（Windows+Disabled → 默认只读档案）
+- `config/mod.rs:4336-4358`——运行时变更器；`config/edit.rs:904-958`——配置写回 API
+
+### 层 5：会话/轮次传播
+- `session/session.rs:98-99,308,370`——`SessionConfiguration` 字段 + 更新通道
+- `session/turn_context.rs:217`——`TurnContext` 字段；`session/mod.rs:726`——构造 `EnvironmentConfig` 注入
+- `session/mcp_runtime.rs:45`——**MCP 运行时变更检测**（级别变化触发重建）
+- `session/thread_settings.rs:49`、`review.rs:128,167`——线程/评审传播
+
+### 层 6：执行管道
+- `tools/sandboxing.rs:403-418`——`SandboxAttempt` 字段 + `executor_windows_sandbox_level`（路径约定推断）
+- `file-system/src/lib.rs:339-343`——**`FileSystemSandboxContext`**（exec-server 沙箱上下文）
+- `unified_exec/process_manager.rs:1245-1266`——`WindowsSandboxSpawnRequest`
+- `exec_policy.rs:172,754`——审批启发式；`runtimes/zsh_fork/unix_escalation.rs`（12 处）——提权链路
+
+### 层 7：安装/就绪流程（Windows 独有）
+- `core/src/windows_sandbox.rs:248`——`run_windows_sandbox_setup`（安装编排 + 指标 + 持久化）
+- `app-server-protocol`——**3 个 RPC**：`windowsSandbox/setupStart`、`windowsSandbox/readiness`、`windowsSandbox/setupCompleted`（common.rs:1171-1179,1921；v2/windows_sandbox.rs 类型）
+
+### 层 8：遥测
+- `sandbox_tags.rs`——`windows_elevated` 标签；`turn_metadata`——沙箱标签
+- `windows_sandbox.rs:324-420`——`codex.windows_sandbox.*` 指标族
+
+### 工具注册机制结论
+**沙箱不参与工具注册**。工具经 `ToolRegistry`（registry.rs:265-365，`ToolName → RegisteredTool`）注册；沙箱在执行期由编排器施加（`select_initial → SandboxAttempt → transform`）。已验证 shell 工具与 unified_exec（process_manager.rs:1364 调 `orchestrator.run`）走同一编排器管道——**PRoot 对两者均已覆盖**。
+
+---
+
+## 十四、缺口分析与补齐计划
+
+### 14.1 逐层对齐状态
+
+| 层 | Windows | PRoot 现状 |
+|---|---|---|
+| 1 配置关键词 | ✅ | ✅ `[proot]` 段 + 校验 + schema |
+| 2 功能开关 | ✅ 灰度 | ❌ 无（仅配置驱动） |
+| 3 协议类型 | ✅ EnvironmentConfig + 更新通道 | ⚠️ 缺口 |
+| 4 配置解析链 | ✅ | ✅（无托管约束/无默认档案联动，当前不需要） |
+| 5 会话传播 | ✅ 全链 | ⚠️ 部分（Config 直读，未进 SessionConfiguration/EnvironmentConfig） |
+| 6 执行管道 | ✅ | ✅ 完整（含 unified_exec） |
+| 7 安装/就绪 | ✅ 3 RPC | ❌ 无安装需求，但 **readiness 检查是 App 集成刚需** |
+| 8 遥测 | ✅ | ✅ `proot` 标签 |
+
+### 14.2 补齐计划（按价值排序）
+
+| # | 缺口 | 价值 | 状态 |
+|---|---|---|---|
+| 1 | **PRoot readiness 检查 API**（对标 `windowsSandbox/readiness`）：校验 proot 可执行文件存在/可执行、rootfs 是目录，供安卓 App 启动时探测 | 高——App 集成刚需 | ✅ 已实施：`sandboxing::ProotReadiness`（Ready/NotConfigured/MissingExecutable/MissingRootfs）+ `check_proot_readiness`；core 入口 `core::sandboxing::proot_readiness(&Config)`；5 个单测（unix 含可执行位校验） |
+| 2 | EnvironmentConfig 加 proot 状态 + mcp_runtime 变更检测 | 中——多环境/运行时切换时需要 | 暂缓 |
+| 3 | UpdateTurnContextParams 运行时开关 | 中——App 需运行中开关时 | 暂缓 |
+| 4 | 功能开关 / 托管需求 / 配置写回 | 低——企业功能 | 不做 |

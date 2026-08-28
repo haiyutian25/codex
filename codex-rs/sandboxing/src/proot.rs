@@ -182,6 +182,63 @@ impl ProotPathMapper {
     }
 }
 
+/// Readiness of the PRoot backend, mirroring the Windows sandbox readiness
+/// surface (`WindowsSandboxReadiness`). Host apps probe this before the first
+/// turn to decide whether sandboxed guest execution is available.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ProotReadiness {
+    /// `[proot]` is configured and both the executable and the rootfs exist.
+    Ready,
+    /// No usable `[proot]` configuration (disabled or incomplete); the
+    /// backend will not be selected.
+    NotConfigured,
+    /// Configured, but the proot executable is missing or not a file.
+    MissingExecutable,
+    /// Configured, but the guest rootfs is missing or not a directory.
+    MissingRootfs,
+}
+
+impl ProotReadiness {
+    pub fn is_ready(self) -> bool {
+        self == Self::Ready
+    }
+}
+
+/// Probes the resolved PRoot configuration for runtime readiness.
+///
+/// `None` (backend disabled or incompletely configured) maps to
+/// [`ProotReadiness::NotConfigured`]; otherwise the executable and rootfs are
+/// checked against the filesystem.
+pub fn check_proot_readiness(config: Option<&ProotConfig>) -> ProotReadiness {
+    let Some(config) = config else {
+        return ProotReadiness::NotConfigured;
+    };
+    let executable = config.executable.as_path();
+    if !is_existing_executable(executable) {
+        return ProotReadiness::MissingExecutable;
+    }
+    if !config.rootfs.as_path().is_dir() {
+        return ProotReadiness::MissingRootfs;
+    }
+    ProotReadiness::Ready
+}
+
+fn is_existing_executable(path: &Path) -> bool {
+    let Ok(metadata) = std::fs::metadata(path) else {
+        return false;
+    };
+    if !metadata.is_file() {
+        return false;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        return metadata.permissions().mode() & 0o111 != 0;
+    }
+    #[cfg(not(unix))]
+    true
+}
+
 #[derive(Debug)]
 pub enum ProotPreparationError {
     FileSystem(String),
