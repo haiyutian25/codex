@@ -1,0 +1,73 @@
+﻿cargo :     Checking codex-sandboxing v0.0.0 (D:\Codex\codex-rs\sandboxing)
+所在位置 C:\Users\Administrator\AppData\Local\Temp\genie-ps-1787878962373-cbukmt.ps1:558 字符: 23
++ cd d:/Codex/codex-rs; cargo check -p codex-core 2>&1 | Out-File -Enco ...
++                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (    Checking co...-rs\sandboxing):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    Checking codex-exec-server v0.0.0 (D:\Codex\codex-rs\exec-server)
+    Checking codex-utils-plugins v0.0.0 (D:\Codex\codex-rs\utils\plugins)
+    Checking codex-rmcp-client v0.0.0 (D:\Codex\codex-rs\rmcp-client)
+    Checking codex-apply-patch v0.0.0 (D:\Codex\codex-rs\apply-patch)
+    Checking codex-plugin v0.0.0 (D:\Codex\codex-rs\plugin)
+    Checking codex-connectors v0.0.0 (D:\Codex\codex-rs\connectors)
+    Checking codex-analytics v0.0.0 (D:\Codex\codex-rs\analytics)
+    Checking codex-hooks v0.0.0 (D:\Codex\codex-rs\hooks)
+    Checking codex-tools v0.0.0 (D:\Codex\codex-rs\tools)
+    Checking codex-mcp v0.0.0 (D:\Codex\codex-rs\codex-mcp)
+    Checking codex-extension-api v0.0.0 (D:\Codex\codex-rs\ext\extension-api)
+    Checking codex-core-plugins v0.0.0 (D:\Codex\codex-rs\core-plugins)
+    Checking codex-skills-extension v0.0.0 (D:\Codex\codex-rs\ext\skills)
+    Checking codex-core v0.0.0 (D:\Codex\codex-rs\core)
+error[E0061]: this method takes 5 arguments but 4 arguments were supplied
+   --> core\src\tools\handlers\unified_exec\exec_command.rs:168:38
+    |
+168 |               && SandboxManager::new().select_initial(
+    |  ______________________________________^^^^^^^^^^^^^^-
+169 | |                 turn_environment.permission_profile(),
+170 | |                 SandboxablePreference::Auto,
+171 | |                 turn_environment.config().windows_sandbox_level,
+172 | |                 turn.network.is_some(),
+173 | |             ) != SandboxType::None;
+    | |_____________- argument #5 of type `bool` is missing
+    |
+note: method defined here
+   --> sandboxing\src\manager.rs:316:12
+    |
+316 |     pub fn select_initial(
+    |            ^^^^^^^^^^^^^^
+help: provide the argument
+    |
+168 |             && SandboxManager::new().select_initial(
+...
+172 |                 turn.network.is_some(),
+173 ~                 /* bool */,
+174 ~             ) != SandboxType::None;
+    |
+
+error[E0063]: missing field `proot` in initializer of `tools::sandboxing::SandboxAttempt<'_>`
+  --> core\src\tools\orchestrator.rs:85:45
+   |
+85 |         let attempt_with_network_approval = SandboxAttempt {
+   |                                             ^^^^^^^^^^^^^^ missing `proot`
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+  --> core\src\safety.rs:72:19
+   |
+72 |             match get_platform_sandbox(windows_sandbox_level != WindowsSandboxLevel::Disabled) {
+   |                   ^^^^^^^^^^^^^^^^^^^^-------------------------------------------------------- argument #2 of type
+ `bool` is missing
+   |
+note: function defined here
+  --> sandboxing\src\manager.rs:65:8
+   |
+65 | pub fn get_platform_sandbox(
+   |        ^^^^^^^^^^^^^^^^^^^^
+help: provide the argument
+   |
+72 |             match get_platform_sandbox(windows_sandbox_level != WindowsSandboxLevel::Disabled, /* bool */) {
+   |                                                                                              ++++++++++++
+
+Some errors have detailed explanations: E0061, E0063.
+For more information about an error, try `rustc --explain E0061`.
+error: could not compile `codex-core` (lib) due to 3 previous errors

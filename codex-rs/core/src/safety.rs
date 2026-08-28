@@ -30,6 +30,7 @@ pub fn assess_patch_safety(
     file_system_sandbox_policy: &FileSystemSandboxPolicy,
     cwd: &PathUri,
     windows_sandbox_level: WindowsSandboxLevel,
+    proot_enabled: bool,
 ) -> SafetyCheck {
     if action.is_empty() {
         return SafetyCheck::Reject {
@@ -69,7 +70,10 @@ pub fn assess_patch_safety(
             // Only auto‑approve when we can actually enforce a sandbox. Otherwise
             // fall back to asking the user because the patch may touch arbitrary
             // paths outside the project.
-            match get_platform_sandbox(windows_sandbox_level != WindowsSandboxLevel::Disabled) {
+            match get_platform_sandbox(
+                windows_sandbox_level != WindowsSandboxLevel::Disabled,
+                proot_enabled,
+            ) {
                 Some(_) => SafetyCheck::AutoApprove,
                 None => {
                     if rejects_sandbox_approval {

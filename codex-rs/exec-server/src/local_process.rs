@@ -365,6 +365,9 @@ impl LocalProcess {
             SandboxType::MacosSeatbelt => Some(ProcessSandboxType::MacosSeatbelt),
             SandboxType::LinuxSeccomp => Some(ProcessSandboxType::LinuxSeccomp),
             SandboxType::WindowsRestrictedToken => Some(ProcessSandboxType::WindowsRestrictedToken),
+            // PRoot wrapping happens core-side (argv transformation); the
+            // exec-server never receives this type as a process sandbox.
+            SandboxType::Proot => Some(ProcessSandboxType::None),
         };
 
         let start = Arc::new(ProcessStart);

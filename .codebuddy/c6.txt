@@ -1,0 +1,72 @@
+﻿cargo :     Checking codex-core v0.0.0 (D:\Codex\codex-rs\core)
+所在位置 C:\Users\Administrator\AppData\Local\Temp\genie-ps-1787879995688-wshqca.ps1:558 字符: 23
++ ...  d:/Codex/codex-rs; cargo check --tests --workspace -j 4 2>&1 | Out-F ...
++                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (    Checking co...\codex-rs\core):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    Checking codex-linux-sandbox v0.0.0 (D:\Codex\codex-rs\linux-sandbox)
+error[E0063]: missing field `proot` in initializer of `tools::sandboxing::SandboxAttempt<'_>`
+   --> core\src\tools\runtimes\apply_patch_tests.rs:240:19
+    |
+240 |     let attempt = SandboxAttempt {
+    |                   ^^^^^^^^^^^^^^ missing `proot`
+
+error[E0063]: missing field `proot` in initializer of `tools::sandboxing::SandboxAttempt<'_>`
+   --> core\src\tools\runtimes\apply_patch_tests.rs:309:19
+    |
+309 |     let attempt = SandboxAttempt {
+    |                   ^^^^^^^^^^^^^^ missing `proot`
+
+error[E0063]: missing field `proot` in initializer of `tools::sandboxing::SandboxAttempt<'_>`
+   --> core\src\tools\sandboxing_tests.rs:249:23
+    |
+249 |     let mut attempt = SandboxAttempt {
+    |                       ^^^^^^^^^^^^^^ missing `proot`
+
+error[E0063]: missing field `proot` in initializer of `tools::sandboxing::SandboxAttempt<'_>`
+   --> core\src\tools\sandboxing_tests.rs:320:23
+    |
+320 |     let mut attempt = SandboxAttempt {
+    |                       ^^^^^^^^^^^^^^ missing `proot`
+
+error[E0061]: this function takes 14 arguments but 13 arguments were supplied
+   --> core\src\turn_metadata_tests.rs:417:21
+    |
+417 |         let state = TurnMetadataState::new(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^
+...
+430 |             &model_info_from_slug("gpt-5.4"),
+    |             -------------------------------- argument #13 of type `bool` is missing
+    |
+note: associated function defined here
+   --> core\src\turn_metadata.rs:146:19
+    |
+146 |     pub(crate) fn new(
+    |                   ^^^
+...
+159 |         auto_review_enabled: bool,
+    |         -------------------------
+help: provide the argument
+    |
+417 ~         let state = TurnMetadataState::new(
+418 +             "session-a".to_string(),
+419 +             "thread-a".to_string(),
+420 +             None,
+421 +             Some(parent_thread_id),
+422 +             &SessionSource::SubAgent(subagent_source),
+423 +             None,
+424 +             "turn-a".to_string(),
+425 +             cwd.clone(),
+426 +             &permission_profile,
+427 +             WindowsSandboxLevel::Disabled,
+428 +             false,
+429 +             false,
+430 +             /* bool */,
+431 +             &model_info_from_slug("gpt-5.4"),
+432 ~         );
+    |
+
+Some errors have detailed explanations: E0061, E0063.
+For more information about an error, try `rustc --explain E0061`.
+error: could not compile `codex-core` (lib test) due to 5 previous errors

@@ -15,6 +15,7 @@ use crate::types::ApprovalsReviewer;
 use crate::types::AppsConfigToml;
 use crate::types::AuthCredentialsStoreMode;
 use crate::types::FeedbackConfigToml;
+use crate::types::ProotToml;
 use crate::types::History;
 use crate::types::MarketplaceConfig;
 use crate::types::McpServerConfig;
@@ -496,6 +497,10 @@ pub struct ConfigToml {
     /// Windows-specific configuration.
     #[serde(default)]
     pub windows: Option<WindowsToml>,
+
+    /// PRoot sandbox backend configuration (Android guest rootfs).
+    #[serde(default)]
+    pub proot: Option<ProotToml>,
 
     /// Collection of in-product notices (different from notifications)
     /// See [`crate::types::Notice`] for more details

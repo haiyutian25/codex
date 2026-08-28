@@ -268,6 +268,7 @@ fn new_config(model: Option<String>, arg0_paths: Arg0DispatchPaths) -> anyhow::R
         file_opener: UriBasedFileOpener::VsCode,
         codex_self_exe: arg0_paths.codex_self_exe,
         codex_linux_sandbox_exe: arg0_paths.codex_linux_sandbox_exe,
+        proot: None,
         main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe,
         zsh_path: None,
         model_reasoning_effort: None,

@@ -186,6 +186,7 @@ pub(crate) async fn prepare_exec_request(
         &permissions,
         SandboxablePreference::Require,
         sandbox_context.windows_sandbox_level,
+        /*proot_enabled*/ false,
         params.enforce_managed_network,
     );
     if sandbox == SandboxType::None {
@@ -234,6 +235,7 @@ pub(crate) async fn prepare_exec_request(
             enforce_managed_network: params.enforce_managed_network,
             environment_id: None,
             network: None,
+            proot: None,
             sandbox_policy_cwd,
             codex_linux_sandbox_exe: runtime_paths.codex_linux_sandbox_exe.as_deref(),
             use_legacy_landlock: sandbox_context.use_legacy_landlock,

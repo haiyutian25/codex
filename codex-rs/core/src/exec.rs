@@ -122,12 +122,14 @@ pub enum ExecCapturePolicy {
 fn select_process_exec_tool_sandbox_type(
     permission_profile: &PermissionProfile,
     windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
+    proot_enabled: bool,
     enforce_managed_network: bool,
 ) -> SandboxType {
     SandboxManager::new().select_initial(
         permission_profile,
         SandboxablePreference::Auto,
         windows_sandbox_level,
+        proot_enabled,
         enforce_managed_network,
     )
 }
@@ -296,6 +298,7 @@ pub async fn process_exec_tool_call(
     sandbox_cwd: &AbsolutePathBuf,
     windows_sandbox_workspace_roots: &[AbsolutePathBuf],
     codex_linux_sandbox_exe: &Option<PathBuf>,
+    proot: Option<&codex_sandboxing::ProotConfig>,
     use_legacy_landlock: bool,
     stdout_stream: Option<StdoutStream>,
 ) -> Result<ExecToolCallOutput> {
@@ -305,6 +308,7 @@ pub async fn process_exec_tool_call(
         sandbox_cwd,
         windows_sandbox_workspace_roots,
         codex_linux_sandbox_exe,
+        proot,
         use_legacy_landlock,
     )?;
 
@@ -320,6 +324,7 @@ pub fn build_exec_request(
     sandbox_cwd: &AbsolutePathBuf,
     windows_sandbox_workspace_roots: &[AbsolutePathBuf],
     codex_linux_sandbox_exe: &Option<PathBuf>,
+    proot: Option<&codex_sandboxing::ProotConfig>,
     use_legacy_landlock: bool,
 ) -> Result<ExecRequest> {
     let ExecParams {
@@ -344,6 +349,7 @@ pub fn build_exec_request(
     let sandbox_type = select_process_exec_tool_sandbox_type(
         permission_profile,
         windows_sandbox_level,
+        proot.is_some(),
         enforce_managed_network,
     );
     tracing::debug!("Sandbox type: {sandbox_type:?}");
@@ -387,6 +393,7 @@ pub fn build_exec_request(
             network: network.as_ref(),
             sandbox_policy_cwd: &sandbox_policy_cwd_uri,
             codex_linux_sandbox_exe: codex_linux_sandbox_exe.as_deref(),
+            proot,
             use_legacy_landlock,
             windows_sandbox_level,
             windows_sandbox_private_desktop,

@@ -133,6 +133,7 @@ impl FileSystemSandboxRunner {
             permission_profile,
             SandboxablePreference::Require,
             sandbox_context.windows_sandbox_level,
+            /*proot_enabled*/ false,
             /*has_managed_network_requirements*/ false,
         );
         if sandbox == SandboxType::None {
@@ -162,6 +163,7 @@ impl FileSystemSandboxRunner {
                     network: None,
                     sandbox_policy_cwd: &cwd.uri,
                     codex_linux_sandbox_exe: self.runtime_paths.codex_linux_sandbox_exe.as_deref(),
+                    proot: None,
                     use_legacy_landlock: sandbox_context.use_legacy_landlock,
                     windows_sandbox_level: sandbox_context.windows_sandbox_level,
                     windows_sandbox_private_desktop: sandbox_context

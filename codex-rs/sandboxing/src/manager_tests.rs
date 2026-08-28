@@ -32,6 +32,7 @@ fn danger_full_access_defaults_to_no_sandbox_without_network_requirements() {
         &PermissionProfile::Disabled,
         SandboxablePreference::Auto,
         WindowsSandboxLevel::Disabled,
+        /*proot_enabled*/ false,
         /*has_managed_network_requirements*/ false,
     );
     assert_eq!(sandbox, SandboxType::None);
@@ -41,11 +42,13 @@ fn danger_full_access_defaults_to_no_sandbox_without_network_requirements() {
 fn danger_full_access_uses_platform_sandbox_with_network_requirements() {
     let manager = SandboxManager::new();
     let expected =
-        get_platform_sandbox(/*windows_sandbox_enabled*/ false).unwrap_or(SandboxType::None);
+        get_platform_sandbox(/*windows_sandbox_enabled*/ false, /*proot_enabled*/ false)
+            .unwrap_or(SandboxType::None);
     let sandbox = manager.select_initial(
         &PermissionProfile::Disabled,
         SandboxablePreference::Auto,
         WindowsSandboxLevel::Disabled,
+        /*proot_enabled*/ false,
         /*has_managed_network_requirements*/ true,
     );
     assert_eq!(sandbox, expected);
@@ -55,7 +58,8 @@ fn danger_full_access_uses_platform_sandbox_with_network_requirements() {
 fn restricted_file_system_uses_platform_sandbox_without_managed_network() {
     let manager = SandboxManager::new();
     let expected =
-        get_platform_sandbox(/*windows_sandbox_enabled*/ false).unwrap_or(SandboxType::None);
+        get_platform_sandbox(/*windows_sandbox_enabled*/ false, /*proot_enabled*/ false)
+            .unwrap_or(SandboxType::None);
     let permissions = PermissionProfile::from_runtime_permissions(
         &FileSystemSandboxPolicy::restricted(vec![FileSystemSandboxEntry {
             path: FileSystemPath::Special {
@@ -70,6 +74,7 @@ fn restricted_file_system_uses_platform_sandbox_without_managed_network() {
         &permissions,
         SandboxablePreference::Auto,
         WindowsSandboxLevel::Disabled,
+        /*proot_enabled*/ false,
         /*has_managed_network_requirements*/ false,
     );
     assert_eq!(sandbox, expected);
@@ -104,6 +109,7 @@ fn unsandboxed_transform_preserves_foreign_cwd_and_unrestricted_file_system_poli
             network: None,
             sandbox_policy_cwd: &cwd_uri,
             codex_linux_sandbox_exe: None,
+            proot: None,
             use_legacy_landlock: false,
             windows_sandbox_level: WindowsSandboxLevel::Disabled,
             windows_sandbox_private_desktop: false,
@@ -216,6 +222,7 @@ fn transform_additional_permissions_enable_network_for_external_sandbox() {
             network: None,
             sandbox_policy_cwd: &cwd_uri,
             codex_linux_sandbox_exe: None,
+            proot: None,
             use_legacy_landlock: false,
             windows_sandbox_level: WindowsSandboxLevel::Disabled,
             windows_sandbox_private_desktop: false,
@@ -287,6 +294,7 @@ fn transform_additional_permissions_preserves_denied_entries() {
             network: None,
             sandbox_policy_cwd: &cwd_uri,
             codex_linux_sandbox_exe: None,
+            proot: None,
             use_legacy_landlock: false,
             windows_sandbox_level: WindowsSandboxLevel::Disabled,
             windows_sandbox_private_desktop: false,
@@ -587,6 +595,7 @@ fn transform_for_direct_spawn_windows_materializes_inner_helper() {
                     network: None,
                     sandbox_policy_cwd: &cwd_uri,
                     codex_linux_sandbox_exe: None,
+                    proot: None,
                     use_legacy_landlock: false,
                     windows_sandbox_level: WindowsSandboxLevel::Elevated,
                     windows_sandbox_private_desktop: false,

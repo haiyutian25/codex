@@ -921,6 +921,10 @@ pub struct Config {
     /// When this program is invoked, arg0 will be set to `codex-linux-sandbox`.
     pub codex_linux_sandbox_exe: Option<PathBuf>,
 
+    /// Resolved PRoot sandbox backend configuration (`[proot]` section).
+    /// Present only when enabled and fully specified (executable + rootfs).
+    pub proot: Option<codex_sandboxing::ProotConfig>,
+
     /// Path to the `codex-execve-wrapper` executable used for shell
     /// escalation. This cannot be set in the config file: it must be set in
     /// code via [`ConfigOverrides`].
@@ -3312,6 +3316,7 @@ impl Config {
             Some(WindowsSandboxModeToml::Unelevated) => WindowsSandboxLevel::RestrictedToken,
             None => WindowsSandboxLevel::Disabled,
         };
+        let proot = resolve_proot_config(&cfg, &mut startup_warnings);
         let persisted_permission_profile_id = if sandbox_mode.is_some()
             || permission_profile.is_some()
             || default_permissions_override.is_some()
@@ -4159,6 +4164,7 @@ impl Config {
             file_opener: cfg.file_opener.unwrap_or(UriBasedFileOpener::VsCode),
             codex_self_exe,
             codex_linux_sandbox_exe,
+            proot,
             main_execve_wrapper_exe,
             zsh_path,
 
@@ -4668,6 +4674,77 @@ pub fn find_codex_home() -> std::io::Result<AbsolutePathBuf> {
 /// that the directory exists.
 pub fn log_dir(cfg: &Config) -> std::io::Result<PathBuf> {
     Ok(cfg.log_dir.clone())
+}
+
+/// Resolves the `[proot]` section into a runtime PRoot sandbox configuration.
+///
+/// Returns `None` (with a startup warning where appropriate) when the backend
+/// is disabled or incompletely specified; the sandbox selection then falls
+/// back to "no platform sandbox" on non-Android hosts.
+fn resolve_proot_config(
+    cfg: &ConfigToml,
+    startup_warnings: &mut Vec<String>,
+) -> Option<codex_sandboxing::ProotConfig> {
+    use codex_sandboxing::DEFAULT_PROOT_PLATFORM_BINDS;
+    use codex_sandboxing::ProotBind;
+    use codex_sandboxing::ProotConfig;
+
+    let proot_toml = cfg.proot.as_ref()?;
+    if !proot_toml.enabled {
+        return None;
+    }
+    let Some(executable) = proot_toml.executable.as_ref() else {
+        startup_warnings.push(
+            "[proot] is enabled but `executable` is missing; PRoot sandbox disabled".to_string(),
+        );
+        return None;
+    };
+    let Some(rootfs) = proot_toml.rootfs.as_ref() else {
+        startup_warnings.push(
+            "[proot] is enabled but `rootfs` is missing; PRoot sandbox disabled".to_string(),
+        );
+        return None;
+    };
+    let Ok(executable) = AbsolutePathBuf::try_from(executable.clone()) else {
+        startup_warnings.push(
+            "[proot].executable is not an absolute path; PRoot sandbox disabled".to_string(),
+        );
+        return None;
+    };
+    let Ok(rootfs) = AbsolutePathBuf::try_from(rootfs.clone()) else {
+        startup_warnings.push(
+            "[proot].rootfs is not an absolute path; PRoot sandbox disabled".to_string(),
+        );
+        return None;
+    };
+    let mut static_binds = Vec::new();
+    for bind in &proot_toml.binds {
+        match AbsolutePathBuf::try_from(bind.host.clone()) {
+            Ok(host) => static_binds.push(ProotBind {
+                host,
+                guest: Some(bind.guest.clone()),
+                dereference: true,
+            }),
+            Err(_) => startup_warnings.push(format!(
+                "[proot].binds entry host `{}` is not an absolute path; bind skipped",
+                bind.host.display()
+            )),
+        }
+    }
+    Some(ProotConfig::new(
+        executable,
+        rootfs,
+        proot_toml.kernel_release.clone(),
+        proot_toml.fake_root.unwrap_or(true),
+        proot_toml.platform_binds.clone().unwrap_or_else(|| {
+            DEFAULT_PROOT_PLATFORM_BINDS
+                .iter()
+                .map(|bind| bind.to_string())
+                .collect()
+        }),
+        proot_toml.extra_flags.clone().unwrap_or_default(),
+        static_binds,
+    ))
 }
 
 #[cfg(test)]

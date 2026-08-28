@@ -32,6 +32,9 @@ pub(crate) fn prepare_apply_patch(
         file_system_sandbox_policy,
         &action.cwd,
         turn_environment.config().windows_sandbox_level,
+        // TODO(proot): plumb the host Config's PRoot state here; until then
+        // patch auto-approval conservatively treats PRoot as unavailable.
+        /*proot_enabled*/ false,
     ) {
         SafetyCheck::AutoApprove => Ok(ApplyPatchRuntimeInvocation {
             action,

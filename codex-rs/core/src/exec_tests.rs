@@ -370,6 +370,7 @@ async fn process_exec_tool_call_preserves_full_buffer_capture_policy() -> Result
         &cwd,
         std::slice::from_ref(&cwd),
         &None,
+        /*proot*/ None,
         /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
     )
@@ -1032,8 +1033,11 @@ fn windows_elevated_rejects_reopened_writable_descendants() {
 
 #[test]
 fn process_exec_tool_call_uses_platform_sandbox_for_network_only_restrictions() {
-    let expected = codex_sandboxing::get_platform_sandbox(/*windows_sandbox_enabled*/ false)
-        .unwrap_or(SandboxType::None);
+    let expected = codex_sandboxing::get_platform_sandbox(
+        /*windows_sandbox_enabled*/ false,
+        /*proot_enabled*/ false,
+    )
+    .unwrap_or(SandboxType::None);
 
     assert_eq!(
         select_process_exec_tool_sandbox_type(
@@ -1042,6 +1046,7 @@ fn process_exec_tool_call_uses_platform_sandbox_for_network_only_restrictions() 
                 NetworkSandboxPolicy::Restricted,
             ),
             codex_protocol::config_types::WindowsSandboxLevel::Disabled,
+            /*proot_enabled*/ false,
             /*enforce_managed_network*/ false,
         ),
         expected
@@ -1074,6 +1079,7 @@ fn build_exec_request_preserves_windows_workspace_roots() -> Result<()> {
         &cwd,
         workspace_roots.as_slice(),
         &None,
+        /*proot*/ None,
         /*use_legacy_landlock*/ false,
     )?;
 
@@ -1193,6 +1199,7 @@ async fn process_exec_tool_call_respects_cancellation_token() -> Result<()> {
             &cwd,
             std::slice::from_ref(&cwd),
             &None,
+            /*proot*/ None,
             /*use_legacy_landlock*/ false,
             /*stdout_stream*/ None,
         ),
@@ -1274,6 +1281,7 @@ while :; do sleep 1; done"#
             &cwd,
             std::slice::from_ref(&cwd),
             &None,
+            /*proot*/ None,
             /*use_legacy_landlock*/ false,
             /*stdout_stream*/ None,
         ),

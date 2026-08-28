@@ -4,6 +4,7 @@ mod denial;
 pub mod landlock;
 mod manager;
 pub mod policy_transforms;
+pub mod proot;
 #[cfg(target_os = "macos")]
 pub mod seatbelt;
 mod spawn;
@@ -28,6 +29,15 @@ pub use manager::SandboxablePreference;
 pub use manager::compatibility_sandbox_policy_for_permission_profile;
 pub use manager::get_platform_sandbox;
 pub use manager::with_managed_mitm_ca_readable_root;
+pub use proot::DEFAULT_PROOT_PLATFORM_BINDS;
+pub use proot::CreateProotCommandArgsParams;
+pub use proot::ProotBind;
+pub use proot::ProotConfig;
+pub use proot::ProotPathMapper;
+pub use proot::ProotPreparationError;
+pub use proot::create_proot_command_args;
+pub use proot::permission_profile_supports_proot_sandbox;
+pub use proot::unsupported_proot_sandbox_reason;
 pub use spawn::SpawnRequest;
 pub use spawn::WindowsSandboxSpawnRequest;
 pub use spawn::spawn_process;
@@ -66,6 +76,9 @@ impl From<SandboxTransformError> for CodexErr {
                 CodexErr::LandlockSandboxExecutableNotProvided
             }
             SandboxTransformError::EnvironmentNetworkProxy(message) => {
+                CodexErr::UnsupportedOperation(message)
+            }
+            SandboxTransformError::ProotPreparation(message) => {
                 CodexErr::UnsupportedOperation(message)
             }
             #[cfg(target_os = "macos")]

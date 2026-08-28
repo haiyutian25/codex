@@ -48,6 +48,7 @@ pub enum SandboxViolationEvent {
 pub enum SandboxViolationBackend {
     LinuxSandbox,
     ManagedNetworkProxy,
+    Proot,
     Seatbelt,
     WindowsSandbox,
 }
@@ -57,6 +58,7 @@ impl SandboxViolationBackend {
         match self {
             Self::LinuxSandbox => "linux_sandbox",
             Self::ManagedNetworkProxy => "managed_network_proxy",
+            Self::Proot => "proot",
             Self::Seatbelt => "seatbelt",
             Self::WindowsSandbox => "windows_sandbox",
         }
@@ -142,6 +144,7 @@ fn classify_filesystem_sandbox_violation(
         SandboxType::None => return None,
         SandboxType::MacosSeatbelt => SandboxViolationBackend::Seatbelt,
         SandboxType::LinuxSeccomp => SandboxViolationBackend::LinuxSandbox,
+        SandboxType::Proot => SandboxViolationBackend::Proot,
         SandboxType::WindowsRestrictedToken => SandboxViolationBackend::WindowsSandbox,
     };
 

@@ -126,6 +126,7 @@ pub(super) async fn spawn_review_thread(
         parent_turn_context.cwd.clone(),
         &parent_turn_context.permission_profile(),
         parent_turn_context.windows_sandbox_level,
+        per_turn_config.proot.is_some(),
         parent_turn_context.network.is_some(),
         auto_review_enabled,
         &model_info,

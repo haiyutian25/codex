@@ -193,6 +193,7 @@ async fn run_cmd_result_with_permission_profile_for_cwd(
         &sandbox_cwd,
         std::slice::from_ref(&sandbox_cwd),
         &codex_linux_sandbox_exe,
+        /*proot*/ None,
         use_legacy_landlock,
         /*stdout_stream*/ None,
     )
@@ -532,6 +533,7 @@ async fn assert_network_blocked(cmd: &[&str]) {
         &sandbox_cwd,
         std::slice::from_ref(&sandbox_cwd),
         &codex_linux_sandbox_exe,
+        /*proot*/ None,
         /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
     )

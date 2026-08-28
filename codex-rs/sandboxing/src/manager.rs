@@ -39,6 +39,8 @@ pub enum SandboxType {
     MacosSeatbelt,
     LinuxSeccomp,
     WindowsRestrictedToken,
+    /// PRoot guest backend for Android apps shipping a Linux rootfs.
+    Proot,
 }
 
 impl SandboxType {
@@ -48,6 +50,7 @@ impl SandboxType {
             SandboxType::MacosSeatbelt => "seatbelt",
             SandboxType::LinuxSeccomp => "seccomp",
             SandboxType::WindowsRestrictedToken => "windows_sandbox",
+            SandboxType::Proot => "proot",
         }
     }
 }
@@ -59,7 +62,10 @@ pub enum SandboxablePreference {
     Forbid,
 }
 
-pub fn get_platform_sandbox(windows_sandbox_enabled: bool) -> Option<SandboxType> {
+pub fn get_platform_sandbox(
+    windows_sandbox_enabled: bool,
+    proot_enabled: bool,
+) -> Option<SandboxType> {
     if cfg!(target_os = "macos") {
         Some(SandboxType::MacosSeatbelt)
     } else if cfg!(target_os = "linux") {
@@ -67,6 +73,12 @@ pub fn get_platform_sandbox(windows_sandbox_enabled: bool) -> Option<SandboxType
     } else if cfg!(target_os = "windows") {
         if windows_sandbox_enabled {
             Some(SandboxType::WindowsRestrictedToken)
+        } else {
+            None
+        }
+    } else if cfg!(target_os = "android") {
+        if proot_enabled {
+            Some(SandboxType::Proot)
         } else {
             None
         }
@@ -141,6 +153,8 @@ pub struct SandboxTransformRequest<'a> {
     pub network: Option<&'a NetworkProxy>,
     pub sandbox_policy_cwd: &'a PathUri,
     pub codex_linux_sandbox_exe: Option<&'a Path>,
+    /// PRoot backend configuration; required when `sandbox` is [`SandboxType::Proot`].
+    pub proot: Option<&'a crate::proot::ProotConfig>,
     // TODO(anp): Reconcile these backend inputs with the supplied sandbox context
     // (TurnEnvironment::sandbox_context for turns) so selection shares its authority.
     pub use_legacy_landlock: bool,
@@ -211,6 +225,7 @@ pub enum SandboxTransformError {
     },
     MissingLinuxSandboxExecutable,
     EnvironmentNetworkProxy(String),
+    ProotPreparation(String),
     #[cfg(target_os = "macos")]
     SeatbeltPreparation(String),
     #[cfg(target_os = "linux")]
@@ -240,6 +255,9 @@ impl std::fmt::Display for SandboxTransformError {
             Self::EnvironmentNetworkProxy(err) => {
                 write!(f, "failed to prepare environment network proxy: {err}")
             }
+            Self::ProotPreparation(err) => {
+                write!(f, "failed to prepare PRoot sandbox: {err}")
+            }
             #[cfg(target_os = "macos")]
             Self::SeatbeltPreparation(err) => {
                 write!(f, "failed to prepare Seatbelt sandbox: {err}")
@@ -263,6 +281,7 @@ impl std::error::Error for SandboxTransformError {
             | Self::InvalidSandboxPolicyCwd { source, .. } => Some(source),
             Self::MissingLinuxSandboxExecutable => None,
             Self::EnvironmentNetworkProxy(_) => None,
+            Self::ProotPreparation(_) => None,
             #[cfg(target_os = "macos")]
             Self::SeatbeltPreparation(_) => None,
             #[cfg(target_os = "linux")]
@@ -299,11 +318,15 @@ impl SandboxManager {
         permission_profile: &PermissionProfile,
         pref: SandboxablePreference,
         windows_sandbox_level: WindowsSandboxLevel,
+        proot_enabled: bool,
         has_managed_network_requirements: bool,
     ) -> SandboxType {
         if self.should_sandbox(permission_profile, pref, has_managed_network_requirements) {
-            get_platform_sandbox(windows_sandbox_level != WindowsSandboxLevel::Disabled)
-                .unwrap_or(SandboxType::None)
+            get_platform_sandbox(
+                windows_sandbox_level != WindowsSandboxLevel::Disabled,
+                proot_enabled,
+            )
+            .unwrap_or(SandboxType::None)
         } else {
             SandboxType::None
         }
@@ -345,6 +368,7 @@ impl SandboxManager {
             network,
             sandbox_policy_cwd,
             codex_linux_sandbox_exe,
+            proot,
             use_legacy_landlock,
             windows_sandbox_level,
             windows_sandbox_private_desktop,
@@ -453,6 +477,38 @@ impl SandboxManager {
                     None,
                     Some(pending_sandboxed_request?),
                 )
+            }
+            SandboxType::Proot => {
+                use crate::proot::CreateProotCommandArgsParams;
+                use crate::proot::create_proot_command_args;
+
+                let proot_config = proot.ok_or_else(|| {
+                    SandboxTransformError::ProotPreparation(
+                        "missing PRoot configuration for Proot sandbox".to_string(),
+                    )
+                })?;
+                let pending = pending_sandboxed_request?;
+                let (file_system_sandbox_policy, _network_sandbox_policy) = pending
+                    .effective_permission_profile
+                    .to_runtime_permissions();
+                let mut args = create_proot_command_args(CreateProotCommandArgsParams {
+                    command: os_argv_to_strings(argv),
+                    file_system_sandbox_policy: &file_system_sandbox_policy,
+                    sandbox_policy_cwd: pending.native_sandbox_policy_cwd.as_path(),
+                    config: proot_config,
+                })
+                .map_err(|err| SandboxTransformError::ProotPreparation(err.to_string()))?;
+                let mut full_command = Vec::with_capacity(1 + args.len());
+                full_command.push(
+                    proot_config
+                        .executable()
+                        .as_path()
+                        .as_os_str()
+                        .to_string_lossy()
+                        .into_owned(),
+                );
+                full_command.append(&mut args);
+                (full_command, None, Some(pending))
             }
             #[cfg(not(target_os = "windows"))]
             SandboxType::WindowsRestrictedToken => (

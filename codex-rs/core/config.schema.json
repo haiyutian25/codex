@@ -2933,6 +2933,75 @@
       },
       "type": "object"
     },
+    "ProotBindToml": {
+      "additionalProperties": false,
+      "description": "A static host→guest bind for the PRoot sandbox backend.",
+      "properties": {
+        "guest": {
+          "description": "Guest location for the bind (e.g. `/workspace`).",
+          "type": "string"
+        },
+        "host": {
+          "description": "Absolute host path to bind into the guest.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "guest",
+        "host"
+      ],
+      "type": "object"
+    },
+    "ProotToml": {
+      "additionalProperties": false,
+      "description": "PRoot sandbox backend configuration (Android apps shipping a Linux rootfs).",
+      "properties": {
+        "binds": {
+          "default": [],
+          "description": "Static binds applied to every sandboxed command.",
+          "items": {
+            "$ref": "#/definitions/ProotBindToml"
+          },
+          "type": "array"
+        },
+        "enabled": {
+          "default": false,
+          "description": "Master switch. Defaults to `false`; Android app deployments set `true`.",
+          "type": "boolean"
+        },
+        "executable": {
+          "description": "Absolute path to the proot executable (provided by the host app at runtime; Codex never bundles or discovers it).",
+          "type": "string"
+        },
+        "extra_flags": {
+          "description": "Extra proot flags passed verbatim (fork-specific options such as `--link2symlinks`).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "fake_root": {
+          "description": "Pass `-0` to fake root identity inside the guest. Defaults to `true`.",
+          "type": "boolean"
+        },
+        "kernel_release": {
+          "description": "Value for proot's `-k` (fake kernel release), e.g. `\"6.1.0\"`.",
+          "type": "string"
+        },
+        "platform_binds": {
+          "description": "Platform binds always mounted (defaults to `/proc`, `/dev`, `/tmp`).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rootfs": {
+          "description": "Absolute path to the guest rootfs.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "RawMcpServerConfig": {
       "additionalProperties": false,
       "description": "Raw MCP config shape used for deserialization and supported-field JSON Schema generation.\n\nFields that are accepted only to produce targeted validation errors should be skipped in the generated schema.\n\nKeep `TryFrom<RawMcpServerConfig> for McpServerConfig` exhaustively destructuring this struct so new TOML fields cannot be added here without updating the validation/mapping logic that produces [`McpServerConfig`].",
@@ -6399,6 +6468,15 @@
         "$ref": "#/definitions/ProjectConfig"
       },
       "type": "object"
+    },
+    "proot": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ProotToml"
+        }
+      ],
+      "default": null,
+      "description": "PRoot sandbox backend configuration (Android guest rootfs)."
     },
     "realtime": {
       "allOf": [

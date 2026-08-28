@@ -749,6 +749,7 @@ impl Session {
             cwd.clone(),
             &permission_profile,
             session_configuration.windows_sandbox_level,
+            per_turn_config.proot.is_some(),
             network.is_some(),
             auto_review_enabled,
             model_info,

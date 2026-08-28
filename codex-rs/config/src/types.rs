@@ -20,6 +20,7 @@ pub use codex_protocol::config_types::Personality;
 pub use codex_protocol::config_types::ServiceTier;
 pub use codex_protocol::config_types::WebSearchMode;
 use codex_utils_absolute_path::AbsolutePathBuf;
+use std::path::PathBuf;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fmt;
@@ -168,6 +169,42 @@ pub struct WindowsToml {
     /// Defaults to `true`. Set to `false` to launch the final sandboxed child
     /// process on `Winsta0\\Default` instead of a private desktop.
     pub sandbox_private_desktop: Option<bool>,
+}
+
+/// A static host→guest bind for the PRoot sandbox backend.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct ProotBindToml {
+    /// Absolute host path to bind into the guest.
+    pub host: PathBuf,
+    /// Guest location for the bind (e.g. `/workspace`).
+    pub guest: String,
+}
+
+/// PRoot sandbox backend configuration (Android apps shipping a Linux rootfs).
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct ProotToml {
+    /// Master switch. Defaults to `false`; Android app deployments set `true`.
+    #[serde(default)]
+    pub enabled: bool,
+    /// Absolute path to the proot executable (provided by the host app at
+    /// runtime; Codex never bundles or discovers it).
+    pub executable: Option<PathBuf>,
+    /// Absolute path to the guest rootfs.
+    pub rootfs: Option<PathBuf>,
+    /// Value for proot's `-k` (fake kernel release), e.g. `"6.1.0"`.
+    pub kernel_release: Option<String>,
+    /// Pass `-0` to fake root identity inside the guest. Defaults to `true`.
+    pub fake_root: Option<bool>,
+    /// Platform binds always mounted (defaults to `/proc`, `/dev`, `/tmp`).
+    pub platform_binds: Option<Vec<String>>,
+    /// Extra proot flags passed verbatim (fork-specific options such as
+    /// `--link2symlinks`).
+    pub extra_flags: Option<Vec<String>>,
+    /// Static binds applied to every sandboxed command.
+    #[serde(default)]
+    pub binds: Vec<ProotBindToml>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, JsonSchema)]

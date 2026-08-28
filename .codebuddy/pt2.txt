@@ -1,0 +1,21 @@
+﻿cargo :    Compiling codex-sandboxing v0.0.0 (D:\Codex\codex-rs\sandboxing)
+所在位置 C:\Users\Administrator\AppData\Local\Temp\genie-ps-1787877643368-4e8176.ps1:558 字符: 23
++ ...  d:/Codex/codex-rs; cargo test -p codex-sandboxing proot 2>&1 | Out-F ...
++                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (   Compiling co...-rs\sandboxing):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.65s
+     Running unittests src\lib.rs (target\debug\deps\codex_sandboxing-bcef7a6b468a323c.exe)
+
+running 7 tests
+test proot::tests::bind_argument_renders_identity_guest_and_no_dereference_forms ... ok
+test proot::tests::path_mapper_translates_longest_prefix_and_reverses ... ok
+test proot::tests::capability_check_rejects_full_disk_profiles ... ok
+test proot::tests::unreadable_root_conflicting_with_cwd_bind_is_rejected ... ok
+test proot::tests::static_bind_translates_cwd_into_guest_namespace ... ok
+test proot::tests::creates_basic_proot_invocation_with_identity_workspace_bind ... ok
+test proot::tests::extra_flags_are_passed_through_before_the_command ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 51 filtered out; finished in 0.01s
+

@@ -8,6 +8,7 @@ use std::path::Path;
 pub(crate) fn permission_profile_sandbox_tag(
     profile: &PermissionProfile,
     windows_sandbox_level: WindowsSandboxLevel,
+    proot_enabled: bool,
     enforce_managed_network: bool,
 ) -> &'static str {
     match profile {
@@ -32,9 +33,12 @@ pub(crate) fn permission_profile_sandbox_tag(
         return "windows_elevated";
     }
 
-    get_platform_sandbox(windows_sandbox_level != WindowsSandboxLevel::Disabled)
-        .map(SandboxType::as_metric_tag)
-        .unwrap_or("none")
+    get_platform_sandbox(
+        windows_sandbox_level != WindowsSandboxLevel::Disabled,
+        proot_enabled,
+    )
+    .map(SandboxType::as_metric_tag)
+    .unwrap_or("none")
 }
 
 pub(crate) fn permission_profile_policy_tag(

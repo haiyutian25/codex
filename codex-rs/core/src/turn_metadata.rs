@@ -154,6 +154,7 @@ impl TurnMetadataState {
         cwd: AbsolutePathBuf,
         permission_profile: &PermissionProfile,
         windows_sandbox_level: WindowsSandboxLevel,
+        proot_enabled: bool,
         enforce_managed_network: bool,
         auto_review_enabled: bool,
         model_info: &ModelInfo,
@@ -163,6 +164,7 @@ impl TurnMetadataState {
             permission_profile_sandbox_tag(
                 permission_profile,
                 windows_sandbox_level,
+                proot_enabled,
                 enforce_managed_network,
             )
             .to_string(),

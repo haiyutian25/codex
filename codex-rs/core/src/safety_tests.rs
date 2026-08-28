@@ -86,7 +86,8 @@ fn external_sandbox_auto_approves_in_on_request() {
             &permission_profile,
             &file_system_sandbox_policy,
             &cwd_uri,
-            WindowsSandboxLevel::Disabled
+            WindowsSandboxLevel::Disabled,
+            /*proot_enabled*/ false
         ),
         SafetyCheck::AutoApprove
     );
@@ -117,6 +118,7 @@ fn granular_with_all_flags_true_matches_on_request_for_out_of_root_patch() {
             &file_system_sandbox_policy,
             &cwd_uri,
             WindowsSandboxLevel::Disabled,
+            /*proot_enabled*/ false,
         ),
         SafetyCheck::AskUser,
     );
@@ -134,6 +136,7 @@ fn granular_with_all_flags_true_matches_on_request_for_out_of_root_patch() {
             &file_system_sandbox_policy,
             &cwd_uri,
             WindowsSandboxLevel::Disabled,
+            /*proot_enabled*/ false,
         ),
         SafetyCheck::AskUser,
     );
@@ -170,6 +173,7 @@ fn granular_sandbox_approval_false_rejects_out_of_root_patch() {
             &file_system_sandbox_policy,
             &cwd_uri,
             WindowsSandboxLevel::Disabled,
+            /*proot_enabled*/ false,
         ),
         SafetyCheck::Reject {
             reason: PATCH_REJECTED_OUTSIDE_PROJECT_REASON.to_string(),
@@ -201,6 +205,7 @@ fn read_only_policy_rejects_patch_with_read_only_reason() {
             &file_system_sandbox_policy,
             &cwd_uri,
             WindowsSandboxLevel::Disabled,
+            /*proot_enabled*/ false,
         ),
         SafetyCheck::Reject {
             reason: PATCH_REJECTED_READ_ONLY_REASON.to_string(),
@@ -251,6 +256,7 @@ fn explicit_unreadable_paths_prevent_auto_approval_for_external_sandbox() {
             &file_system_sandbox_policy,
             &cwd_uri,
             WindowsSandboxLevel::Disabled,
+            /*proot_enabled*/ false,
         ),
         SafetyCheck::AskUser,
     );
@@ -301,6 +307,7 @@ fn explicit_read_only_subpaths_prevent_auto_approval_for_external_sandbox() {
             &file_system_sandbox_policy,
             &cwd_uri,
             WindowsSandboxLevel::Disabled,
+            /*proot_enabled*/ false,
         ),
         SafetyCheck::AskUser,
     );
@@ -344,6 +351,7 @@ fn missing_project_dot_codex_config_requires_approval() {
             &file_system_sandbox_policy,
             &cwd_uri,
             WindowsSandboxLevel::Disabled,
+            /*proot_enabled*/ false,
         ),
         SafetyCheck::AskUser,
     );

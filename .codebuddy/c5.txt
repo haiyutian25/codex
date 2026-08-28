@@ -1,0 +1,957 @@
+﻿cargo :     Checking mcp_test_support v0.0.0 (D:\Codex\codex-rs\mcp-server\tests\common)
+所在位置 C:\Users\Administrator\AppData\Local\Temp\genie-ps-1787879513922-54pjwh.ps1:558 字符: 23
++ ...  d:/Codex/codex-rs; cargo check --tests --workspace -j 4 2>&1 | Out-F ...
++                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (    Checking mc...r\tests\common):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    Checking codex-queue-extension v0.0.0 (D:\Codex\codex-rs\ext\queue)
+    Checking codex-thread-manager-sample v0.0.0 (D:\Codex\codex-rs\thread-manager-sample)
+    Checking codex-goal-extension v0.0.0 (D:\Codex\codex-rs\ext\goal)
+    Checking codex-mcp-server v0.0.0 (D:\Codex\codex-rs\mcp-server)
+    Checking codex-mcp-extension v0.0.0 (D:\Codex\codex-rs\ext\mcp)
+    Checking codex-core v0.0.0 (D:\Codex\codex-rs\core)
+    Checking codex-login v0.0.0 (D:\Codex\codex-rs\login)
+    Checking codex-memories-write v0.0.0 (D:\Codex\codex-rs\memories\write)
+    Checking codex-guardian-v2 v0.0.0 (D:\Codex\codex-rs\ext\guardian-v2)
+    Checking core_test_support v0.0.0 (D:\Codex\codex-rs\core\tests\common)
+    Checking codex-web-search-extension v0.0.0 (D:\Codex\codex-rs\ext\web-search)
+    Checking codex-memories-extension v0.0.0 (D:\Codex\codex-rs\ext\memories)
+    Checking codex-history-notes-extension v0.0.0 (D:\Codex\codex-rs\ext\history-notes)
+    Checking codex-image-generation-extension v0.0.0 (D:\Codex\codex-rs\ext\image-generation)
+error[E0061]: this function takes 8 arguments but 7 arguments were supplied
+   --> core\tests\suite\windows_sandbox.rs:176:15
+    |
+176 |       let err = process_exec_tool_call(
+    |  _______________^^^^^^^^^^^^^^^^^^^^^^-
+177 | |         ExecParams {
+178 | |             command: vec![
+179 | |                 "cmd.exe".to_string(),
+...   |
+201 | |         /*use_legacy_landlock*/ false,
+    | |                                 ----- expected `std::option::Option<&ProotConfig>`, found `bool`
+202 | |         /*stdout_stream*/ None,
+    | |                           ---- expected `bool`, found `std::option::Option<_>`
+203 | |     )
+    | |_____- argument #8 of type `std::option::Option<StdoutStream>` is missing
+    |
+note: function defined here
+   --> core\src\exec.rs:295:14
+    |
+295 | pub async fn process_exec_tool_call(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+help: did you mean
+    |
+176 ~     let err = process_exec_tool_call(
+177 +         ExecParams {
+178 +             command: vec![
+179 +                 "cmd.exe".to_string(),
+180 +                 "/D".to_string(),
+181 +                 "/C".to_string(),
+182 +                 "type secret.env >NUL 2>NUL & echo exact secret 1>future.env 2>NUL & type future.env 2>NUL & type
+ public.txt & exit /B 0"
+183 +                     .to_string(),
+184 +             ],
+185 +             cwd: cwd.clone(),
+186 +             expiration: 10_000.into(),
+187 +             capture_policy: ExecCapturePolicy::ShellTool,
+188 +             env: HashMap::new(),
+189 +             network: None,
+190 +             network_environment_id: None,
+191 +             sandbox_permissions: SandboxPermissions::UseDefault,
+192 +             windows_sandbox_level: WindowsSandboxLevel::RestrictedToken,
+193 +             windows_sandbox_private_desktop: false,
+194 +             justification: None,
+195 +             arg0: None,
+196 +         },
+197 +         &permission_profile,
+198 +         &cwd,
+199 +         std::slice::from_ref(&cwd),
+200 +         &None,
+201 +         None,
+202 +         false,
+203 +         /* std::option::Option<StdoutStream> */,
+204 +     )
+    |
+
+error[E0061]: this function takes 8 arguments but 7 arguments were supplied
+   --> core\tests\suite\windows_sandbox.rs:226:18
+    |
+226 |       let output = process_exec_tool_call(
+    |  __________________^^^^^^^^^^^^^^^^^^^^^^-
+227 | |         ExecParams {
+228 | |             command: vec![
+229 | |                 "cmd.exe".to_string(),
+...   |
+250 | |         /*use_legacy_landlock*/ false,
+    | |                                 ----- expected `std::option::Option<&ProotConfig>`, found `bool`
+251 | |         /*stdout_stream*/ None,
+    | |                           ---- expected `bool`, found `std::option::Option<_>`
+252 | |     )
+    | |_____- argument #8 of type `std::option::Option<StdoutStream>` is missing
+    |
+note: function defined here
+   --> core\src\exec.rs:295:14
+    |
+295 | pub async fn process_exec_tool_call(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+help: did you mean
+    |
+226 ~     let output = process_exec_tool_call(
+227 +         ExecParams {
+228 +             command: vec![
+229 +                 "cmd.exe".to_string(),
+230 +                 "/D".to_string(),
+231 +                 "/C".to_string(),
+232 +                 "echo sandbox-ok".to_string(),
+233 +             ],
+234 +             cwd: cwd.clone(),
+235 +             expiration: 10_000.into(),
+236 +             capture_policy: ExecCapturePolicy::ShellTool,
+237 +             env: HashMap::new(),
+238 +             network: None,
+239 +             network_environment_id: None,
+240 +             sandbox_permissions: SandboxPermissions::UseDefault,
+241 +             windows_sandbox_level: WindowsSandboxLevel::Elevated,
+242 +             windows_sandbox_private_desktop: false,
+243 +             justification: None,
+244 +             arg0: None,
+245 +         },
+246 +         &permission_profile,
+247 +         &cwd,
+248 +         std::slice::from_ref(&cwd),
+249 +         &None,
+250 +         None,
+251 +         false,
+252 +         /* std::option::Option<StdoutStream> */,
+253 +     )
+    |
+
+error[E0061]: this function takes 8 arguments but 7 arguments were supplied
+   --> core\tests\suite\windows_sandbox.rs:326:9
+    |
+326 |       } = process_exec_tool_call(
+    |  _________^^^^^^^^^^^^^^^^^^^^^^-
+327 | |         ExecParams {
+328 | |             command: vec![
+329 | |                 "cmd.exe".to_string(),
+...   |
+357 | |         /*use_legacy_landlock*/ false,
+    | |                                 ----- expected `std::option::Option<&ProotConfig>`, found `bool`
+358 | |         /*stdout_stream*/ None,
+    | |                           ---- expected `bool`, found `std::option::Option<_>`
+359 | |     )
+    | |_____- argument #8 of type `std::option::Option<StdoutStream>` is missing
+    |
+note: function defined here
+   --> core\src\exec.rs:295:14
+    |
+295 | pub async fn process_exec_tool_call(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+help: did you mean
+    |
+326 ~     } = process_exec_tool_call(
+327 +         ExecParams {
+328 +             command: vec![
+329 +                 "cmd.exe".to_string(),
+330 +                 "/D".to_string(),
+331 +                 "/C".to_string(),
+332 +                 "(type secret.env 1>NUL 2>NUL && echo GLOB-READ || echo GLOB-DENIED) & (type %SETUP_MARKER% 1>NUL
+ 2>NUL && echo MARKER-READ-ALLOWED || echo MARKER-READ-DENIED) & (echo tampered > %SETUP_MARKER% 2>NUL && echo MARKER-W
+RITE-ALLOWED || echo MARKER-WRITE-DENIED) & type public.txt & type %BUNDLED_SKILL% & (type %EXACT_SECRET% 1>NUL 2>NUL &
+& echo EXACT-READ || echo EXACT-DENIED)".to_string(),
+333 +             ],
+334 +             cwd: cwd.clone(),
+335 +             expiration: 10_000.into(),
+336 +             capture_policy: ExecCapturePolicy::ShellTool,
+337 +             env: [
+338 +                 ("BUNDLED_SKILL", &bundled_skill),
+339 +                 ("EXACT_SECRET", &exact_secret),
+340 +                 ("SETUP_MARKER", &setup_marker),
+341 +             ]
+342 +             .into_iter()
+343 +             .map(|(name, path)| (name.to_string(), format!("\"{}\"", path.display())))
+344 +             .collect(),
+345 +             network: None,
+346 +             network_environment_id: None,
+347 +             sandbox_permissions: SandboxPermissions::UseDefault,
+348 +             windows_sandbox_level: WindowsSandboxLevel::Elevated,
+349 +             windows_sandbox_private_desktop: false,
+350 +             justification: None,
+351 +             arg0: None,
+352 +         },
+353 +         &permission_profile,
+354 +         &cwd,
+355 +         std::slice::from_ref(&cwd),
+356 +         &None,
+357 +         None,
+358 +         false,
+359 +         /* std::option::Option<StdoutStream> */,
+360 +     )
+    |
+
+error[E0061]: this function takes 8 arguments but 7 arguments were supplied
+   --> core\src\exec_tests.rs:354:18
+    |
+354 |       let output = process_exec_tool_call(
+    |  __________________^^^^^^^^^^^^^^^^^^^^^^-
+355 | |         ExecParams {
+356 | |             command,
+357 | |             cwd: cwd.clone(),
+...   |
+373 | |         /*use_legacy_landlock*/ false,
+    | |                                 ----- expected `std::option::Option<&ProotConfig>`, found `bool`
+374 | |         /*stdout_stream*/ None,
+    | |                           ---- expected `bool`, found `std::option::Option<_>`
+375 | |     )
+    | |_____- argument #8 of type `std::option::Option<StdoutStream>` is missing
+    |
+note: function defined here
+   --> core\src\exec.rs:295:14
+    |
+295 | pub async fn process_exec_tool_call(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+...
+303 |     stdout_stream: Option<StdoutStream>,
+    |     -----------------------------------
+help: did you mean
+    |
+354 ~     let output = process_exec_tool_call(
+355 +         ExecParams {
+356 +             command,
+357 +             cwd: cwd.clone(),
+358 +             expiration: 1.into(),
+359 +             capture_policy: ExecCapturePolicy::FullBuffer,
+360 +             env: std::env::vars().collect(),
+361 +             network: None,
+362 +             network_environment_id: None,
+363 +             sandbox_permissions: SandboxPermissions::UseDefault,
+364 +             windows_sandbox_level: WindowsSandboxLevel::Disabled,
+365 +             windows_sandbox_private_desktop: false,
+366 +             justification: None,
+367 +             arg0: None,
+368 +         },
+369 +         &permission_profile,
+370 +         &cwd,
+371 +         std::slice::from_ref(&cwd),
+372 +         &None,
+373 +         None,
+374 +         false,
+375 +         /* std::option::Option<StdoutStream> */,
+376 +     )
+    |
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+    --> core\src\exec_tests.rs:1035:20
+     |
+1035 |     let expected = codex_sandboxing::get_platform_sandbox(/*windows_sandbox_enabled*/ false)
+     |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^----------------------------------- argument #2 of type
+ `bool` is missing
+     |
+note: function defined here
+    --> sandboxing\src\manager.rs:65:8
+     |
+  65 | pub fn get_platform_sandbox(
+     |        ^^^^^^^^^^^^^^^^^^^^
+help: provide the argument
+     |
+1035 -     let expected = codex_sandboxing::get_platform_sandbox(/*windows_sandbox_enabled*/ false)
+1035 +     let expected = codex_sandboxing::get_platform_sandbox(false, /* bool */)
+     |
+
+error[E0061]: this function takes 4 arguments but 3 arguments were supplied
+    --> core\src\exec_tests.rs:1039:9
+     |
+1039 |           select_process_exec_tool_sandbox_type(
+     |  _________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
+1040 | |             &PermissionProfile::from_runtime_permissions(
+1041 | |                 &FileSystemSandboxPolicy::unrestricted(),
+1042 | |                 NetworkSandboxPolicy::Restricted,
+...    |
+1045 | |             /*enforce_managed_network*/ false,
+1046 | |         ),
+     | |_________- argument #4 of type `bool` is missing
+     |
+note: function defined here
+    --> core\src\exec.rs:122:4
+     |
+ 122 | fn select_process_exec_tool_sandbox_type(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 126 |     enforce_managed_network: bool,
+     |     -----------------------------
+help: provide the argument
+     |
+1039 ~         select_process_exec_tool_sandbox_type(
+1040 +             &PermissionProfile::from_runtime_permissions(
+1041 +                 &FileSystemSandboxPolicy::unrestricted(),
+1042 +                 NetworkSandboxPolicy::Restricted,
+1043 +             ),
+1044 +             codex_protocol::config_types::WindowsSandboxLevel::Disabled,
+1045 +             false,
+1046 +             /* bool */,
+1047 ~         ),
+     |
+
+error[E0061]: this function takes 7 arguments but 6 arguments were supplied
+    --> core\src\exec_tests.rs:1058:24
+     |
+1058 |     let exec_request = build_exec_request(
+     |                        ^^^^^^^^^^^^^^^^^^
+...
+1077 |         /*use_legacy_landlock*/ false,
+     |                                 ----- argument #6 of type `std::option::Option<&ProotConfig>` is missing
+     |
+note: function defined here
+    --> core\src\exec.rs:321:8
+     |
+ 321 | pub fn build_exec_request(
+     |        ^^^^^^^^^^^^^^^^^^
+...
+ 327 |     proot: Option<&codex_sandboxing::ProotConfig>,
+     |     ---------------------------------------------
+help: provide the argument
+     |
+1058 ~     let exec_request = build_exec_request(
+1059 +         ExecParams {
+1060 +             command: vec!["echo".to_string(), "ok".to_string()],
+1061 +             cwd: cwd.clone(),
+1062 +             expiration: ExecExpiration::DefaultTimeout,
+1063 +             capture_policy: ExecCapturePolicy::ShellTool,
+1064 +             env: HashMap::new(),
+1065 +             network: None,
+1066 +             network_environment_id: None,
+1067 +             sandbox_permissions: SandboxPermissions::UseDefault,
+1068 +             windows_sandbox_level: WindowsSandboxLevel::Disabled,
+1069 +             windows_sandbox_private_desktop: false,
+1070 +             justification: None,
+1071 +             arg0: None,
+1072 +         },
+1073 +         &PermissionProfile::Disabled,
+1074 +         &cwd,
+1075 +         workspace_roots.as_slice(),
+1076 +         &None,
+1077 +         /* std::option::Option<&ProotConfig> */,
+1078 +         false,
+1079 ~     )?;
+     |
+
+error[E0061]: this function takes 8 arguments but 7 arguments were supplied
+    --> core\src\exec_tests.rs:1190:9
+     |
+1190 |           process_exec_tool_call(
+     |  _________^^^^^^^^^^^^^^^^^^^^^^-
+1191 | |             params,
+1192 | |             &PermissionProfile::Disabled,
+1193 | |             &cwd,
+...    |
+1196 | |             /*use_legacy_landlock*/ false,
+     | |                                     ----- expected `std::option::Option<&ProotConfig>`, found `bool`
+1197 | |             /*stdout_stream*/ None,
+     | |                               ---- expected `bool`, found `std::option::Option<_>`
+1198 | |         ),
+     | |_________- argument #8 of type `std::option::Option<StdoutStream>` is missing
+     |
+note: function defined here
+    --> core\src\exec.rs:295:14
+     |
+ 295 | pub async fn process_exec_tool_call(
+     |              ^^^^^^^^^^^^^^^^^^^^^^
+...
+ 303 |     stdout_stream: Option<StdoutStream>,
+     |     -----------------------------------
+help: did you mean
+     |
+1190 ~         process_exec_tool_call(
+1191 +             params,
+1192 +             &PermissionProfile::Disabled,
+1193 +             &cwd,
+1194 +             std::slice::from_ref(&cwd),
+1195 +             &None,
+1196 +             None,
+1197 +             false,
+1198 +             /* std::option::Option<StdoutStream> */,
+1199 ~         ),
+     |
+
+error[E0061]: this function takes 4 arguments but 3 arguments were supplied
+  --> core\src\sandbox_tags_tests.rs:20:18
+   |
+20 |       let actual = permission_profile_sandbox_tag(
+   |  __________________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
+21 | |         &PermissionProfile::Disabled,
+22 | |         WindowsSandboxLevel::Disabled,
+23 | |         /*enforce_managed_network*/ false,
+24 | |     );
+   | |_____- argument #4 of type `bool` is missing
+   |
+note: function defined here
+  --> core\src\sandbox_tags.rs:8:15
+   |
+ 8 | pub(crate) fn permission_profile_sandbox_tag(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+12 |     enforce_managed_network: bool,
+   |     -----------------------------
+help: provide the argument
+   |
+20 ~     let actual = permission_profile_sandbox_tag(
+21 +         &PermissionProfile::Disabled,
+22 +         WindowsSandboxLevel::Disabled,
+23 +         false,
+24 +         /* bool */,
+25 ~     );
+   |
+
+error[E0061]: this function takes 4 arguments but 3 arguments were supplied
+  --> core\src\sandbox_tags_tests.rs:30:18
+   |
+30 |       let actual = permission_profile_sandbox_tag(
+   |  __________________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
+31 | |         &PermissionProfile::External {
+32 | |             network: NetworkSandboxPolicy::Enabled,
+33 | |         },
+34 | |         WindowsSandboxLevel::Disabled,
+35 | |         /*enforce_managed_network*/ false,
+36 | |     );
+   | |_____- argument #4 of type `bool` is missing
+   |
+note: function defined here
+  --> core\src\sandbox_tags.rs:8:15
+   |
+ 8 | pub(crate) fn permission_profile_sandbox_tag(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+12 |     enforce_managed_network: bool,
+   |     -----------------------------
+help: provide the argument
+   |
+30 ~     let actual = permission_profile_sandbox_tag(
+31 +         &PermissionProfile::External {
+32 +             network: NetworkSandboxPolicy::Enabled,
+33 +         },
+34 +         WindowsSandboxLevel::Disabled,
+35 +         false,
+36 +         /* bool */,
+37 ~     );
+   |
+
+error[E0061]: this function takes 4 arguments but 3 arguments were supplied
+  --> core\src\sandbox_tags_tests.rs:42:18
+   |
+42 |       let actual = permission_profile_sandbox_tag(
+   |  __________________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
+43 | |         &PermissionProfile::read_only(),
+44 | |         WindowsSandboxLevel::Disabled,
+45 | |         /*enforce_managed_network*/ false,
+46 | |     );
+   | |_____- argument #4 of type `bool` is missing
+   |
+note: function defined here
+  --> core\src\sandbox_tags.rs:8:15
+   |
+ 8 | pub(crate) fn permission_profile_sandbox_tag(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+12 |     enforce_managed_network: bool,
+   |     -----------------------------
+help: provide the argument
+   |
+42 ~     let actual = permission_profile_sandbox_tag(
+43 +         &PermissionProfile::read_only(),
+44 +         WindowsSandboxLevel::Disabled,
+45 +         false,
+46 +         /* bool */,
+47 ~     );
+   |
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+  --> core\src\sandbox_tags_tests.rs:47:20
+   |
+47 |     let expected = get_platform_sandbox(/*windows_sandbox_enabled*/ false)
+   |                    ^^^^^^^^^^^^^^^^^^^^----------------------------------- argument #2 of type `bool` is missing
+   |
+note: function defined here
+  --> sandboxing\src\manager.rs:65:8
+   |
+65 | pub fn get_platform_sandbox(
+   |        ^^^^^^^^^^^^^^^^^^^^
+help: provide the argument
+   |
+47 -     let expected = get_platform_sandbox(/*windows_sandbox_enabled*/ false)
+47 +     let expected = get_platform_sandbox(false, /* bool */)
+   |
+
+error[E0061]: this function takes 4 arguments but 3 arguments were supplied
+  --> core\src\sandbox_tags_tests.rs:56:9
+   |
+56 |           permission_profile_sandbox_tag(
+   |  _________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
+57 | |             &PermissionProfile::Disabled,
+58 | |             WindowsSandboxLevel::Disabled,
+59 | |             /*enforce_managed_network*/ false,
+60 | |         ),
+   | |_________- argument #4 of type `bool` is missing
+   |
+note: function defined here
+  --> core\src\sandbox_tags.rs:8:15
+   |
+ 8 | pub(crate) fn permission_profile_sandbox_tag(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+12 |     enforce_managed_network: bool,
+   |     -----------------------------
+help: provide the argument
+   |
+56 ~         permission_profile_sandbox_tag(
+57 +             &PermissionProfile::Disabled,
+58 +             WindowsSandboxLevel::Disabled,
+59 +             false,
+60 +             /* bool */,
+61 ~         ),
+   |
+
+error[E0061]: this function takes 4 arguments but 3 arguments were supplied
+  --> core\src\sandbox_tags_tests.rs:64:9
+   |
+64 |           permission_profile_sandbox_tag(
+   |  _________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
+65 | |             &PermissionProfile::External {
+66 | |                 network: NetworkSandboxPolicy::Restricted,
+67 | |             },
+68 | |             WindowsSandboxLevel::Disabled,
+69 | |             /*enforce_managed_network*/ false,
+70 | |         ),
+   | |_________- argument #4 of type `bool` is missing
+   |
+note: function defined here
+  --> core\src\sandbox_tags.rs:8:15
+   |
+ 8 | pub(crate) fn permission_profile_sandbox_tag(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+12 |     enforce_managed_network: bool,
+   |     -----------------------------
+help: provide the argument
+   |
+64 ~         permission_profile_sandbox_tag(
+65 +             &PermissionProfile::External {
+66 +                 network: NetworkSandboxPolicy::Restricted,
+67 +             },
+68 +             WindowsSandboxLevel::Disabled,
+69 +             false,
+70 +             /* bool */,
+71 ~         ),
+   |
+
+error[E0061]: this function takes 4 arguments but 3 arguments were supplied
+  --> core\src\sandbox_tags_tests.rs:83:9
+   |
+83 |           permission_profile_sandbox_tag(
+   |  _________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
+84 | |             &profile,
+85 | |             WindowsSandboxLevel::Disabled,
+86 | |             /*enforce_managed_network*/ false,
+87 | |         ),
+   | |_________- argument #4 of type `bool` is missing
+   |
+note: function defined here
+  --> core\src\sandbox_tags.rs:8:15
+   |
+ 8 | pub(crate) fn permission_profile_sandbox_tag(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+12 |     enforce_managed_network: bool,
+   |     -----------------------------
+help: provide the argument
+   |
+83 ~         permission_profile_sandbox_tag(
+84 +             &profile,
+85 +             WindowsSandboxLevel::Disabled,
+86 +             false,
+87 +             /* bool */,
+88 ~         ),
+   |
+
+error[E0061]: this function takes 4 arguments but 3 arguments were supplied
+   --> core\src\sandbox_tags_tests.rs:109:9
+    |
+109 |           permission_profile_sandbox_tag(
+    |  _________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
+110 | |             &profile,
+111 | |             WindowsSandboxLevel::Disabled,
+112 | |             /*enforce_managed_network*/ false,
+113 | |         ),
+    | |_________- argument #4 of type `bool` is missing
+    |
+note: function defined here
+   --> core\src\sandbox_tags.rs:8:15
+    |
+  8 | pub(crate) fn permission_profile_sandbox_tag(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 12 |     enforce_managed_network: bool,
+    |     -----------------------------
+help: provide the argument
+    |
+109 ~         permission_profile_sandbox_tag(
+110 +             &profile,
+111 +             WindowsSandboxLevel::Disabled,
+112 +             false,
+113 +             /* bool */,
+114 ~         ),
+    |
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> core\src\sandbox_tags_tests.rs:124:20
+    |
+124 |     let expected = get_platform_sandbox(/*windows_sandbox_enabled*/ false)
+    |                    ^^^^^^^^^^^^^^^^^^^^----------------------------------- argument #2 of type `bool` is missing
+    |
+note: function defined here
+   --> sandboxing\src\manager.rs:65:8
+    |
+ 65 | pub fn get_platform_sandbox(
+    |        ^^^^^^^^^^^^^^^^^^^^
+help: provide the argument
+    |
+124 -     let expected = get_platform_sandbox(/*windows_sandbox_enabled*/ false)
+124 +     let expected = get_platform_sandbox(false, /* bool */)
+    |
+
+error[E0061]: this function takes 4 arguments but 3 arguments were supplied
+   --> core\src\sandbox_tags_tests.rs:129:9
+    |
+129 |           permission_profile_sandbox_tag(
+    |  _________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
+130 | |             &profile,
+131 | |             WindowsSandboxLevel::Disabled,
+132 | |             /*enforce_managed_network*/ true,
+133 | |         ),
+    | |_________- argument #4 of type `bool` is missing
+    |
+note: function defined here
+   --> core\src\sandbox_tags.rs:8:15
+    |
+  8 | pub(crate) fn permission_profile_sandbox_tag(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 12 |     enforce_managed_network: bool,
+    |     -----------------------------
+help: provide the argument
+    |
+129 ~         permission_profile_sandbox_tag(
+130 +             &profile,
+131 +             WindowsSandboxLevel::Disabled,
+132 +             true,
+133 +             /* bool */,
+134 ~         ),
+    |
+
+error[E0061]: this function takes 7 arguments but 6 arguments were supplied
+  --> core\src\safety_tests.rs:83:9
+   |
+83 |           assess_patch_safety(
+   |  _________^^^^^^^^^^^^^^^^^^^-
+84 | |             &add_inside,
+85 | |             AskForApproval::OnRequest,
+86 | |             &permission_profile,
+...  |
+89 | |             WindowsSandboxLevel::Disabled
+90 | |         ),
+   | |_________- argument #7 of type `bool` is missing
+   |
+note: function defined here
+  --> core\src\safety.rs:26:8
+   |
+26 | pub fn assess_patch_safety(
+   |        ^^^^^^^^^^^^^^^^^^^
+...
+33 |     proot_enabled: bool,
+   |     -------------------
+help: provide the argument
+   |
+83 |         assess_patch_safety(
+...
+88 |             &cwd_uri,
+89 ~             WindowsSandboxLevel::Disabled,
+90 +             /* bool */,
+   |
+
+error[E0061]: this function takes 7 arguments but 6 arguments were supplied
+   --> core\src\safety_tests.rs:113:9
+    |
+113 |           assess_patch_safety(
+    |  _________^^^^^^^^^^^^^^^^^^^-
+114 | |             &add_outside,
+115 | |             AskForApproval::OnRequest,
+116 | |             &permission_profile,
+...   |
+119 | |             WindowsSandboxLevel::Disabled,
+120 | |         ),
+    | |_________- argument #7 of type `bool` is missing
+    |
+note: function defined here
+   --> core\src\safety.rs:26:8
+    |
+ 26 | pub fn assess_patch_safety(
+    |        ^^^^^^^^^^^^^^^^^^^
+...
+ 33 |     proot_enabled: bool,
+    |     -------------------
+help: provide the argument
+    |
+113 |         assess_patch_safety(
+...
+119 |             WindowsSandboxLevel::Disabled,
+120 ~             /* bool */,
+121 ~         ),
+    |
+
+error[E0061]: this function takes 7 arguments but 6 arguments were supplied
+   --> core\src\safety_tests.rs:124:9
+    |
+124 |           assess_patch_safety(
+    |  _________^^^^^^^^^^^^^^^^^^^-
+125 | |             &add_outside,
+126 | |             AskForApproval::Granular(GranularApprovalConfig {
+127 | |                 sandbox_approval: true,
+...   |
+136 | |             WindowsSandboxLevel::Disabled,
+137 | |         ),
+    | |_________- argument #7 of type `bool` is missing
+    |
+note: function defined here
+   --> core\src\safety.rs:26:8
+    |
+ 26 | pub fn assess_patch_safety(
+    |        ^^^^^^^^^^^^^^^^^^^
+...
+ 33 |     proot_enabled: bool,
+    |     -------------------
+help: provide the argument
+    |
+124 |         assess_patch_safety(
+...
+136 |             WindowsSandboxLevel::Disabled,
+137 ~             /* bool */,
+138 ~         ),
+    |
+
+error[E0061]: this function takes 7 arguments but 6 arguments were supplied
+   --> core\src\safety_tests.rs:160:9
+    |
+160 |           assess_patch_safety(
+    |  _________^^^^^^^^^^^^^^^^^^^-
+161 | |             &add_outside,
+162 | |             AskForApproval::Granular(GranularApprovalConfig {
+163 | |                 sandbox_approval: false,
+...   |
+172 | |             WindowsSandboxLevel::Disabled,
+173 | |         ),
+    | |_________- argument #7 of type `bool` is missing
+    |
+note: function defined here
+   --> core\src\safety.rs:26:8
+    |
+ 26 | pub fn assess_patch_safety(
+    |        ^^^^^^^^^^^^^^^^^^^
+...
+ 33 |     proot_enabled: bool,
+    |     -------------------
+help: provide the argument
+    |
+160 |         assess_patch_safety(
+...
+172 |             WindowsSandboxLevel::Disabled,
+173 ~             /* bool */,
+174 ~         ),
+    |
+
+error[E0061]: this function takes 7 arguments but 6 arguments were supplied
+   --> core\src\safety_tests.rs:197:9
+    |
+197 |           assess_patch_safety(
+    |  _________^^^^^^^^^^^^^^^^^^^-
+198 | |             &action,
+199 | |             AskForApproval::Never,
+200 | |             &permission_profile,
+...   |
+203 | |             WindowsSandboxLevel::Disabled,
+204 | |         ),
+    | |_________- argument #7 of type `bool` is missing
+    |
+note: function defined here
+   --> core\src\safety.rs:26:8
+    |
+ 26 | pub fn assess_patch_safety(
+    |        ^^^^^^^^^^^^^^^^^^^
+...
+ 33 |     proot_enabled: bool,
+    |     -------------------
+help: provide the argument
+    |
+197 |         assess_patch_safety(
+...
+203 |             WindowsSandboxLevel::Disabled,
+204 ~             /* bool */,
+205 ~         ),
+    |
+
+error[E0061]: this function takes 7 arguments but 6 arguments were supplied
+   --> core\src\safety_tests.rs:247:9
+    |
+247 |           assess_patch_safety(
+    |  _________^^^^^^^^^^^^^^^^^^^-
+248 | |             &action,
+249 | |             AskForApproval::OnRequest,
+250 | |             &permission_profile,
+...   |
+253 | |             WindowsSandboxLevel::Disabled,
+254 | |         ),
+    | |_________- argument #7 of type `bool` is missing
+    |
+note: function defined here
+   --> core\src\safety.rs:26:8
+    |
+ 26 | pub fn assess_patch_safety(
+    |        ^^^^^^^^^^^^^^^^^^^
+...
+ 33 |     proot_enabled: bool,
+    |     -------------------
+help: provide the argument
+    |
+247 |         assess_patch_safety(
+...
+253 |             WindowsSandboxLevel::Disabled,
+254 ~             /* bool */,
+255 ~         ),
+    |
+
+error[E0061]: this function takes 7 arguments but 6 arguments were supplied
+   --> core\src\safety_tests.rs:297:9
+    |
+297 |           assess_patch_safety(
+    |  _________^^^^^^^^^^^^^^^^^^^-
+298 | |             &action,
+299 | |             AskForApproval::OnRequest,
+300 | |             &permission_profile,
+...   |
+303 | |             WindowsSandboxLevel::Disabled,
+304 | |         ),
+    | |_________- argument #7 of type `bool` is missing
+    |
+note: function defined here
+   --> core\src\safety.rs:26:8
+    |
+ 26 | pub fn assess_patch_safety(
+    |        ^^^^^^^^^^^^^^^^^^^
+...
+ 33 |     proot_enabled: bool,
+    |     -------------------
+help: provide the argument
+    |
+297 |         assess_patch_safety(
+...
+303 |             WindowsSandboxLevel::Disabled,
+304 ~             /* bool */,
+305 ~         ),
+    |
+
+error[E0061]: this function takes 7 arguments but 6 arguments were supplied
+   --> core\src\safety_tests.rs:340:9
+    |
+340 |           assess_patch_safety(
+    |  _________^^^^^^^^^^^^^^^^^^^-
+341 | |             &action,
+342 | |             AskForApproval::OnRequest,
+343 | |             &permission_profile,
+...   |
+346 | |             WindowsSandboxLevel::Disabled,
+347 | |         ),
+    | |_________- argument #7 of type `bool` is missing
+    |
+note: function defined here
+   --> core\src\safety.rs:26:8
+    |
+ 26 | pub fn assess_patch_safety(
+    |        ^^^^^^^^^^^^^^^^^^^
+...
+ 33 |     proot_enabled: bool,
+    |     -------------------
+help: provide the argument
+    |
+340 |         assess_patch_safety(
+...
+346 |             WindowsSandboxLevel::Disabled,
+347 ~             /* bool */,
+348 ~         ),
+    |
+
+For more information about this error, try `rustc --explain E0061`.
+error: could not compile `codex-core` (test "all") due to 3 previous errors
+warning: build failed, waiting for other jobs to finish...
+error[E0063]: missing field `proot` in initializer of `tools::sandboxing::SandboxAttempt<'_>`
+   --> core\src\tools\runtimes\apply_patch_tests.rs:240:19
+    |
+240 |     let attempt = SandboxAttempt {
+    |                   ^^^^^^^^^^^^^^ missing `proot`
+
+error[E0063]: missing field `proot` in initializer of `tools::sandboxing::SandboxAttempt<'_>`
+   --> core\src\tools\runtimes\apply_patch_tests.rs:309:19
+    |
+309 |     let attempt = SandboxAttempt {
+    |                   ^^^^^^^^^^^^^^ missing `proot`
+
+error[E0063]: missing field `proot` in initializer of `tools::sandboxing::SandboxAttempt<'_>`
+   --> core\src\tools\sandboxing_tests.rs:249:23
+    |
+249 |     let mut attempt = SandboxAttempt {
+    |                       ^^^^^^^^^^^^^^ missing `proot`
+
+error[E0063]: missing field `proot` in initializer of `tools::sandboxing::SandboxAttempt<'_>`
+   --> core\src\tools\sandboxing_tests.rs:320:23
+    |
+320 |     let mut attempt = SandboxAttempt {
+    |                       ^^^^^^^^^^^^^^ missing `proot`
+
+error[E0061]: this function takes 14 arguments but 13 arguments were supplied
+   --> core\src\turn_metadata_tests.rs:417:21
+    |
+417 |         let state = TurnMetadataState::new(
+    |                     ^^^^^^^^^^^^^^^^^^^^^^
+...
+430 |             &model_info_from_slug("gpt-5.4"),
+    |             -------------------------------- argument #13 of type `bool` is missing
+    |
+note: associated function defined here
+   --> core\src\turn_metadata.rs:146:19
+    |
+146 |     pub(crate) fn new(
+    |                   ^^^
+...
+159 |         auto_review_enabled: bool,
+    |         -------------------------
+help: provide the argument
+    |
+417 ~         let state = TurnMetadataState::new(
+418 +             "session-a".to_string(),
+419 +             "thread-a".to_string(),
+420 +             None,
+421 +             Some(parent_thread_id),
+422 +             &SessionSource::SubAgent(subagent_source),
+423 +             None,
+424 +             "turn-a".to_string(),
+425 +             cwd.clone(),
+426 +             &permission_profile,
+427 +             WindowsSandboxLevel::Disabled,
+428 +             false,
+429 +             false,
+430 +             /* bool */,
+431 +             &model_info_from_slug("gpt-5.4"),
+432 ~         );
+    |
+
+Some errors have detailed explanations: E0061, E0063.
+For more information about an error, try `rustc --explain E0061`.
+error: could not compile `codex-core` (lib test) due to 28 previous errors
