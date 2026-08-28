@@ -384,3 +384,39 @@ fn make_executable(path: &Path) {
 
 #[cfg(not(unix))]
 fn make_executable(_path: &Path) {}
+
+#[test]
+fn guest_shell_rewrites_wrapped_command_program() {
+    let workspace = host_path("/workspace");
+    let config = test_config().with_guest_shell(Some("/bin/sh".to_string()));
+    let params = CreateProotCommandArgsParams {
+        // Host shell detection produced a host-specific shell path.
+        command: vec![
+            "/system/bin/sh".to_string(),
+            "-c".to_string(),
+            "echo hi".to_string(),
+        ],
+        file_system_sandbox_policy: &workspace_policy(&workspace),
+        sandbox_policy_cwd: workspace.as_path(),
+        config: &config,
+    };
+    let args = create_proot_command_args(params).expect("proot args");
+    let tail: Vec<&str> = args[args.len() - 3..].iter().map(String::as_str).collect();
+    assert_eq!(tail, vec!["/bin/sh", "-c", "echo hi"]);
+}
+
+#[test]
+fn no_guest_shell_leaves_command_untouched() {
+    let workspace = host_path("/workspace");
+    let config = test_config();
+    assert_eq!(config.guest_shell(), None);
+    let params = CreateProotCommandArgsParams {
+        command: vec!["/bin/sh".to_string(), "-c".to_string(), "echo hi".to_string()],
+        file_system_sandbox_policy: &workspace_policy(&workspace),
+        sandbox_policy_cwd: workspace.as_path(),
+        config: &config,
+    };
+    let args = create_proot_command_args(params).expect("proot args");
+    let tail: Vec<&str> = args[args.len() - 3..].iter().map(String::as_str).collect();
+    assert_eq!(tail, vec!["/bin/sh", "-c", "echo hi"]);
+}

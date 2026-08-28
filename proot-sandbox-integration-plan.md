@@ -8,7 +8,8 @@
 > - 阶段 2：`SandboxType::Proot` + `get_platform_sandbox`/`select_initial` 加 `proot_enabled` 参数（安卓分支）+ transform Proot 臂 + `SandboxViolationBackend::Proot`；波及修复：exec-server×3、orchestrator×3、exec.rs、exec_command、sandbox_tags、safety、turn_metadata、registry 及全部测试调用点
 > - 阶段 3：`config` crate `ProotToml`/`ProotBindToml` + `ConfigToml.proot`；core `resolve_proot_config` + `Config.proot`；schema 重生成
 > - 阶段 4：orchestrator/registry/turn_metadata/review 接真实配置值；`assess_patch_safety` 保守传 false（TODO 已标注）；`apply_patch` 自动审批在安卓上降级为询问用户（安全侧）
-> - 遗留（阶段 5 设备联调，另行安排）：真机验证、shell 探测 guest 化、`-p`/`-n` 端口隔离预留
+> - 注册完善（2026-08-28 第二轮）：按 13 机制审计补齐——readiness API、`guest_shell`（shell guest 化）、apply_patch 真实 proot 状态；确认不做 EnvironmentConfig 传播（14.3 设计决策）
+> - 遗留（阶段 5 设备联调，另行安排）：真机验证、`-p`/`-n` 端口隔离预留
 > 目标平台：Android App（UniFFI 桥接）+ App 内置 PRoot Linux 环境
 > 前置文档：`core-platform-features-analysis.md`（core 平台代码功能归属）
 >
@@ -538,6 +539,26 @@ safety.rs::assess_patch_safety：get_platform_sandbox(level!=Disabled) 决定补
 | # | 缺口 | 价值 | 状态 |
 |---|---|---|---|
 | 1 | **PRoot readiness 检查 API**（对标 `windowsSandbox/readiness`）：校验 proot 可执行文件存在/可执行、rootfs 是目录，供安卓 App 启动时探测 | 高——App 集成刚需 | ✅ 已实施：`sandboxing::ProotReadiness`（Ready/NotConfigured/MissingExecutable/MissingRootfs）+ `check_proot_readiness`；core 入口 `core::sandboxing::proot_readiness(&Config)`；5 个单测（unix 含可执行位校验） |
-| 2 | EnvironmentConfig 加 proot 状态 + mcp_runtime 变更检测 | 中——多环境/运行时切换时需要 | 暂缓 |
-| 3 | UpdateTurnContextParams 运行时开关 | 中——App 需运行中开关时 | 暂缓 |
-| 4 | 功能开关 / 托管需求 / 配置写回 | 低——企业功能 | 不做 |
+| 2 | **shell guest 化**（机制 11）：宿主 shell 探测结果可能指向 rootfs 内不存在的路径 | 高——执行正确性 | ✅ 已实施：`[proot].guest_shell` 配置项 + `ProotConfig::with_guest_shell`；transform 时重写包装命令的 program（`[shell,-c,cmd]` 的第 0 位）；opt-in 默认不改动；2 个单测 |
+| 3 | **apply_patch 真实 proot 状态**：原保守传 `false`（TODO） | 中——审批正确性 | ✅ 已实施：`prepare_apply_patch` 经 `step_context.turn.config.proot` 传真实值，TODO 消除 |
+| 4 | EnvironmentConfig 加 proot 状态 + mcp_runtime 变更检测 | 低——消费方均可经 `TurnContext.config` 直读，无需协议传播 | 不做（设计决策见下） |
+| 5 | UpdateTurnContextParams 运行时开关 | 低——配置启动时加载，App 重启即生效 | 不做 |
+| 6 | 功能开关 / 托管需求 / 配置写回 | 低——企业功能 | 不做 |
+
+### 14.3 设计决策：为何不做 EnvironmentConfig 传播（机制 5/6）
+
+Windows 的 `windows_sandbox_level` 经 `SessionConfiguration → TurnContext → EnvironmentConfig` 三层传播，原因是：① 支持客户端运行时更新（UpdateTurnContextParams）；② 到达远程执行器（每环境独立状态）。
+
+PRoot 两者皆不需要：
+- **配置静态**：`[proot]` 启动时加载，无运行时切换需求
+- **纯本地后端**：PRoot 包装发生在 core 侧 argv 层，不经 exec-server/远程执行器
+- **消费方全部可达 `TurnContext.config`**（`Arc<Config>`）：orchestrator（`turn_ctx.config.proot`）、registry 遥测（`invocation.turn.config.proot`）、turn_metadata（`per_turn_config.proot`）、apply_patch（`step_context.turn.config.proot`）均已直读真实值
+
+故跳过协议层传播，避免 `protocol → session → environment` 全链改动，注册面更窄且语义等价。
+
+### 14.4 注册完整性结论（对照 13.2 的 13 种机制）
+
+| 状态 | 机制 |
+|---|---|
+| ✅ 已注册（8） | 配置类型、协议枚举（SandboxType::Proot）、就绪探测（proot_readiness）、派生（通用直派生）、transform（Proot 臂+能力检查）、运行时命令改写（guest_shell）、遥测（"proot" 标签+turn_metadata）、审批联动（safety/apply_patch 真实状态） |
+| ⭕ 不需要（5，有正当理由） | 功能开关（单一用途 App 无灰度需求）、托管需求（企业功能）、arg0 派发（无辅助二进制）、配置写回（App 直接写 config.toml）、默认档案联动（PRoot 隔离不依赖档案降级） |

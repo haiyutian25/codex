@@ -202,6 +202,10 @@ pub struct ProotToml {
     /// Extra proot flags passed verbatim (fork-specific options such as
     /// `--link2symlinks`).
     pub extra_flags: Option<Vec<String>>,
+    /// Guest-side shell used to rewrite the wrapped command's program, e.g.
+    /// `"/bin/sh"`. Set this when host shell detection yields a path that does
+    /// not exist inside the rootfs. Unset leaves the detected shell untouched.
+    pub guest_shell: Option<String>,
     /// Static binds applied to every sandboxed command.
     #[serde(default)]
     pub binds: Vec<ProotBindToml>,

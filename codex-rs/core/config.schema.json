@@ -2984,6 +2984,10 @@
           "description": "Pass `-0` to fake root identity inside the guest. Defaults to `true`.",
           "type": "boolean"
         },
+        "guest_shell": {
+          "description": "Guest-side shell used to rewrite the wrapped command's program, e.g. `\"/bin/sh\"`. Set this when host shell detection yields a path that does not exist inside the rootfs. Unset leaves the detected shell untouched.",
+          "type": "string"
+        },
         "kernel_release": {
           "description": "Value for proot's `-k` (fake kernel release), e.g. `\"6.1.0\"`.",
           "type": "string"

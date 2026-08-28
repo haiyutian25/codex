@@ -65,6 +65,11 @@ pub struct ProotConfig {
     platform_binds: Vec<String>,
     extra_flags: Vec<String>,
     static_binds: Vec<ProotBind>,
+    /// Guest-side shell used to rewrite the wrapped command's program when the
+    /// host-detected shell path does not exist inside the rootfs. `None` leaves
+    /// the command untouched (host shell detection already produced a
+    /// guest-valid path, e.g. the `/bin/sh` fallback).
+    guest_shell: Option<String>,
 }
 
 impl ProotConfig {
@@ -86,7 +91,19 @@ impl ProotConfig {
             platform_binds,
             extra_flags,
             static_binds,
+            guest_shell: None,
         }
+    }
+
+    /// Opt-in guest shell override (see `guest_shell` field). Builder-style so the
+    /// `new` signature stays stable for existing callers/tests.
+    pub fn with_guest_shell(mut self, guest_shell: Option<String>) -> Self {
+        self.guest_shell = guest_shell;
+        self
+    }
+
+    pub fn guest_shell(&self) -> Option<&str> {
+        self.guest_shell.as_deref()
     }
 
     /// Absolute path to the proot executable (validated absolute by type).
@@ -347,8 +364,21 @@ pub fn create_proot_command_args(
         args.push(bind.to_bind_argument());
     }
     args.extend(config.extra_flags.iter().cloned());
+    let command = rewrite_guest_shell(command, config.guest_shell.as_deref());
     args.extend(command);
     Ok(args)
+}
+
+/// Replaces the wrapped command's program with the configured guest shell.
+///
+/// Codex exec tool calls are shell-wrapped (`[shell, -c, cmd]`), so element 0
+/// is the shell. Host shell detection may yield a host-specific path that does
+/// not exist inside the rootfs; the host app supplies the guest shell instead.
+fn rewrite_guest_shell(mut command: Vec<String>, guest_shell: Option<&str>) -> Vec<String> {
+    if let (Some(guest_shell), Some(program)) = (guest_shell, command.first_mut()) {
+        *program = guest_shell.to_string();
+    }
+    command
 }
 
 /// Joins a relative path onto a POSIX guest base using `/` separators even on

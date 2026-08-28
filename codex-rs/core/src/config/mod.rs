@@ -4731,20 +4731,23 @@ fn resolve_proot_config(
             )),
         }
     }
-    Some(ProotConfig::new(
-        executable,
-        rootfs,
-        proot_toml.kernel_release.clone(),
-        proot_toml.fake_root.unwrap_or(true),
-        proot_toml.platform_binds.clone().unwrap_or_else(|| {
-            DEFAULT_PROOT_PLATFORM_BINDS
-                .iter()
-                .map(|bind| bind.to_string())
-                .collect()
-        }),
-        proot_toml.extra_flags.clone().unwrap_or_default(),
-        static_binds,
-    ))
+    Some(
+        ProotConfig::new(
+            executable,
+            rootfs,
+            proot_toml.kernel_release.clone(),
+            proot_toml.fake_root.unwrap_or(true),
+            proot_toml.platform_binds.clone().unwrap_or_else(|| {
+                DEFAULT_PROOT_PLATFORM_BINDS
+                    .iter()
+                    .map(|bind| bind.to_string())
+                    .collect()
+            }),
+            proot_toml.extra_flags.clone().unwrap_or_default(),
+            static_binds,
+        )
+        .with_guest_shell(proot_toml.guest_shell.clone()),
+    )
 }
 
 #[cfg(test)]
