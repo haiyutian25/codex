@@ -368,52 +368,153 @@ pub enum SandboxType { None, Proot }
 
 ---
 
-## 十三、Windows 沙箱注册面全量盘点（PRoot 对齐基准）
+## 十三、Windows 沙箱注册机制全解（关键词 / 调用链 / 测试，PRoot 对齐基准）
 
-> 2026-08-28 全库排查结果。Windows 沙箱从配置到执行共 8 层注册面；PRoot 逐层对齐情况见第十四节。
+> 2026-08-28 全库排查。本节按"关键词清单 → 注册机制 → 调用链 → 测试清单"四部分完整记录 Windows 沙箱是**怎样注册进 Codex、怎样被调用**的，作为 PRoot 模块注册的对齐基准。
 
-### 层 1：配置关键词
-- `config/src/types.rs:158-172`——`WindowsSandboxModeToml`（elevated/unelevated）+ `WindowsToml`（`[windows]` 表：`sandbox` + `sandbox_private_desktop`）
-- `config/src/config_toml.rs:499`——`ConfigToml.windows` 字段
-- `config/src/config_requirements.rs`（174-175、800-806、1470-1478、1756-1802 等）——**托管需求**：requirements.toml 可强制沙箱模式
-- `core/config.schema.json`——schema 条目 ×4 组
+### 13.1 关键词全清单（字面值）
 
-### 层 2：功能开关（灰度发布）
-- `features/src/lib.rs:349,351`——`Feature::WindowsSandbox`（键 `experimental_windows_sandbox`）、`Feature::WindowsSandboxElevated`（键 `elevated_windows_sandbox`）
-- `core/config/mod.rs:3256-3278`——features 作为配置解析回退来源（`from_features`）
+**配置键（config.toml）**
+| 键 | 取值 | 位置 |
+|---|---|---|
+| `[windows].sandbox` | `"elevated"` / `"unelevated"` | types.rs:158-172（kebab-case serde） |
+| `[windows].sandbox_private_desktop` | bool，默认 `true`（false 用 `Winsta0\Default`） | types.rs:171 |
 
-### 层 3：协议类型（对外表面）
-- `protocol/src/config_types.rs:297,308`——`WindowsSandboxLevel`、`WindowsSandboxProxySettingsMode`
-- `protocol/src/environment.rs:36-38`——**`EnvironmentConfig` 携带**沙箱级别（每环境状态）
-- `protocol/src/protocol.rs:527`——**`UpdateTurnContextParams.windows_sandbox_level`**（客户端运行时更新通道）
+**功能开关键（features.toml 的 `[features]` 表）**
+| 键 | 注册位置 | 说明 |
+|---|---|---|
+| `experimental_windows_sandbox` | features/lib.rs:1118-1123（FeatureSpec：id/key/stage/default_enabled） | 受限令牌模式 |
+| `elevated_windows_sandbox` | features/lib.rs:1124-1129 | 提权模式（优先级更高） |
+| `enable_experimental_windows_sandbox` | features/legacy.rs:17（legacy 别名映射） | 历史键 |
 
-### 层 4：core 配置解析链
-- `config/mod.rs:3256-3317`——配置 → features 回退 → 托管约束 → mode→level 映射
-- `config/permissions.rs:48-59`——**默认权限档案联动**（Windows+Disabled → 默认只读档案）
-- `config/mod.rs:4336-4358`——运行时变更器；`config/edit.rs:904-958`——配置写回 API
+**托管需求键（requirements.toml）**
+| 键 | 位置 |
+|---|---|
+| `[windows].allowed_sandbox_implementations`（列表，含 Elevated 取 Elevated 否则 Unelevated） | config_requirements.rs:800-806,1756-1802 |
+| `[windows].sandbox_private_desktop` | config_requirements.rs:1470-1478 |
 
-### 层 5：会话/轮次传播
-- `session/session.rs:98-99,308,370`——`SessionConfiguration` 字段 + 更新通道
-- `session/turn_context.rs:217`——`TurnContext` 字段；`session/mod.rs:726`——构造 `EnvironmentConfig` 注入
-- `session/mcp_runtime.rs:45`——**MCP 运行时变更检测**（级别变化触发重建）
-- `session/thread_settings.rs:49`、`review.rs:128,167`——线程/评审传播
+**环境变量**
+| 变量 | 用途 | 位置 |
+|---|---|---|
+| `CODEX_WINDOWS_SANDBOX_PROXY_PORTS` | 沙箱代理端口传递 | windows-sandbox-rs/setup.rs:744 |
+| `USERNAME`/`USERPROFILE` | wrapper 安装期环境白名单 | sandboxing/manager.rs:34 |
 
-### 层 6：执行管道
-- `tools/sandboxing.rs:403-418`——`SandboxAttempt` 字段 + `executor_windows_sandbox_level`（路径约定推断）
-- `file-system/src/lib.rs:339-343`——**`FileSystemSandboxContext`**（exec-server 沙箱上下文）
-- `unified_exec/process_manager.rs:1245-1266`——`WindowsSandboxSpawnRequest`
-- `exec_policy.rs:172,754`——审批启发式；`runtimes/zsh_fork/unix_escalation.rs`（12 处）——提权链路
+**arg0 自派发关键词**
+| 值 | 用途 | 位置 |
+|---|---|---|
+| `--run-as-windows-sandbox`（`CODEX_WINDOWS_SANDBOX_ARG1`） | codex 二进制自派发为沙箱 wrapper 的 argv1 暗号 | windows-sandbox-rs/wrapper.rs:20；arg0/lib.rs:111-112 分发 |
 
-### 层 7：安装/就绪流程（Windows 独有）
-- `core/src/windows_sandbox.rs:248`——`run_windows_sandbox_setup`（安装编排 + 指标 + 持久化）
-- `app-server-protocol`——**3 个 RPC**：`windowsSandbox/setupStart`、`windowsSandbox/readiness`、`windowsSandbox/setupCompleted`（common.rs:1171-1179,1921；v2/windows_sandbox.rs 类型）
+**RPC 方法名（app-server-protocol）**
+| 方法 | 类型 | 注册位置 |
+|---|---|---|
+| `windowsSandbox/setupStart` | 请求/响应 | common.rs:1171-1175（宏表条目：`Name => "method" { params, serialization, response }`） |
+| `windowsSandbox/readiness` | 请求/响应 | common.rs:1176-1180 |
+| `windowsSandbox/setupCompleted` | 通知 | common.rs:1921 |
 
-### 层 8：遥测
-- `sandbox_tags.rs`——`windows_elevated` 标签；`turn_metadata`——沙箱标签
-- `windows_sandbox.rs:324-420`——`codex.windows_sandbox.*` 指标族
+**遥测键**
+| 键 | 位置 |
+|---|---|
+| 指标 `codex.windows_sandbox.setup_duration_ms` / `setup_success` / `setup_failure` / `elevated_setup_canceled` / `elevated_setup_failure` / `legacy_setup_preflight_failed` | windows_sandbox.rs:334-407 |
+| 沙箱标签值 `windows_elevated` | sandbox_tags.rs |
 
-### 工具注册机制结论
-**沙箱不参与工具注册**。工具经 `ToolRegistry`（registry.rs:265-365，`ToolName → RegisteredTool`）注册；沙箱在执行期由编排器施加（`select_initial → SandboxAttempt → transform`）。已验证 shell 工具与 unified_exec（process_manager.rs:1364 调 `orchestrator.run`）走同一编排器管道——**PRoot 对两者均已覆盖**。
+### 13.2 注册机制（每层是"怎样挂进系统"的）
+
+| # | 机制 | Windows 的注册方式 | 代码锚点 |
+|---|---|---|---|
+| 1 | 功能开关注册 | 往 `FeatureSpec` 静态数组加条目（id+key+stage+default） | features/lib.rs:1118-1129 |
+| 2 | 配置类型注册 | `WindowsToml` 结构 + `ConfigToml.windows` 字段 + JsonSchema 派生 | config/types.rs:165-172、config_toml.rs:499 |
+| 3 | 托管需求注册 | `ConfigRequirements` 加 `ConstrainedWithSource` 字段 + 合并逻辑 | config_requirements.rs:174-175 |
+| 4 | 协议枚举注册 | `WindowsSandboxLevel`/`ProxySettingsMode` 进 config_types | protocol/config_types.rs:297,308 |
+| 5 | 环境状态注册 | `EnvironmentConfig` 加字段（每环境携带） | protocol/environment.rs:36-38 |
+| 6 | 运行时更新通道注册 | `UpdateTurnContextParams` 加 `Option<字段>`（客户端可改） | protocol/protocol.rs:527 |
+| 7 | RPC 注册 | common.rs 宏表加条目 + v2 类型模块 | common.rs:1171-1180、v2/windows_sandbox.rs |
+| 8 | arg0 派发注册 | arg0/lib.rs 的 argv1 匹配分支 | arg0/lib.rs:111-112 |
+| 9 | 派生注册 | `spawn.rs` 的 `SandboxType` match 臂（Windows 走专用会话派生） | sandboxing/spawn.rs:55-56 |
+| 10 | transform 注册 | `manager.rs` 的 `SandboxType` match 臂 + 能力检查函数 | sandboxing/manager.rs、windows.rs |
+| 11 | 运行时命令改写注册 | `runtimes/mod.rs` 的 `disable_powershell_profile_for_elevated_windows_sandbox`（提权沙箱下改写 PowerShell 启动参数） | runtimes/mod.rs:147；unified_exec.rs:402 调用 |
+| 12 | 配置写回注册 | `config/edit.rs` 的 `set_windows_sandbox_mode`（写 `["windows","sandbox"]`）+ legacy 键清理 | edit.rs:904-958 |
+| 13 | 默认档案联动注册 | `default_builtin_permission_profile_name(project, windows_sandbox_level)`——Windows+Disabled → 只读档案 | config/permissions.rs:48-59 |
+
+### 13.3 调用链（端到端，四条流）
+
+**流 A：配置解析（启动时）**
+```
+config.toml [windows].sandbox
+  → resolve_windows_sandbox_mode（windows_sandbox.rs:45）
+     ├─ 有配置 → 用配置
+     └─ 无配置 → legacy_windows_sandbox_mode（features 键，elevated 优先）
+  → 托管需求约束（config_requirements 合并，可强制/否决）
+  → mode→level 映射：Elevated→Elevated / Unelevated→RestrictedToken / None→Disabled（config/mod.rs:3314-3317）
+  → Config.permissions.windows_sandbox_mode + windows_sandbox_private_desktop
+```
+另有 `WindowsSandboxLevelExt::from_config/from_features`（windows_sandbox.rs:19-43）供会话侧直接推导。
+
+**流 B：会话→执行（每轮）**
+```
+SessionConfiguration.windows_sandbox_level（session/session.rs:98，经 UpdateTurnContextParams 可更新 :308,370）
+  → TurnContext.windows_sandbox_level（turn_context.rs:217）
+  → EnvironmentConfig 构造注入（session/mod.rs:726）
+  → 工具执行：orchestrator.select_initial（按 level + 偏好选 SandboxType）
+    → SandboxAttempt（携带 level/private_desktop，tools/sandboxing.rs:403）
+    → transform（manager.rs：Windows 臂做覆盖解析）
+    → spawn（spawn.rs:55 → spawn_windows_sandbox_session_for_level → command_runner 进程 IPC）
+  旁路：mcp_runtime.rs:45 检测 level 变化触发 MCP 运行时重建
+```
+
+**流 C：安装/就绪（Windows 独有，一次性）**
+```
+客户端 RPC windowsSandbox/readiness → 返回 Ready/NotConfigured/UpdateRequired
+客户端 RPC windowsSandbox/setupStart
+  → run_windows_sandbox_setup（windows_sandbox.rs:248）
+    → setup 二进制（ACL/WFP 过滤器/沙箱账户安装）
+    → 指标 emit（codex.windows_sandbox.*）
+    → set_windows_sandbox_mode 持久化（config/edit.rs:904）
+  → 通知 windowsSandbox/setupCompleted（成功/失败+错误）
+```
+
+**流 D：审批联动**
+```
+exec_policy 启发式（exec_policy.rs:754）：level==Disabled 时施加托管文件系统限制补偿
+safety.rs::assess_patch_safety：get_platform_sandbox(level!=Disabled) 决定补丁自动审批
+```
+
+### 13.4 测试清单（Windows 沙箱的测试是怎样组织的）
+
+| 测试文件 | 函数 | 测什么 |
+|---|---|---|
+| `core/src/windows_sandbox_tests.rs`（11 个） | `elevated_flag_works_by_itself`、`restricted_token_flag_works_by_itself`、`no_flags_means_no_sandbox`、`elevated_wins_when_both_flags_are_enabled` | features 键→level 解析矩阵 |
+| 同上 | `legacy_mode_prefers_elevated`、`legacy_mode_supports_alias_key`、`resolve_windows_sandbox_mode_falls_back_to_legacy_keys` | legacy 键回退与别名 |
+| 同上 | `resolve_windows_sandbox_private_desktop_defaults_to_true`、`..._respects_explicit_cfg_value` | 私有桌面默认值 |
+| 同上 | `provisioning_settings_omit_the_disabled_socks_proxy`、`provisioning_settings_are_empty_when_managed_network_is_disabled` | 代理供给 |
+| `core/tests/suite/windows_sandbox.rs`（4 个集成） | `windows_restricted_token_rejects_exact_and_glob_deny_read_policy`、`windows_elevated_does_not_create_missing_workspace_metadata`、`windows_elevated_enforces_deny_read_and_protects_setup_marker`、`windows_elevated_unified_exec_enforces_managed_deny_reads` | 真实派生的端到端隔离验证 |
+| `core/src/config/config_tests.rs` | `windows_sandbox_mode_falls_back_when_disallowed_by_requirements`（:10379）等 | 配置层：托管约束回退、字段断言（:12513） |
+| `core/src/tools/sandboxing_tests.rs` | `windows_sandbox_env_preserves_denied_reads_or_rejects_unsupported_backend`（:208） | transform 层行为 |
+| `core/tests/suite/unified_exec.rs` | `unified_exec_rejects_unelevated_windows_sandbox_with_managed_network`（:1212） | 托管网络与后端组合约束 |
+| `sandboxing/src/manager_tests.rs` | wrapper 安装环境白名单测试（:508）、代理模式测试（:578） | manager 层 |
+| `core/src/tools/runtimes/mod.rs`（内联 6 个） | `inserts_no_profile_for_elevated_windows_sandbox`（:403）等 | PowerShell 参数改写 |
+| `windows-sandbox-rs` crate | `wrapper_tests.rs`、`tests/helper_manifest.rs` | wrapper argv、安装清单 |
+
+### 13.5 工具注册机制结论
+
+**沙箱不参与工具注册**。工具经 `ToolRegistry`（registry.rs:265-365，`ToolName → RegisteredTool`，`register_trusted`/`register_external`）注册；沙箱在执行期由编排器施加（`select_initial → SandboxAttempt → transform → spawn`）。已验证 shell 工具与 unified_exec（process_manager.rs:1364 调 `orchestrator.run`）走同一编排器管道——**PRoot 对两者均已覆盖**。
+
+### 13.6 PRoot 逐机制对齐表
+
+| # | 注册机制 | Windows | PRoot 对应实现 |
+|---|---|---|---|
+| 1 | 功能开关 | 2 个 FeatureSpec | 无（配置驱动，暂不需要灰度） |
+| 2 | 配置类型 | `WindowsToml` | ✅ `ProotToml`/`ProotBindToml` + `ConfigToml.proot` |
+| 3 | 托管需求 | 2 个约束字段 | 无（企业功能，不做） |
+| 4 | 协议枚举 | `WindowsSandboxLevel` | ✅ `SandboxType::Proot`（复用现有枚举） |
+| 5 | 环境状态 | `EnvironmentConfig` 字段 | ⚠️ 暂缓（缺口 #2） |
+| 6 | 运行时更新通道 | `UpdateTurnContextParams` 字段 | ⚠️ 暂缓（缺口 #3） |
+| 7 | RPC | 3 个方法 | ✅ 等价物：`proot_readiness`（core 入口，未来 UniFFI 暴露；不走 app-server） |
+| 8 | arg0 派发 | `--run-as-windows-sandbox` | 不需要（纯 argv 包装，无辅助二进制） |
+| 9 | 派生注册 | 专用会话派生 | ✅ 通用直派生（与 Seatbelt 同路径） |
+| 10 | transform | Windows 臂 | ✅ Proot 臂 + 能力检查 |
+| 11 | 运行时命令改写 | PowerShell profile 禁用 | 待做：shell 探测 guest 化（阶段 5） |
+| 12 | 配置写回 | `set_windows_sandbox_mode` | 无（App 直接写 config.toml） |
+| 13 | 默认档案联动 | Disabled→只读档案 | 不需要（PRoot 隔离不依赖档案降级） |
 
 ---
 
