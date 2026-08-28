@@ -647,13 +647,21 @@ FLAG 关键词协议（承载元数据）：
 | 配置解析 | `resolve_proot_config`（core/config/mod.rs）→ `Config.proot` | ✅ |
 | 就绪探测 | `proot_readiness`（core/sandboxing/mod.rs） | ✅ |
 
-**② 模型能否经核心调用？——能。**
+**② 模型能否经核心调用？——能，且 transform 环已实证贯通。**
 
 - 模型命令工具（exec_command）的执行路径 `process_manager.rs:1364 → orchestrator.run` 与编排器已接线（15.4 链）
 - 编排器以 `turn_ctx.config.proot.is_some()` 传 `proot_enabled`（真实配置值，非硬编码）
 - 激活条件：**`[proot]` 配置启用 + 安卓构建**（`cfg!(target_os="android")` 为真）
 - 与 Windows 的唯一差异是平台门（android vs windows）——**注册与调用机制完全同构**
 
-**③ 边界说明**：
-- Windows 开发机上 `cfg!(android)` 为假，选择分支不会命中 Proot（预期行为，与 Windows 沙箱在 Linux 上不命中同理）；包装逻辑本身有 13 个单测覆盖
-- 端到端"选中 Proot"的验证需安卓构建/真机（阶段 5）
+**③ transform 环实证（2026-08-28 新增 2 个 transform 级测试，15 个 proot 测试全过）**：
+
+| 测试 | 证明 |
+|---|---|
+| `transform_wraps_command_with_proot_when_proot_backend_selected` | 以 `SandboxType::Proot` + 真实 `ProotConfig` 调 `SandboxManager::transform`，断言：argv[0] = proot 可执行文件、原命令保留在尾部、`-r`/`-w`/`-b` flag 齐全、工作区已绑定——**transform 包装链真实贯通** |
+| `transform_errors_when_proot_selected_without_config` | 选中 Proot 但未供配置时返回 `ProotPreparationError`（接线错误的调用方得到明确报错而非 panic） |
+
+**④ 边界说明**：
+- Windows 开发机上 `cfg!(android)` 为假，选择分支不会命中 Proot（预期行为，与 Windows 沙箱在 Linux 上不命中同理）
+- 选择分支（`get_platform_sandbox` 的 android 臂）为纯逻辑，安卓构建编译即生效；包装/派生链已由上述测试实证
+- 端到端"真机执行 proot 命令"的验证属阶段 5（设备联调）

@@ -1,4 +1,11 @@
 use super::*;
+use crate::SandboxCommand;
+use crate::SandboxManager;
+use crate::SandboxTransformError;
+use crate::SandboxTransformRequest;
+use crate::SandboxType;
+use codex_protocol::config_types::WindowsSandboxLevel;
+use codex_protocol::models::PermissionProfile;
 use codex_protocol::permissions::FileSystemAccessMode;
 use codex_protocol::permissions::FileSystemPath;
 use codex_protocol::permissions::FileSystemSandboxEntry;
@@ -6,6 +13,7 @@ use codex_protocol::permissions::NetworkSandboxPolicy;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
+use std::collections::HashMap;
 use std::path::Path;
 
 /// Host-native absolute test path: POSIX on unix, `C:`-prefixed on Windows.
@@ -419,4 +427,98 @@ fn no_guest_shell_leaves_command_untouched() {
     let args = create_proot_command_args(params).expect("proot args");
     let tail: Vec<&str> = args[args.len() - 3..].iter().map(String::as_str).collect();
     assert_eq!(tail, vec!["/bin/sh", "-c", "echo hi"]);
+}
+
+/// End-to-end proof of the transform link: when the backend is selected as
+/// `SandboxType::Proot`, `SandboxManager::transform` actually wraps the command
+/// with the proot argv (program becomes the proot executable, original shell
+/// command preserved at the tail, proot flags present).
+#[test]
+fn transform_wraps_command_with_proot_when_proot_backend_selected() {
+    let workspace = host_path("/data/workspace");
+    let policy = workspace_policy(&workspace);
+    let permissions =
+        PermissionProfile::from_runtime_permissions(&policy, NetworkSandboxPolicy::Restricted);
+    let cwd_uri = PathUri::from_abs_path(&workspace);
+    let config = test_config();
+    let proot_exe = config.executable().to_string_lossy().into_owned();
+
+    let manager = SandboxManager::new();
+    let exec_request = manager
+        .transform(SandboxTransformRequest {
+            command: SandboxCommand {
+                program: "/bin/sh".into(),
+                args: vec!["-c".to_string(), "git status".to_string()],
+                cwd: cwd_uri.clone(),
+                env: HashMap::new(),
+                managed_network: None,
+                additional_permissions: None,
+            },
+            permissions: &permissions,
+            sandbox: SandboxType::Proot,
+            enforce_managed_network: false,
+            environment_id: None,
+            network: None,
+            sandbox_policy_cwd: &cwd_uri,
+            codex_linux_sandbox_exe: None,
+            proot: Some(&config),
+            use_legacy_landlock: false,
+            windows_sandbox_level: WindowsSandboxLevel::Disabled,
+            windows_sandbox_private_desktop: false,
+        })
+        .expect("transform should wrap the command with proot");
+
+    let argv = &exec_request.command;
+    // Program (argv[0]) is now the proot executable.
+    assert_eq!(argv[0], proot_exe);
+    // The original shell command is preserved at the tail.
+    let tail: Vec<&str> = argv[argv.len() - 3..].iter().map(String::as_str).collect();
+    assert_eq!(tail, vec!["/bin/sh", "-c", "git status"]);
+    // Core proot flags are present.
+    assert!(argv.iter().any(|a| a == "-r"), "missing -r rootfs flag");
+    assert!(argv.iter().any(|a| a == "-w"), "missing -w cwd flag");
+    assert!(argv.iter().any(|a| a == "-b"), "missing -b bind flag");
+    // The workspace is bound into the guest.
+    let workspace_display = workspace.to_string_lossy().into_owned();
+    assert!(
+        bind_values(argv).iter().any(|b| b.starts_with(&workspace_display)),
+        "workspace root should be bound"
+    );
+}
+
+/// The Proot transform arm must fail clearly when the backend is selected but
+/// no `ProotConfig` was supplied (mis-wired caller), rather than panicking.
+#[test]
+fn transform_errors_when_proot_selected_without_config() {
+    let workspace = host_path("/data/workspace");
+    let policy = workspace_policy(&workspace);
+    let permissions =
+        PermissionProfile::from_runtime_permissions(&policy, NetworkSandboxPolicy::Restricted);
+    let cwd_uri = PathUri::from_abs_path(&workspace);
+
+    let manager = SandboxManager::new();
+    let err = manager
+        .transform(SandboxTransformRequest {
+            command: SandboxCommand {
+                program: "/bin/sh".into(),
+                args: vec!["-c".to_string(), "true".to_string()],
+                cwd: cwd_uri.clone(),
+                env: HashMap::new(),
+                managed_network: None,
+                additional_permissions: None,
+            },
+            permissions: &permissions,
+            sandbox: SandboxType::Proot,
+            enforce_managed_network: false,
+            environment_id: None,
+            network: None,
+            sandbox_policy_cwd: &cwd_uri,
+            codex_linux_sandbox_exe: None,
+            proot: None,
+            use_legacy_landlock: false,
+            windows_sandbox_level: WindowsSandboxLevel::Disabled,
+            windows_sandbox_private_desktop: false,
+        })
+        .expect_err("transform should error when proot config is missing");
+    assert!(matches!(err, SandboxTransformError::ProotPreparation(_)));
 }
