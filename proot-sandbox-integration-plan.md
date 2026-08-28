@@ -562,3 +562,98 @@ PRoot 两者皆不需要：
 |---|---|
 | ✅ 已注册（8） | 配置类型、协议枚举（SandboxType::Proot）、就绪探测（proot_readiness）、派生（通用直派生）、transform（Proot 臂+能力检查）、运行时命令改写（guest_shell）、遥测（"proot" 标签+turn_metadata）、审批联动（safety/apply_patch 真实状态） |
 | ⭕ 不需要（5，有正当理由） | 功能开关（单一用途 App 无灰度需求）、托管需求（企业功能）、arg0 派发（无辅助二进制）、配置写回（App 直接写 config.toml）、默认档案联动（PRoot 隔离不依赖档案降级） |
+
+---
+
+## 十五、接入—注册—关键词组合机制图解（以 Windows 为基准，PRoot 逐环对照）
+
+> 本节回答两个问题：① 沙箱模块是**怎样接入 Codex、怎样被注册、怎样被"关键词组合"调用**的；② 新增的 PRoot **是否已注册、模型能否经核心管道调用到它**。结论先行：**均已就位，核验证据见 15.5**。
+
+### 15.1 接入：依赖图（模块怎么连进 Codex）
+
+Windows 沙箱实体是 `windows-sandbox-rs`（crate `codex-windows-sandbox`），经 4 个 crate 的 Cargo 依赖接入：
+
+```
+Cargo.toml:224  codex-windows-sandbox = { path = "windows-sandbox-rs" }
+   ├── arg0            关键词派发入口
+   ├── sandboxing      transform 包装 + spawn 派生
+   ├── core            安装/就绪流程 + level 解析
+   └── network-proxy   代理集成
+```
+
+**PRoot 对照**：不是独立 crate，而是 `sandboxing` 内置模块（`sandboxing/src/proot.rs`），由 `sandboxing` + `config` + `core` 三处接入——依赖面更窄，无外部 crate 引入。
+
+### 15.2 注册：模块注册的"可被调用入口"
+
+| 入口 | Windows | PRoot |
+|---|---|---|
+| ① arg0 关键词派发 | `arg0/src/lib.rs:111`：`argv1 == "--run-as-windows-sandbox"` → wrapper main（`#[cfg(windows)]` 门内） | **不需要**——proot 是外部二进制，不自举 |
+| ② SandboxType 枚举变体 | `WindowsRestrictedToken`，transform/spawn 各有 match 臂 | ✅ `SandboxType::Proot`：transform 臂（manager.rs:481）、metric tag（:53）、选择分支（:81）、违规后端（violation.rs:147）、exec-server（local_process.rs:370） |
+| ③ 公共 API 导出 | `lib.rs:349-351` 导出 3 函数 | ✅ `lib.rs:7` `pub mod proot`（**无 cfg 门**）+ 导出 `create_proot_command_args`/`check_proot_readiness`/`ProotConfig` 等 |
+
+### 15.3 关键词组合：模块被"组合调用"的核心机制
+
+**Windows 的 argv 关键词协议**（`windows-sandbox-rs/src/wrapper.rs:20-36`）：
+
+```
+派发关键词（激活钥匙，argv1）：
+  --run-as-windows-sandbox
+
+FLAG 关键词协议（承载元数据）：
+  --codex-home / --command-cwd / --permission-profile <JSON> / --env-json <JSON>
+  --windows-sandbox-level / --workspace-root（可重复）/ --windows-sandbox-private-desktop
+  --proxy-enforced / --read-roots-json / --write-roots-json / --deny-read-paths-json ...
+```
+
+组合流程（`manager.rs:661-687`）：transform 判定 `WindowsRestrictedToken` → 拼关键词 argv → `command = [codex_exe] + wrapper_args` → `sandbox` 复位 None → spawn 重启 codex → arg0 命中派发词 → wrapper 解析 FLAG → 沙箱内跑内层命令。
+
+**PRoot 的关键词组合**：proot 原生 flag 即关键词，元数据直接进 flag，无需自举协议：
+
+```
+<proot> -0 -r <rootfs> -k <ver> -w <guest_cwd> -b <host[:guest]>... [extra_flags...] <shell> -c <cmd>
+```
+
+**同构性结论**：Windows 用"重启 codex + 自定义 FLAG 协议"当 wrapper；PRoot 用"外部 proot 二进制 + 原生 flag"当 wrapper。两者都是 **transform 期把 wrapper 编进 command → 通用派生**，机制同构，PRoot 更简。
+
+### 15.4 端到端调用链（模型 → PRoot 包装执行）
+
+```
+模型发出 exec_command 工具调用
+  → 工具处理器（tools/handlers/unified_exec/exec_command.rs）
+  → process_manager.exec_command（unified_exec/process_manager.rs:1305-1365）
+  → orchestrator.run(runtime, req, tool_ctx)                    process_manager.rs:1364
+      turn_ctx = tool_ctx.step_context.turn                     orchestrator.rs
+      proot_enabled = turn_ctx.config.proot.is_some()           orchestrator.rs:274
+      select_initial(profile, pref, ws_level, proot_enabled, network)
+        → get_platform_sandbox(windows_enabled, proot_enabled)  manager.rs:325
+          → cfg!(target_os="android") && proot_enabled
+              → SandboxType::Proot                              manager.rs:79-84
+      SandboxAttempt { proot: turn_ctx.config.proot.as_ref() }  orchestrator.rs:301
+  → transform(SandboxTransformRequest { proot })                tools/sandboxing.rs
+      → Proot 臂：能力检查 + 绑定表 + argv 组装（含 guest_shell）manager.rs:481-511
+  → spawn：通用直派生执行 proot 包装命令                          spawn.rs:94
+```
+
+### 15.5 注册与可调用性核验结论（逐项证据）
+
+**① 是否被注册？——是。**
+
+| 核验点 | 证据 | 结果 |
+|---|---|---|
+| 枚举变体 | `SandboxType::Proot` 全部 match 臂已处理（工作区零错误编译即证明无遗漏） | ✅ |
+| transform 臂 | manager.rs:481，**无 `#[cfg]` 平台门**（对比 Windows 臂 :466 有 `#[cfg(windows)]`）——安卓构建必然编入 | ✅ |
+| 选择分支 | get_platform_sandbox 的 `cfg!(android)` 分支（manager.rs:79-84） | ✅ |
+| 模块编译门 | `lib.rs:7 pub mod proot` 无 cfg 门，全平台编入 | ✅ |
+| 配置解析 | `resolve_proot_config`（core/config/mod.rs）→ `Config.proot` | ✅ |
+| 就绪探测 | `proot_readiness`（core/sandboxing/mod.rs） | ✅ |
+
+**② 模型能否经核心调用？——能。**
+
+- 模型命令工具（exec_command）的执行路径 `process_manager.rs:1364 → orchestrator.run` 与编排器已接线（15.4 链）
+- 编排器以 `turn_ctx.config.proot.is_some()` 传 `proot_enabled`（真实配置值，非硬编码）
+- 激活条件：**`[proot]` 配置启用 + 安卓构建**（`cfg!(target_os="android")` 为真）
+- 与 Windows 的唯一差异是平台门（android vs windows）——**注册与调用机制完全同构**
+
+**③ 边界说明**：
+- Windows 开发机上 `cfg!(android)` 为假，选择分支不会命中 Proot（预期行为，与 Windows 沙箱在 Linux 上不命中同理）；包装逻辑本身有 13 个单测覆盖
+- 端到端"选中 Proot"的验证需安卓构建/真机（阶段 5）
