@@ -292,6 +292,25 @@ fn readiness_without_config_is_not_configured() {
     assert!(!ProotReadiness::NotConfigured.is_ready());
 }
 
+/// Telemetry tag mapping for every readiness state, mirroring the metric-tag
+/// convention used by the Windows sandbox metrics.
+#[test]
+fn readiness_metric_tags_cover_all_states() {
+    assert_eq!(ProotReadiness::Ready.as_metric_tag(), "ready");
+    assert_eq!(
+        ProotReadiness::NotConfigured.as_metric_tag(),
+        "not_configured"
+    );
+    assert_eq!(
+        ProotReadiness::MissingExecutable.as_metric_tag(),
+        "missing_executable"
+    );
+    assert_eq!(
+        ProotReadiness::MissingRootfs.as_metric_tag(),
+        "missing_rootfs"
+    );
+}
+
 #[test]
 fn readiness_is_ready_when_executable_and_rootfs_exist() {
     let temp = tempfile::tempdir().expect("temp dir");

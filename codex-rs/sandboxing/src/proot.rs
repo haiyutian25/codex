@@ -219,6 +219,17 @@ impl ProotReadiness {
     pub fn is_ready(self) -> bool {
         self == Self::Ready
     }
+
+    /// Telemetry tag value for the `status` dimension of proot readiness
+    /// metrics, mirroring the Windows sandbox metric-tag convention.
+    pub const fn as_metric_tag(self) -> &'static str {
+        match self {
+            Self::Ready => "ready",
+            Self::NotConfigured => "not_configured",
+            Self::MissingExecutable => "missing_executable",
+            Self::MissingRootfs => "missing_rootfs",
+        }
+    }
 }
 
 /// Probes the resolved PRoot configuration for runtime readiness.
