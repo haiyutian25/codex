@@ -148,19 +148,11 @@ pub(crate) static BANNED_PREFIX_SUGGESTIONS: &[&[&str]] = &[
 /// words being evaluated by exec-policy.
 ///
 /// The command tokens may be the original argv or a shell-specific lowering of
-/// a wrapper such as `bash -lc ...` or `powershell.exe -Command ...`. We only
-/// need to distinguish the PowerShell case because its dangerous-command
-/// heuristics operate on PowerShell-flavored inner command words rather than
-/// the generic command classifier.
+/// a wrapper such as `bash -lc ...`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExecPolicyCommandOrigin {
     /// Use the generic unmatched-command heuristics.
     Generic,
-    #[cfg(windows)]
-    /// The command words came from the `-Command` body of a top-level
-    /// PowerShell wrapper, so use PowerShell-specific unmatched-command
-    /// heuristics for the lowered words.
-    PowerShell,
 }
 
 #[derive(Clone, Copy)]
@@ -704,10 +696,6 @@ fn dangerous_command_match_for_origin(
 ) -> Option<DangerousCommandMatch> {
     match command_origin {
         ExecPolicyCommandOrigin::Generic => dangerous_command_match(command),
-        #[cfg(windows)]
-        ExecPolicyCommandOrigin::PowerShell => {
-            codex_shell_command::is_dangerous_command::dangerous_powershell_words_match(command)
-        }
     }
 }
 
@@ -840,19 +828,6 @@ fn commands_for_exec_policy(command: &[String]) -> ExecPolicyCommands {
             commands,
             command_origin: ExecPolicyCommandOrigin::Generic,
         };
-    }
-
-    #[cfg(windows)]
-    {
-        if let Some(commands) =
-            codex_shell_command::powershell::parse_powershell_command_into_plain_commands(command)
-            && !commands.is_empty()
-        {
-            return ExecPolicyCommands {
-                commands,
-                command_origin: ExecPolicyCommandOrigin::PowerShell,
-            };
-        }
     }
 
     ExecPolicyCommands {

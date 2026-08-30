@@ -1,16 +1,8 @@
 use super::ExecApprovalRequest;
-#[cfg(windows)]
-use super::ExecPolicyCommandOrigin;
-#[cfg(windows)]
-use super::ExecPolicyCommands;
 use super::ExecPolicyManager;
 use super::commands_for_exec_policy;
 use crate::shell::Shell;
 use crate::tools::sandboxing::ExecApprovalRequirement;
-#[cfg(windows)]
-use codex_shell_command::powershell::extract_powershell_command;
-#[cfg(windows)]
-use codex_shell_command::powershell::parse_powershell_script_into_plain_commands;
 use codex_tools::UnifiedExecShellMode;
 use std::path::Path;
 
@@ -29,17 +21,6 @@ impl ExecPolicyManager {
                 .await;
         }
 
-        #[cfg(windows)]
-        let mut policy_commands = match extract_powershell_command(command) {
-            Some((_, script)) => ExecPolicyCommands {
-                commands: parse_powershell_script_into_plain_commands(script)
-                    .unwrap_or_else(|| vec![command.to_vec()]),
-                command_origin: ExecPolicyCommandOrigin::PowerShell,
-            },
-            None => commands_for_exec_policy(command),
-        };
-
-        #[cfg(not(windows))]
         let mut policy_commands = commands_for_exec_policy(command);
 
         // Evaluate the executable alongside its apparent commands. Inner
@@ -61,31 +42,10 @@ fn shell_approval_command<'a>(
     };
     let executable_path = Path::new(executable);
 
-    #[cfg(windows)]
-    let is_system_shell = std::env::var_os("SystemRoot").is_some_and(|system_root| {
-        let system_directory = Path::new(&system_root).join("System32");
-        let powershell_directory = system_directory.join("WindowsPowerShell").join("v1.0");
-        executable_path.parent().is_some_and(|parent| {
-            parent
-                .as_os_str()
-                .eq_ignore_ascii_case(system_directory.as_os_str())
-                || parent
-                    .as_os_str()
-                    .eq_ignore_ascii_case(powershell_directory.as_os_str())
-        })
-    });
-
-    #[cfg(not(windows))]
     let is_system_shell = executable_path
         .parent()
         .is_some_and(|parent| parent == Path::new("/bin") || parent == Path::new("/usr/bin"));
 
-    #[cfg(windows)]
-    let is_configured_shell = executable_path
-        .as_os_str()
-        .eq_ignore_ascii_case(configured_shell.shell_path.as_os_str());
-
-    #[cfg(not(windows))]
     let is_configured_shell = executable_path == configured_shell.shell_path.as_path();
 
     if is_configured_shell
