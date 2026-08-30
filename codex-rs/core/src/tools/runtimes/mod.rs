@@ -9,7 +9,6 @@ use crate::exec_env::CODEX_SESSION_ID_ENV_VAR;
 use crate::exec_env::CODEX_THREAD_ID_ENV_VAR;
 use crate::sandboxing::SandboxPermissions;
 use crate::shell::Shell;
-use crate::shell::ShellType;
 use codex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
 use codex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
 #[cfg(unix)]
@@ -23,7 +22,6 @@ use codex_network_proxy::PROXY_ENV_KEYS;
 use codex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
 pub(crate) use codex_network_proxy::is_managed_proxy_env_var;
 pub(crate) use codex_network_proxy::strip_managed_proxy_env;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::shell_environment::is_non_inheritable_env_var;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
@@ -142,35 +140,6 @@ pub(crate) fn apply_zsh_fork_path_prepend(
         return;
     };
     runtime_path_prepends.prepend(env, zsh_bin_dir);
-}
-
-pub(crate) fn disable_powershell_profile_for_elevated_windows_sandbox(
-    command: &[String],
-    shell_type: Option<&ShellType>,
-    sandbox_requested: bool,
-    windows_sandbox_level: WindowsSandboxLevel,
-) -> Vec<String> {
-    if shell_type != Some(&ShellType::PowerShell)
-        || !sandbox_requested
-        || windows_sandbox_level != WindowsSandboxLevel::Elevated
-        || command.is_empty()
-    {
-        return command.to_vec();
-    }
-
-    if command[1..]
-        .iter()
-        .any(|arg| arg.eq_ignore_ascii_case("-NoProfile"))
-    {
-        return command.to_vec();
-    }
-
-    // The elevated Windows sandbox runs as a dedicated sandbox account while
-    // HOME/USERPROFILE may still point at the real user profile. Loading
-    // PowerShell profiles in that mixed context is not a valid login shell.
-    let mut command = command.to_vec();
-    command.insert(1, "-NoProfile".to_string());
-    command
 }
 
 /// POSIX-only helper: for commands produced by `Shell::derive_exec_args`
@@ -394,136 +363,6 @@ fn shell_single_quote(input: &str) -> String {
     input.replace('\'', r#"'"'"'"#)
 }
 
-#[cfg(test)]
-mod disable_powershell_profile_tests {
-    use super::*;
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn inserts_no_profile_for_elevated_windows_sandbox() {
-        let command = vec![
-            "powershell.exe".to_string(),
-            "-Command".to_string(),
-            "Write-Output ok".to_string(),
-        ];
-
-        let rewritten = disable_powershell_profile_for_elevated_windows_sandbox(
-            &command,
-            Some(&ShellType::PowerShell),
-            /*sandbox_requested*/ true,
-            WindowsSandboxLevel::Elevated,
-        );
-
-        assert_eq!(
-            rewritten,
-            vec![
-                "powershell.exe".to_string(),
-                "-NoProfile".to_string(),
-                "-Command".to_string(),
-                "Write-Output ok".to_string(),
-            ]
-        );
-    }
-
-    #[test]
-    fn inserts_no_profile_before_encoded_command() {
-        let command = vec![
-            "powershell.exe".to_string(),
-            "-EncodedCommand".to_string(),
-            "VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIABvAGsA".to_string(),
-        ];
-
-        let rewritten = disable_powershell_profile_for_elevated_windows_sandbox(
-            &command,
-            Some(&ShellType::PowerShell),
-            /*sandbox_requested*/ true,
-            WindowsSandboxLevel::Elevated,
-        );
-
-        assert_eq!(
-            rewritten,
-            vec![
-                "powershell.exe".to_string(),
-                "-NoProfile".to_string(),
-                "-EncodedCommand".to_string(),
-                "VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIABvAGsA".to_string(),
-            ]
-        );
-    }
-
-    #[test]
-    fn preserves_existing_no_profile() {
-        let command = vec![
-            "pwsh.exe".to_string(),
-            "-NoProfile".to_string(),
-            "-Command".to_string(),
-            "Write-Output ok".to_string(),
-        ];
-
-        let rewritten = disable_powershell_profile_for_elevated_windows_sandbox(
-            &command,
-            Some(&ShellType::PowerShell),
-            /*sandbox_requested*/ true,
-            WindowsSandboxLevel::Elevated,
-        );
-
-        assert_eq!(rewritten, command);
-    }
-
-    #[test]
-    fn leaves_legacy_restricted_token_backend_alone() {
-        let command = vec![
-            "powershell.exe".to_string(),
-            "-Command".to_string(),
-            "Write-Output ok".to_string(),
-        ];
-
-        let rewritten = disable_powershell_profile_for_elevated_windows_sandbox(
-            &command,
-            Some(&ShellType::PowerShell),
-            /*sandbox_requested*/ true,
-            WindowsSandboxLevel::RestrictedToken,
-        );
-
-        assert_eq!(rewritten, command);
-    }
-
-    #[test]
-    fn leaves_unsandboxed_attempts_alone() {
-        let command = vec![
-            "powershell.exe".to_string(),
-            "-Command".to_string(),
-            "Write-Output ok".to_string(),
-        ];
-
-        let rewritten = disable_powershell_profile_for_elevated_windows_sandbox(
-            &command,
-            Some(&ShellType::PowerShell),
-            /*sandbox_requested*/ false,
-            WindowsSandboxLevel::Elevated,
-        );
-
-        assert_eq!(rewritten, command);
-    }
-
-    #[test]
-    fn leaves_non_powershell_alone() {
-        let command = vec![
-            "/bin/bash".to_string(),
-            "-lc".to_string(),
-            "echo ok".to_string(),
-        ];
-
-        let rewritten = disable_powershell_profile_for_elevated_windows_sandbox(
-            &command,
-            Some(&ShellType::Bash),
-            /*sandbox_requested*/ true,
-            WindowsSandboxLevel::Elevated,
-        );
-
-        assert_eq!(rewritten, command);
-    }
-}
 
 #[cfg(all(test, unix))]
 #[path = "mod_tests.rs"]

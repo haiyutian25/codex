@@ -31,7 +31,6 @@ pub(crate) fn prepare_apply_patch(
         turn_environment.permission_profile(),
         file_system_sandbox_policy,
         &action.cwd,
-        turn_environment.config().windows_sandbox_level,
         step_context.turn.config.proot.is_some(),
     ) {
         SafetyCheck::AutoApprove => Ok(ApplyPatchRuntimeInvocation {

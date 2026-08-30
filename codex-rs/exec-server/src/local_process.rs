@@ -362,9 +362,7 @@ impl LocalProcess {
         }
         let sandbox_type = match prepared.sandbox {
             SandboxType::None => Some(ProcessSandboxType::None),
-            SandboxType::MacosSeatbelt => Some(ProcessSandboxType::MacosSeatbelt),
             SandboxType::LinuxSeccomp => Some(ProcessSandboxType::LinuxSeccomp),
-            SandboxType::WindowsRestrictedToken => Some(ProcessSandboxType::WindowsRestrictedToken),
             // PRoot wrapping happens core-side (argv transformation); the
             // exec-server never receives this type as a process sandbox.
             SandboxType::Proot => Some(ProcessSandboxType::None),
@@ -390,7 +388,6 @@ impl LocalProcess {
             env: &prepared.env,
             arg0: &prepared.arg0,
             sandbox: prepared.sandbox,
-            windows_sandbox: prepared.windows_sandbox_spawn_request(),
             tty: params.tty,
             stdin_open: params.tty || params.pipe_stdin,
             inherited_fds: &[],
@@ -1384,14 +1381,11 @@ mod tests {
             .await
             .err()
             .expect("valid boundary process ID should proceed to process preparation");
-        #[cfg(not(target_os = "windows"))]
         assert!(
             error
                 .message
                 .contains("executor-local network proxy launch requires an enabled proxy")
         );
-        #[cfg(target_os = "windows")]
-        assert_eq!(error, invalid_params("argv must not be empty".to_string()));
 
         for process_id in [
             String::new(),

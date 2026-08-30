@@ -4,7 +4,6 @@ use crate::SandboxManager;
 use crate::SandboxTransformError;
 use crate::SandboxTransformRequest;
 use crate::SandboxType;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::permissions::FileSystemAccessMode;
 use codex_protocol::permissions::FileSystemPath;
@@ -482,8 +481,6 @@ fn transform_wraps_command_with_proot_when_proot_backend_selected() {
             codex_linux_sandbox_exe: None,
             proot: Some(&config),
             use_legacy_landlock: false,
-            windows_sandbox_level: WindowsSandboxLevel::Disabled,
-            windows_sandbox_private_desktop: false,
         })
         .expect("transform should wrap the command with proot");
 
@@ -535,8 +532,6 @@ fn transform_errors_when_proot_selected_without_config() {
             codex_linux_sandbox_exe: None,
             proot: None,
             use_legacy_landlock: false,
-            windows_sandbox_level: WindowsSandboxLevel::Disabled,
-            windows_sandbox_private_desktop: false,
         })
         .expect_err("transform should error when proot config is missing");
     assert!(matches!(err, SandboxTransformError::ProotPreparation(_)));

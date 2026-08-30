@@ -317,9 +317,7 @@ pub struct ExecResponse {
 pub enum ProcessSandboxType {
     /// The process was explicitly started without a platform sandbox.
     None,
-    MacosSeatbelt,
     LinuxSeccomp,
-    WindowsRestrictedToken,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

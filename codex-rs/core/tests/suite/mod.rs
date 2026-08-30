@@ -61,7 +61,6 @@ mod current_time_reminder;
 mod cyber_access_program;
 mod cyber_exec_policy;
 mod deprecation_notice;
-mod exec;
 mod exec_policy;
 #[cfg(not(target_os = "windows"))]
 mod extension_sandbox;
@@ -173,6 +172,5 @@ mod web_search;
 mod websocket_fallback;
 mod window_headers;
 #[cfg(target_os = "windows")]
-mod windows_sandbox;
 mod workspace_roots;
 mod worktree_trust;

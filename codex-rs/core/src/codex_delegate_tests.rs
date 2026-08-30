@@ -204,8 +204,7 @@ async fn run_codex_thread_interactive_respects_pre_cancelled_spawn() {
             SubAgentSource::Review,
             /*initial_history*/ None,
             crate::session::GitEnrichmentPolicy::Fresh,
-            codex_sandboxing::WindowsSandboxProxySettingsMode::Reconcile,
-        ),
+            ),
     )
     .await
     .expect("cancelled delegate spawn should not hang");
@@ -250,8 +249,7 @@ async fn guardian_delegates_do_not_inherit_parent_extensions() {
             subagent_source,
             /*initial_history*/ None,
             crate::session::GitEnrichmentPolicy::Fresh,
-            codex_sandboxing::WindowsSandboxProxySettingsMode::Reconcile,
-        )
+            )
         .await
         .expect("delegate session should start");
 
@@ -293,7 +291,6 @@ async fn run_codex_thread_interactive_rejects_approval_policy_that_can_prompt() 
         SubAgentSource::Review,
         /*initial_history*/ None,
         crate::session::GitEnrichmentPolicy::Fresh,
-        codex_sandboxing::WindowsSandboxProxySettingsMode::Reconcile,
     )
     .await;
 

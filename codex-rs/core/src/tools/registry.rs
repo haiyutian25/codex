@@ -492,7 +492,6 @@ impl ToolRegistry {
                 "sandbox",
                 permission_profile_sandbox_tag(
                     &permission_profile,
-                    invocation.turn.windows_sandbox_level,
                     invocation.turn.config.proot.is_some(),
                     invocation.turn.network.is_some(),
                 ),

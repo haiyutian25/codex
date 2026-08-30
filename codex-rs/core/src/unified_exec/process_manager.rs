@@ -212,14 +212,10 @@ fn exec_server_env_for_request(
 fn exec_server_params_for_request(
     process_id: i32,
     request: &ExecRequest,
-    windows_sandbox_proxy_settings_mode: codex_sandboxing::WindowsSandboxProxySettingsMode,
     tty: bool,
 ) -> codex_exec_server::ExecParams {
     let (env_policy, env) = exec_server_env_for_request(request);
-    let sandbox = request.exec_server_sandbox.clone().map(|mut sandbox| {
-        sandbox.windows_sandbox_proxy_settings_mode = Some(windows_sandbox_proxy_settings_mode);
-        sandbox
-    });
+    let sandbox = request.exec_server_sandbox.clone();
     // Sandbox retries and memory-backed local launches can reuse a unified-exec
     // ID while the executor still retains the previous process.
     let exec_server_process_id =
@@ -1120,7 +1116,6 @@ impl UnifiedExecProcessManager {
         environment_id: Option<&str>,
         exec_server_env_config: Option<ExecServerEnvConfig>,
         shell_snapshot: Option<codex_exec_server::ShellSnapshotRequest>,
-        windows_sandbox_proxy_settings_mode: codex_sandboxing::WindowsSandboxProxySettingsMode,
         tty: bool,
         spawn_lifecycle: SpawnLifecycleHandle,
         environment: &codex_exec_server::Environment,
@@ -1144,7 +1139,6 @@ impl UnifiedExecProcessManager {
         self.open_session_with_prepared_exec_env(
             process_id,
             &request,
-            windows_sandbox_proxy_settings_mode,
             network_policy_decider,
             tty,
             spawn_lifecycle,
@@ -1167,7 +1161,6 @@ impl UnifiedExecProcessManager {
         &self,
         process_id: i32,
         request: &ExecRequest,
-        windows_sandbox_proxy_settings_mode: codex_sandboxing::WindowsSandboxProxySettingsMode,
         network_policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
         tty: bool,
         mut spawn_lifecycle: SpawnLifecycleHandle,
@@ -1183,12 +1176,7 @@ impl UnifiedExecProcessManager {
             }
 
             let backend = environment.get_exec_backend();
-            let params = exec_server_params_for_request(
-                process_id,
-                request,
-                windows_sandbox_proxy_settings_mode,
-                tty,
-            );
+            let params = exec_server_params_for_request(process_id, request, tty);
             let started = match network_policy_decider {
                 Some(decider) => {
                     backend
@@ -1213,57 +1201,12 @@ impl UnifiedExecProcessManager {
         if request.command.is_empty() {
             return Err(UnifiedExecError::MissingCommandLine);
         }
-        let network_proxy_restricting_sid = {
-            #[cfg(target_os = "windows")]
-            {
-                if request.sandbox == codex_sandboxing::SandboxType::WindowsRestrictedToken {
-                    request
-                        .network
-                        .as_ref()
-                        .map(|network| {
-                            network
-                                .network_proxy_restricting_sid(
-                                    request.network_environment_id.as_deref(),
-                                )
-                                .ok_or_else(|| {
-                                    UnifiedExecError::create_process(
-                                        "managed Windows proxy route is missing its restricting SID"
-                                            .to_string(),
-                                    )
-                                })
-                        })
-                        .transpose()?
-                } else {
-                    None
-                }
-            }
-            #[cfg(not(target_os = "windows"))]
-            {
-                None::<String>
-            }
-        };
-        let windows_sandbox =
-            if request.sandbox == codex_sandboxing::SandboxType::WindowsRestrictedToken {
-                Some(codex_sandboxing::WindowsSandboxSpawnRequest {
-                    permission_profile: &request.permission_profile,
-                    workspace_roots: &request.windows_sandbox_workspace_roots,
-                    windows_sandbox_level: request.windows_sandbox_level,
-                    proxy_enforced: request.network.is_some(),
-                    network_proxy_restricting_sid: network_proxy_restricting_sid.as_deref(),
-                    proxy_settings_mode: windows_sandbox_proxy_settings_mode,
-                    filesystem_overrides: request.windows_sandbox_filesystem_overrides.as_ref(),
-                    use_private_desktop: request.windows_sandbox_private_desktop,
-                })
-            } else {
-                None
-            };
         let spawn_result = codex_sandboxing::spawn_process(codex_sandboxing::SpawnRequest {
             command: &request.command,
             cwd: native_cwd.as_path(),
             env: &request.env,
             arg0: &request.arg0,
             sandbox: request.sandbox,
-            windows_sandbox,
             tty,
             stdin_open: tty,
             inherited_fds: &inherited_fds,

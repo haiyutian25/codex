@@ -4,7 +4,6 @@ use std::path::PathBuf;
 
 use codex_apply_patch::ApplyPatchAction;
 use codex_apply_patch::ApplyPatchFileChange;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::permissions::FileSystemSandboxPolicy;
 use codex_protocol::protocol::AskForApproval;
@@ -29,7 +28,6 @@ pub fn assess_patch_safety(
     permission_profile: &PermissionProfile,
     file_system_sandbox_policy: &FileSystemSandboxPolicy,
     cwd: &PathUri,
-    windows_sandbox_level: WindowsSandboxLevel,
     proot_enabled: bool,
 ) -> SafetyCheck {
     if action.is_empty() {
@@ -70,10 +68,7 @@ pub fn assess_patch_safety(
             // Only auto‑approve when we can actually enforce a sandbox. Otherwise
             // fall back to asking the user because the patch may touch arbitrary
             // paths outside the project.
-            match get_platform_sandbox(
-                windows_sandbox_level != WindowsSandboxLevel::Disabled,
-                proot_enabled,
-            ) {
+            match get_platform_sandbox(proot_enabled) {
                 Some(_) => SafetyCheck::AutoApprove,
                 None => {
                     if rejects_sandbox_approval {

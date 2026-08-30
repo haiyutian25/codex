@@ -132,7 +132,6 @@ impl FileSystemSandboxRunner {
         let sandbox = sandbox_manager.select_initial(
             permission_profile,
             SandboxablePreference::Require,
-            sandbox_context.windows_sandbox_level,
             /*proot_enabled*/ false,
             /*has_managed_network_requirements*/ false,
         );
@@ -152,8 +151,6 @@ impl FileSystemSandboxRunner {
         sandbox_manager
             .transform_for_direct_spawn(SandboxDirectSpawnTransformRequest {
                 workspace_roots,
-                windows_sandbox_proxy_settings_mode:
-                    codex_sandboxing::WindowsSandboxProxySettingsMode::Preserve,
                 transform: SandboxTransformRequest {
                     command,
                     permissions: permission_profile,
@@ -165,9 +162,6 @@ impl FileSystemSandboxRunner {
                     codex_linux_sandbox_exe: self.runtime_paths.codex_linux_sandbox_exe.as_deref(),
                     proot: None,
                     use_legacy_landlock: sandbox_context.use_legacy_landlock,
-                    windows_sandbox_level: sandbox_context.windows_sandbox_level,
-                    windows_sandbox_private_desktop: sandbox_context
-                        .windows_sandbox_private_desktop,
                 },
             })
             .map_err(|err| invalid_request(format!("failed to prepare fs sandbox: {err}")))
@@ -497,10 +491,6 @@ fn json_error(err: serde_json::Error) -> JSONRPCErrorError {
 }
 
 #[cfg(test)]
-#[path = "fs_sandbox_windows_tests.rs"]
-mod windows_tests;
-
-#[cfg(test)]
 mod tests {
     use std::collections::HashMap;
     use std::ffi::OsString;
@@ -656,11 +646,14 @@ mod tests {
         );
     }
 
+    // Requires a working platform sandbox backend; after the Windows/macOS
+    // backend removal only Linux provides one.
+    #[cfg(target_os = "linux")]
     #[test]
     fn sandbox_exec_request_carries_helper_env() {
         let Some((path_key, path)) = std::env::vars_os().find(|(key, _)| {
             let key = key.to_string_lossy();
-            key == "PATH" || (cfg!(windows) && key.eq_ignore_ascii_case("PATH"))
+            key == "PATH"
         }) else {
             return;
         };
@@ -673,11 +666,10 @@ mod tests {
         let runner = FileSystemSandboxRunner::new(runtime_paths);
         let native_cwd = AbsolutePathBuf::current_dir().expect("cwd");
         let cwd = PathUri::from_abs_path(&native_cwd);
-        let file_system_policy = restricted_policy(vec![
-            #[cfg(windows)]
-            special_entry(FileSystemSpecialPath::Root, FileSystemAccessMode::Read),
-            path_entry(native_cwd.clone(), FileSystemAccessMode::Write),
-        ]);
+        let file_system_policy = restricted_policy(vec![path_entry(
+            native_cwd.clone(),
+            FileSystemAccessMode::Write,
+        )]);
         let network_policy = NetworkSandboxPolicy::Restricted;
         let permission_profile =
             PermissionProfile::from_runtime_permissions(&file_system_policy, network_policy);
@@ -685,26 +677,6 @@ mod tests {
         let sandbox_cwd = SandboxCwd {
             uri: cwd,
             native: native_cwd,
-        };
-        #[cfg(windows)]
-        let sandbox_context = {
-            let error = runner
-                .sandbox_exec_request(
-                    &permission_profile,
-                    &sandbox_cwd,
-                    std::slice::from_ref(&sandbox_cwd.native),
-                    &sandbox_context,
-                )
-                .expect_err("disabled Windows sandbox must not run the helper unsandboxed");
-            assert_eq!(
-                error.message,
-                "filesystem sandbox cannot be enforced on this executor"
-            );
-            crate::FileSystemSandboxContext {
-                windows_sandbox_level:
-                    codex_protocol::config_types::WindowsSandboxLevel::RestrictedToken,
-                ..sandbox_context
-            }
         };
 
         let request = runner

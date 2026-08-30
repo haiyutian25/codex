@@ -168,7 +168,6 @@ impl ExecCommandHandler {
             && SandboxManager::new().select_initial(
                 turn_environment.permission_profile(),
                 SandboxablePreference::Auto,
-                turn_environment.config().windows_sandbox_level,
                 turn.config.proot.is_some(),
                 turn.network.is_some(),
             ) != SandboxType::None;

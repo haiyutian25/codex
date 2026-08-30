@@ -145,7 +145,7 @@ async fn explicit_escalation_prepares_exec_without_managed_network() -> anyhow::
 
     assert_eq!(exec_request.cwd, PathUri::from_abs_path(&command_cwd));
     assert_eq!(
-        exec_request.windows_sandbox_policy_cwd,
+        exec_request.sandbox_policy_cwd,
         PathUri::from_abs_path(&native_sandbox_policy_cwd)
     );
     assert_eq!(exec_request.network, None);

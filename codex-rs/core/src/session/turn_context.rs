@@ -4,7 +4,6 @@ use crate::environment_selection::EnvironmentConfigOrigin;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::exec_policy::AllowPrefixRules;
 use crate::shell_snapshot::ShellSnapshotFile;
-use crate::tools::sandboxing::executor_windows_sandbox_level;
 use arc_swap::ArcSwap;
 use codex_core_plugins::PluginCommandAttribution;
 use codex_core_plugins::ResolvedPluginMetricsOperation;
@@ -129,11 +128,8 @@ impl TurnEnvironment {
             cwd: Some(self.cwd().clone()),
             workspace_roots: self.workspace_roots().to_vec(),
             temporary_directories: self.temporary_directories.clone(),
-            windows_sandbox_level: executor_windows_sandbox_level(
-                config.windows_sandbox_level,
-                self.cwd(),
-            ),
-            windows_sandbox_private_desktop: config.windows_sandbox_private_desktop,
+            windows_sandbox_level: Default::default(),
+            windows_sandbox_private_desktop: false,
             windows_sandbox_proxy_settings_mode: None,
             use_legacy_landlock: config.use_legacy_landlock,
         }
@@ -748,7 +744,6 @@ impl Session {
             sub_id.clone(),
             cwd.clone(),
             &permission_profile,
-            session_configuration.windows_sandbox_level,
             per_turn_config.proot.is_some(),
             network.is_some(),
             auto_review_enabled,

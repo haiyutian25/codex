@@ -238,7 +238,7 @@ async fn file_system_sandbox_context_preserves_executor_workspace_permissions() 
     let manager = SandboxManager::new();
     let sandbox_policy_cwd = PathUri::from_abs_path(&path);
     let attempt = SandboxAttempt {
-        sandbox: SandboxType::MacosSeatbelt,
+        sandbox: SandboxType::LinuxSeccomp,
         sandbox_requested: true,
         permissions: &permissions,
         exec_server_permissions: &exec_server_permissions,
@@ -249,8 +249,6 @@ async fn file_system_sandbox_context_preserves_executor_workspace_permissions() 
         codex_linux_sandbox_exe: None,
         proot: None,
         use_legacy_landlock: true,
-        windows_sandbox_level: WindowsSandboxLevel::RestrictedToken,
-        windows_sandbox_private_desktop: true,
         network_denial_cancellation_token: None,
         network_proxy: None,
     };
@@ -276,11 +274,8 @@ async fn file_system_sandbox_context_preserves_executor_workspace_permissions() 
         sandbox.cwd,
         Some(codex_utils_path_uri::PathUri::from_abs_path(&path))
     );
-    assert_eq!(
-        sandbox.windows_sandbox_level,
-        WindowsSandboxLevel::RestrictedToken
-    );
-    assert_eq!(sandbox.windows_sandbox_private_desktop, true);
+    assert_eq!(sandbox.windows_sandbox_level, WindowsSandboxLevel::Disabled);
+    assert_eq!(sandbox.windows_sandbox_private_desktop, false);
     assert_eq!(sandbox.use_legacy_landlock, true);
 }
 
@@ -319,8 +314,6 @@ async fn file_system_sandbox_context_respects_sandbox_request() {
         codex_linux_sandbox_exe: None,
         proot: None,
         use_legacy_landlock: false,
-        windows_sandbox_level: WindowsSandboxLevel::Disabled,
-        windows_sandbox_private_desktop: false,
         network_denial_cancellation_token: None,
         network_proxy: None,
     };
@@ -348,7 +341,7 @@ async fn file_system_sandbox_context_respects_sandbox_request() {
             cwd: Some(cwd.clone()),
             workspace_roots: vec![cwd],
             temporary_directories: None,
-            windows_sandbox_level: WindowsSandboxLevel::RestrictedToken,
+            windows_sandbox_level: WindowsSandboxLevel::Disabled,
             windows_sandbox_private_desktop: false,
             windows_sandbox_proxy_settings_mode: None,
             use_legacy_landlock: false,

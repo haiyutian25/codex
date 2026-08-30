@@ -15,7 +15,6 @@ use crate::tools::network_approval::NetworkApprovalSpec;
 use codex_file_system::FileSystemSandboxContext;
 use codex_network_proxy::NetworkProxy;
 use codex_protocol::approvals::ExecPolicyAmendment;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::error::CodexErr;
 use codex_protocol::permissions::FileSystemSandboxKind;
 use codex_protocol::permissions::FileSystemSandboxPolicy;
@@ -28,7 +27,6 @@ use codex_sandboxing::SandboxType;
 use codex_sandboxing::SandboxablePreference;
 use codex_sandboxing::policy_transforms::effective_permission_profile;
 use codex_tools::ToolName;
-use codex_utils_path_uri::PathConvention;
 use codex_utils_path_uri::PathUri;
 use futures::Future;
 use serde::Serialize;
@@ -400,23 +398,8 @@ pub(crate) struct SandboxAttempt<'a> {
     // TODO(anp): Reconcile these attempt settings with TurnEnvironment::sandbox_context
     // so process execution and patch writes honor the selected environment's backend.
     pub use_legacy_landlock: bool,
-    pub windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
-    pub windows_sandbox_private_desktop: bool,
     pub network_denial_cancellation_token: Option<CancellationToken>,
     pub(crate) network_proxy: Option<&'a NetworkProxy>,
-}
-
-pub(crate) fn executor_windows_sandbox_level(
-    windows_sandbox_level: WindowsSandboxLevel,
-    cwd: &PathUri,
-) -> WindowsSandboxLevel {
-    if windows_sandbox_level == WindowsSandboxLevel::Disabled
-        && cwd.infer_path_convention() == Some(PathConvention::Windows)
-    {
-        WindowsSandboxLevel::RestrictedToken
-    } else {
-        windows_sandbox_level
-    }
 }
 
 impl<'a> SandboxAttempt<'a> {
@@ -466,8 +449,6 @@ impl<'a> SandboxAttempt<'a> {
                     .map(std::path::PathBuf::as_path),
                 proot: self.proot,
                 use_legacy_landlock: self.use_legacy_landlock,
-                windows_sandbox_level: self.windows_sandbox_level,
-                windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,
             })
             .map_err(CodexErr::from)?;
         let workspace_roots = self
@@ -502,8 +483,6 @@ impl<'a> SandboxAttempt<'a> {
                 codex_linux_sandbox_exe: None,
                 proot: None,
                 use_legacy_landlock: self.use_legacy_landlock,
-                windows_sandbox_level: self.windows_sandbox_level,
-                windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,
             })
             .map_err(CodexErr::from)?;
         let mut exec_request = crate::sandboxing::ExecRequest::from_sandbox_exec_request(
@@ -515,14 +494,11 @@ impl<'a> SandboxAttempt<'a> {
         if self.sandbox_requested {
             exec_request.exec_server_sandbox = Some(FileSystemSandboxContext {
                 permissions: exec_server_permissions.into(),
-                cwd: Some(exec_request.windows_sandbox_policy_cwd.clone()),
+                cwd: Some(exec_request.sandbox_policy_cwd.clone()),
                 workspace_roots: self.workspace_roots.to_vec(),
                 temporary_directories: None,
-                windows_sandbox_level: executor_windows_sandbox_level(
-                    self.windows_sandbox_level,
-                    self.sandbox_cwd,
-                ),
-                windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,
+                windows_sandbox_level: Default::default(),
+                windows_sandbox_private_desktop: false,
                 windows_sandbox_proxy_settings_mode: None,
                 use_legacy_landlock: self.use_legacy_landlock,
             });

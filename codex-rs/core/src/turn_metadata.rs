@@ -32,7 +32,6 @@ use codex_git_utils::get_has_changes_in_repo;
 use codex_git_utils::get_head_commit_hash;
 use codex_protocol::AgentPath;
 use codex_protocol::ThreadId;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::openai_models::ModelInfo;
 use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
@@ -153,7 +152,6 @@ impl TurnMetadataState {
         turn_id: String,
         cwd: AbsolutePathBuf,
         permission_profile: &PermissionProfile,
-        windows_sandbox_level: WindowsSandboxLevel,
         proot_enabled: bool,
         enforce_managed_network: bool,
         auto_review_enabled: bool,
@@ -163,7 +161,6 @@ impl TurnMetadataState {
         let sandbox = Some(
             permission_profile_sandbox_tag(
                 permission_profile,
-                windows_sandbox_level,
                 proot_enabled,
                 enforce_managed_network,
             )

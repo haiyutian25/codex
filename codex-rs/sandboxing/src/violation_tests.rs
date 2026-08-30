@@ -105,9 +105,9 @@ fn classifies_filesystem_violation_with_path() {
     );
 
     assert_eq!(
-        classify_filesystem_sandbox_violation(SandboxType::MacosSeatbelt, &output),
+        classify_filesystem_sandbox_violation(SandboxType::Proot, &output),
         Some(FileSystemSandboxViolation {
-            backend: SandboxViolationBackend::Seatbelt,
+            backend: SandboxViolationBackend::Proot,
             reason: FileSystemSandboxViolationReason::OperationNotPermitted,
             path: Some("/private/tmp/denied".to_string()),
             output_snippet: "bash: /private/tmp/denied: Operation not permitted".to_string(),
@@ -125,9 +125,9 @@ fn classifies_filesystem_violation_with_unicode_before_marker() {
     );
 
     assert_eq!(
-        classify_filesystem_sandbox_violation(SandboxType::MacosSeatbelt, &output),
+        classify_filesystem_sandbox_violation(SandboxType::Proot, &output),
         Some(FileSystemSandboxViolation {
-            backend: SandboxViolationBackend::Seatbelt,
+            backend: SandboxViolationBackend::Proot,
             reason: FileSystemSandboxViolationReason::OperationNotPermitted,
             path: Some("/private/tmp/\u{130}-denied".to_string()),
             output_snippet: "bash: /private/tmp/\u{130}-denied: Operation not permitted"
@@ -146,9 +146,9 @@ fn classifies_filesystem_violation_from_aggregated_output() {
     );
 
     assert_eq!(
-        classify_filesystem_sandbox_violation(SandboxType::MacosSeatbelt, &output),
+        classify_filesystem_sandbox_violation(SandboxType::Proot, &output),
         Some(FileSystemSandboxViolation {
-            backend: SandboxViolationBackend::Seatbelt,
+            backend: SandboxViolationBackend::Proot,
             reason: FileSystemSandboxViolationReason::ReadOnlyFileSystem,
             path: None,
             output_snippet: "cargo failed: Read-only file system when writing target".to_string(),
@@ -166,9 +166,9 @@ fn keeps_output_snippet_on_the_stream_that_matched() {
     );
 
     assert_eq!(
-        classify_filesystem_sandbox_violation(SandboxType::MacosSeatbelt, &output),
+        classify_filesystem_sandbox_violation(SandboxType::Proot, &output),
         Some(FileSystemSandboxViolation {
-            backend: SandboxViolationBackend::Seatbelt,
+            backend: SandboxViolationBackend::Proot,
             reason: FileSystemSandboxViolationReason::PermissionDenied,
             path: Some("/private/tmp/denied".to_string()),
             output_snippet: "bash: /private/tmp/denied: Permission denied".to_string(),
