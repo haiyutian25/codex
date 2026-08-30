@@ -1,21 +1,12 @@
 use std::collections::HashMap;
-use std::net::SocketAddr;
-use std::time::Duration;
 
 #[cfg(target_os = "macos")]
 use codex_network_proxy::ManagedNetworkSandboxContext;
-use codex_network_proxy::NetworkProxyConfig;
-use codex_network_proxy::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
-use codex_network_proxy::RemoteNetworkProxyConfig;
-use codex_network_proxy::RemoteNetworkProxyLaunchConfig;
 #[cfg(target_os = "linux")]
 use codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
-use tokio::io::AsyncReadExt;
-use tokio::io::AsyncWriteExt;
-use tokio::time::timeout;
 
 use super::prepare_exec_request;
 #[cfg(unix)]
