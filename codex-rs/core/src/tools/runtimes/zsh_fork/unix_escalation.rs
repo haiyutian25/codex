@@ -515,7 +515,6 @@ fn evaluate_intercepted_exec_policy(
             crate::exec_policy::UnmatchedCommandContext {
                 approval_policy,
                 permission_profile: &permission_profile,
-                windows_sandbox_level,
                 sandbox_permissions,
                 command_origin: crate::exec_policy::ExecPolicyCommandOrigin::Generic,
             },
