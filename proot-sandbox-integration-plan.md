@@ -665,3 +665,5 @@ FLAG 关键词协议（承载元数据）：
 - Windows 开发机上 `cfg!(android)` 为假，选择分支不会命中 Proot（预期行为，与 Windows 沙箱在 Linux 上不命中同理）
 - 选择分支（`get_platform_sandbox` 的 android 臂）为纯逻辑，安卓构建编译即生效；包装/派生链已由上述测试实证
 - 端到端"真机执行 proot 命令"的验证属阶段 5（设备联调）
+
+**⑤ 遥测接入核验（2026-08-30）**：对照 windows/macos 的遥测写法（沙箱后端标签 / 违规后端 / 安装指标三表面），PRoot 生产代码已接入前两表面——`as_metric_tag → "proot"`（manager.rs:53）、`permission_profile_sandbox_tag(proot_enabled)` 安卓返回 `"proot"`（sandbox_tags.rs:38）、turn_metadata 传 `proot_enabled`、`SandboxViolationBackend::Proot → "proot"`（violation.rs:51,61）。Windows 独有的 `codex.windows_sandbox.*` 安装指标 PRoot 无对应（无安装流程，readiness 指标为可选扩展）。补 2 个实证测试：`proot_backend_reports_proot_metric_tag`（core）、`proot_backend_violations_report_proot`（sandboxing），均通过。

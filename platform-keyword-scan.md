@@ -5,11 +5,11 @@
 
 ## 一、总览
 
-- 扫描文件数：2313
-- 命中文件数：480
-- 命中行数（总）：5509
-- `windows` 命中行数：5042
-- `macos` 命中行数：487
+- 扫描文件数：2315
+- 命中文件数：482
+- 命中行数（总）：5525
+- `windows` 命中行数：5057
+- `macos` 命中行数：488
 
 ## 二、按模块汇总
 
@@ -27,7 +27,7 @@
 | `codex-home` | 1 | 2 | 2 | 0 |
 | `codex-mcp` | 2 | 13 | 13 | 0 |
 | `config` | 23 | 300 | 252 | 48 |
-| `core` | 166 | 1712 | 1637 | 75 |
+| `core` | 166 | 1713 | 1638 | 75 |
 | `core-plugins` | 16 | 53 | 41 | 14 |
 | `diagnostics` | 2 | 6 | 3 | 5 |
 | `exec-server` | 41 | 361 | 343 | 18 |
@@ -55,7 +55,7 @@
 | `rmcp-client` | 13 | 99 | 91 | 8 |
 | `rollout` | 1 | 1 | 1 | 0 |
 | `rollout-trace` | 1 | 3 | 3 | 0 |
-| `sandboxing` | 12 | 308 | 205 | 103 |
+| `sandboxing` | 14 | 323 | 219 | 104 |
 | `secrets` | 1 | 1 | 1 | 0 |
 | `shell-command` | 8 | 85 | 82 | 3 |
 | `shell-escalation` | 1 | 1 | 0 | 1 |
@@ -504,19 +504,19 @@
 
 | 行号 | 关键词 | 内容 |
 |---:|---|---|
-| 32 | `windows` | `use crate::types::WindowsToml;` |
-| 45 | `windows` | `use codex_protocol::config_types::WindowsSandboxLevel;` |
-| 496 | `windows` | `/// Windows-specific configuration.` |
-| 498 | `windows` | `pub windows: Option<WindowsToml>,` |
-| 725 | `windows` | `windows_sandbox_level: WindowsSandboxLevel,` |
-| 733 | `windows` | `// default to workspace-write except on unsandboxed Windows where we` |
-| 738 | `windows` | `if cfg!(target_os = "windows")` |
-| 739 | `windows` | `&& windows_sandbox_level == WindowsSandboxLevel::Disabled` |
-| 748 | `windows` | `let effective_sandbox_mode = if cfg!(target_os = "windows")` |
-| 749 | `windows` | `// If the experimental Windows sandbox is enabled, do not force a downgrade.` |
-| 750 | `windows` | `&& windows_sandbox_level == WindowsSandboxLevel::Disabled` |
-| 828 | `windows` | `/// projects trust map. On Windows, strips UNC, when possible, to try to ensure` |
-| 846 | `windows` | `if cfg!(windows) {` |
+| 33 | `windows` | `use crate::types::WindowsToml;` |
+| 46 | `windows` | `use codex_protocol::config_types::WindowsSandboxLevel;` |
+| 497 | `windows` | `/// Windows-specific configuration.` |
+| 499 | `windows` | `pub windows: Option<WindowsToml>,` |
+| 730 | `windows` | `windows_sandbox_level: WindowsSandboxLevel,` |
+| 738 | `windows` | `// default to workspace-write except on unsandboxed Windows where we` |
+| 743 | `windows` | `if cfg!(target_os = "windows")` |
+| 744 | `windows` | `&& windows_sandbox_level == WindowsSandboxLevel::Disabled` |
+| 753 | `windows` | `let effective_sandbox_mode = if cfg!(target_os = "windows")` |
+| 754 | `windows` | `// If the experimental Windows sandbox is enabled, do not force a downgrade.` |
+| 755 | `windows` | `&& windows_sandbox_level == WindowsSandboxLevel::Disabled` |
+| 833 | `windows` | `/// projects trust map. On Windows, strips UNC, when possible, to try to ensure` |
+| 851 | `windows` | `if cfg!(windows) {` |
 
 #### `codex-rs/config/src/hook_config.rs`（8 处）
 
@@ -769,14 +769,14 @@
 
 | 行号 | 关键词 | 内容 |
 |---:|---|---|
-| 149 | `windows` | `if cfg!(windows) {` |
-| 159 | `windows` | `pub enum WindowsSandboxModeToml {` |
-| 166 | `windows` | `pub struct WindowsToml {` |
-| 167 | `windows` | `pub sandbox: Option<WindowsSandboxModeToml>,` |
-| 313 | `windows` | `/// Minimum remaining percentage required in Codex rate-limit windows before memory startup runs.` |
-| 825 | `windows` | `/// Tracks whether the user has acknowledged the Windows world-writable directories warning.` |
+| 150 | `windows` | `if cfg!(windows) {` |
+| 160 | `windows` | `pub enum WindowsSandboxModeToml {` |
+| 167 | `windows` | `pub struct WindowsToml {` |
+| 168 | `windows` | `pub sandbox: Option<WindowsSandboxModeToml>,` |
+| 354 | `windows` | `/// Minimum remaining percentage required in Codex rate-limit windows before memory startup runs.` |
+| 866 | `windows` | `/// Tracks whether the user has acknowledged the Windows world-writable directories warning.` |
 
-### 模块 `core`（166 个文件 / 1712 行）
+### 模块 `core`（166 个文件 / 1713 行）
 
 #### `codex-rs/core/Cargo.toml`（2 处）
 
@@ -951,44 +951,44 @@
 | 322 | `windows` | `pub windows_sandbox_private_desktop: bool,` |
 | 342 | `windows` | `windows_sandbox_mode: None,` |
 | 343 | `windows` | `windows_sandbox_private_desktop: true,` |
-| 1109 | `windows` | `"Once reset, message items in current context window will be cleared in the new window, but notes and history items will be persistent across windows."` |
-| 3135 | `windows` | `windows_sandbox_mode: mut constrained_windows_sandbox_mode,` |
-| 3136 | `windows` | `windows_sandbox_private_desktop: _,` |
-| 3252 | `windows` | `let configured_windows_sandbox_mode = resolve_windows_sandbox_mode(&cfg);` |
-| 3255 | `windows` | `let selected_windows_sandbox_mode = configured_windows_sandbox_mode.or_else(\|\| {` |
-| 3256 | `windows` | `match WindowsSandboxLevel::from_features(&features) {` |
-| 3257 | `windows` | `WindowsSandboxLevel::Elevated => Some(WindowsSandboxModeToml::Elevated),` |
-| 3258 | `windows` | `WindowsSandboxLevel::RestrictedToken => Some(WindowsSandboxModeToml::Unelevated),` |
-| 3259 | `windows` | `WindowsSandboxLevel::Disabled => None,` |
-| 3263 | `windows` | `"windows.sandbox",` |
-| 3264 | `windows` | `selected_windows_sandbox_mode,` |
-| 3265 | `windows` | `&mut constrained_windows_sandbox_mode,` |
-| 3268 | `windows` | `let effective_windows_sandbox_mode = *constrained_windows_sandbox_mode.get();` |
-| 3269 | `windows` | `let windows_sandbox_mode = if constrained_windows_sandbox_mode.source.is_some() {` |
-| 3270 | `windows` | `effective_windows_sandbox_mode` |
-| 3272 | `windows` | `configured_windows_sandbox_mode` |
-| 3274 | `windows` | `let windows_sandbox_private_desktop = resolve_windows_sandbox_private_desktop(&cfg);` |
-| 3310 | `windows` | `let windows_sandbox_level = match effective_windows_sandbox_mode {` |
-| 3311 | `windows` | `Some(WindowsSandboxModeToml::Elevated) => WindowsSandboxLevel::Elevated,` |
-| 3312 | `windows` | `Some(WindowsSandboxModeToml::Unelevated) => WindowsSandboxLevel::RestrictedToken,` |
-| 3313 | `windows` | `None => WindowsSandboxLevel::Disabled,` |
-| 3422 | `windows` | `windows_sandbox_level,` |
-| 3443 | `windows` | `default_builtin_permission_profile_name(&active_project, windows_sandbox_level)` |
-| 3523 | `windows` | `windows_sandbox_level,` |
-| 4074 | `windows` | `windows_sandbox_mode,` |
-| 4075 | `windows` | `windows_sandbox_private_desktop,` |
-| 4330 | `windows` | `pub fn set_windows_sandbox_enabled(&mut self, value: bool) {` |
-| 4331 | `windows` | `self.permissions.windows_sandbox_mode = if value {` |
-| 4332 | `windows` | `Some(WindowsSandboxModeToml::Unelevated)` |
-| 4334 | `windows` | `self.permissions.windows_sandbox_mode,` |
-| 4335 | `windows` | `Some(WindowsSandboxModeToml::Unelevated)` |
-| 4339 | `windows` | `self.permissions.windows_sandbox_mode` |
-| 4343 | `windows` | `pub fn set_windows_elevated_sandbox_enabled(&mut self, value: bool) {` |
-| 4344 | `windows` | `self.permissions.windows_sandbox_mode = if value {` |
-| 4345 | `windows` | `Some(WindowsSandboxModeToml::Elevated)` |
-| 4347 | `windows` | `self.permissions.windows_sandbox_mode,` |
-| 4348 | `windows` | `Some(WindowsSandboxModeToml::Elevated)` |
-| 4352 | `windows` | `self.permissions.windows_sandbox_mode` |
+| 1113 | `windows` | `"Once reset, message items in current context window will be cleared in the new window, but notes and history items will be persistent across windows."` |
+| 3139 | `windows` | `windows_sandbox_mode: mut constrained_windows_sandbox_mode,` |
+| 3140 | `windows` | `windows_sandbox_private_desktop: _,` |
+| 3256 | `windows` | `let configured_windows_sandbox_mode = resolve_windows_sandbox_mode(&cfg);` |
+| 3259 | `windows` | `let selected_windows_sandbox_mode = configured_windows_sandbox_mode.or_else(\|\| {` |
+| 3260 | `windows` | `match WindowsSandboxLevel::from_features(&features) {` |
+| 3261 | `windows` | `WindowsSandboxLevel::Elevated => Some(WindowsSandboxModeToml::Elevated),` |
+| 3262 | `windows` | `WindowsSandboxLevel::RestrictedToken => Some(WindowsSandboxModeToml::Unelevated),` |
+| 3263 | `windows` | `WindowsSandboxLevel::Disabled => None,` |
+| 3267 | `windows` | `"windows.sandbox",` |
+| 3268 | `windows` | `selected_windows_sandbox_mode,` |
+| 3269 | `windows` | `&mut constrained_windows_sandbox_mode,` |
+| 3272 | `windows` | `let effective_windows_sandbox_mode = *constrained_windows_sandbox_mode.get();` |
+| 3273 | `windows` | `let windows_sandbox_mode = if constrained_windows_sandbox_mode.source.is_some() {` |
+| 3274 | `windows` | `effective_windows_sandbox_mode` |
+| 3276 | `windows` | `configured_windows_sandbox_mode` |
+| 3278 | `windows` | `let windows_sandbox_private_desktop = resolve_windows_sandbox_private_desktop(&cfg);` |
+| 3314 | `windows` | `let windows_sandbox_level = match effective_windows_sandbox_mode {` |
+| 3315 | `windows` | `Some(WindowsSandboxModeToml::Elevated) => WindowsSandboxLevel::Elevated,` |
+| 3316 | `windows` | `Some(WindowsSandboxModeToml::Unelevated) => WindowsSandboxLevel::RestrictedToken,` |
+| 3317 | `windows` | `None => WindowsSandboxLevel::Disabled,` |
+| 3427 | `windows` | `windows_sandbox_level,` |
+| 3448 | `windows` | `default_builtin_permission_profile_name(&active_project, windows_sandbox_level)` |
+| 3528 | `windows` | `windows_sandbox_level,` |
+| 4079 | `windows` | `windows_sandbox_mode,` |
+| 4080 | `windows` | `windows_sandbox_private_desktop,` |
+| 4336 | `windows` | `pub fn set_windows_sandbox_enabled(&mut self, value: bool) {` |
+| 4337 | `windows` | `self.permissions.windows_sandbox_mode = if value {` |
+| 4338 | `windows` | `Some(WindowsSandboxModeToml::Unelevated)` |
+| 4340 | `windows` | `self.permissions.windows_sandbox_mode,` |
+| 4341 | `windows` | `Some(WindowsSandboxModeToml::Unelevated)` |
+| 4345 | `windows` | `self.permissions.windows_sandbox_mode` |
+| 4349 | `windows` | `pub fn set_windows_elevated_sandbox_enabled(&mut self, value: bool) {` |
+| 4350 | `windows` | `self.permissions.windows_sandbox_mode = if value {` |
+| 4351 | `windows` | `Some(WindowsSandboxModeToml::Elevated)` |
+| 4353 | `windows` | `self.permissions.windows_sandbox_mode,` |
+| 4354 | `windows` | `Some(WindowsSandboxModeToml::Elevated)` |
+| 4358 | `windows` | `self.permissions.windows_sandbox_mode` |
 
 #### `codex-rs/core/src/config/network_proxy_spec.rs`（3 处）
 
@@ -1122,98 +1122,98 @@
 | 106 | `windows` | `pub windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,` |
 | 107 | `windows` | `pub windows_sandbox_private_desktop: bool,` |
 | 124 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,` |
-| 130 | `windows` | `windows_sandbox_level,` |
-| 202 | `windows` | `#[cfg(target_os = "windows")]` |
-| 214 | `windows` | `#[cfg_attr(not(target_os = "windows"), allow(dead_code))]` |
-| 297 | `windows` | `windows_sandbox_workspace_roots: &[AbsolutePathBuf],` |
-| 306 | `windows` | `windows_sandbox_workspace_roots,` |
-| 321 | `windows` | `windows_sandbox_workspace_roots: &[AbsolutePathBuf],` |
-| 333 | `windows` | `windows_sandbox_level,` |
-| 334 | `windows` | `windows_sandbox_private_desktop,` |
-| 346 | `windows` | `windows_sandbox_level,` |
-| 391 | `windows` | `windows_sandbox_level,` |
-| 392 | `windows` | `windows_sandbox_private_desktop,` |
-| 395 | `windows` | `let windows_sandbox_workspace_roots = if windows_sandbox_workspace_roots.is_empty() {` |
-| 398 | `windows` | `windows_sandbox_workspace_roots.to_vec()` |
-| 400 | `windows` | `ExecRequest::from_sandbox_exec_request(request, options, windows_sandbox_workspace_roots)` |
-| 418 | `windows` | `windows_sandbox_policy_cwd,` |
-| 419 | `windows` | `windows_sandbox_workspace_roots,` |
-| 420 | `windows` | `windows_sandbox_level,` |
-| 421 | `windows` | `windows_sandbox_private_desktop,` |
-| 423 | `windows` | `windows_sandbox_filesystem_overrides,` |
-| 437 | `windows` | `// TODO(anp): Keep PathUri through the Windows sandbox launch boundary.` |
-| 438 | `windows` | `let windows_sandbox_policy_cwd = windows_sandbox_policy_cwd` |
-| 451 | `windows` | `windows_sandbox_level,` |
-| 452 | `windows` | `windows_sandbox_private_desktop,` |
-| 465 | `windows` | `&windows_sandbox_policy_cwd,` |
-| 466 | `windows` | `&windows_sandbox_workspace_roots,` |
-| 467 | `windows` | `windows_sandbox_filesystem_overrides.as_ref(),` |
-| 480 | `windows` | `#[cfg_attr(not(windows), allow(unused_variables))] sandbox: SandboxType,` |
-| 481 | `windows` | `#[cfg_attr(not(windows), allow(unused_variables))] permission_profile: &PermissionProfile,` |
-| 482 | `windows` | `#[cfg_attr(not(windows), allow(unused_variables))] windows_sandbox_policy_cwd: &AbsolutePathBuf,` |
-| 483 | `windows` | `#[cfg_attr(not(windows), allow(unused_variables))]` |
-| 484 | `windows` | `windows_sandbox_workspace_roots: &[AbsolutePathBuf],` |
-| 485 | `windows` | `#[cfg_attr(not(windows), allow(unused_variables))] windows_sandbox_filesystem_overrides: Option<` |
-| 486 | `windows` | `&WindowsSandboxFilesystemOverrides,` |
-| 489 | `windows` | `#[cfg(target_os = "windows")]` |
-| 490 | `windows` | `if sandbox == SandboxType::WindowsRestrictedToken {` |
-| 491 | `windows` | `return exec_windows_sandbox(` |
-| 494 | `windows` | `windows_sandbox_policy_cwd,` |
-| 495 | `windows` | `windows_sandbox_workspace_roots,` |
-| 496 | `windows` | `windows_sandbox_filesystem_overrides,` |
-| 504 | `windows` | `#[cfg(target_os = "windows")]` |
-| 517 | `windows` | `#[cfg(target_os = "windows")]` |
-| 518 | `windows` | `fn windowsapps_path_kind(path: &str) -> &'static str {` |
-| 520 | `windows` | `if lower.contains("\\program files\\windowsapps\\") {` |
-| 521 | `windows` | `return "windowsapps_package";` |
-| 523 | `windows` | `if lower.contains("\\appdata\\local\\microsoft\\windowsapps\\") {` |
-| 524 | `windows` | `return "windowsapps_alias";` |
-| 526 | `windows` | `if lower.contains("\\windowsapps\\") {` |
-| 527 | `windows` | `return "windowsapps_other";` |
-| 532 | `windows` | `#[cfg(target_os = "windows")]` |
-| 533 | `windows` | `fn record_windows_sandbox_spawn_failure(` |
-| 535 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,` |
-| 547 | `windows` | `let path_kind = windowsapps_path_kind(path);` |
-| 549 | `windows` | `windows_sandbox_level,` |
-| 550 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::Elevated` |
-| 558 | `windows` | `"codex.windows_sandbox.createprocessasuserw_failed",` |
-| 570 | `windows` | `#[cfg(target_os = "windows")]` |
-| 571 | `windows` | `async fn exec_windows_sandbox(` |
-| 574 | `windows` | `windows_sandbox_policy_cwd: &AbsolutePathBuf,` |
-| 575 | `windows` | `windows_sandbox_workspace_roots: &[AbsolutePathBuf],` |
-| 576 | `windows` | `windows_sandbox_filesystem_overrides: Option<&WindowsSandboxFilesystemOverrides>,` |
-| 579 | `windows` | `use codex_windows_sandbox::run_windows_sandbox_capture_for_permission_profile_elevated;` |
-| 580 | `windows` | `use codex_windows_sandbox::run_windows_sandbox_capture_with_filesystem_overrides;` |
-| 590 | `windows` | `windows_sandbox_level,` |
-| 591 | `windows` | `windows_sandbox_private_desktop,` |
-| 608 | `windows` | `"managed Windows proxy route is missing its restricting SID",` |
-| 614 | `windows` | `// Windows sandbox capture still receives timeout and cancellation separately.` |
-| 617 | `windows` | `codex_windows_sandbox::WindowsSandboxCancellationToken::new(move \|\| {` |
-| 626 | `windows` | `let workspace_roots = if windows_sandbox_workspace_roots.is_empty() {` |
-| 627 | `windows` | `vec![windows_sandbox_policy_cwd.clone()]` |
-| 629 | `windows` | `windows_sandbox_workspace_roots.to_vec()` |
-| 634 | `windows` | `"windows sandbox: failed to resolve codex_home: {err}"` |
-| 638 | `windows` | `let sandbox_level = windows_sandbox_level;` |
-| 640 | `windows` | `let use_elevated = windows_sandbox_uses_elevated_backend(sandbox_level);` |
-| 641 | `windows` | `let additional_deny_write_paths = windows_sandbox_filesystem_overrides` |
-| 644 | `windows` | `let additional_deny_read_paths = windows_sandbox_filesystem_overrides` |
-| 647 | `windows` | `let elevated_read_roots_override = windows_sandbox_filesystem_overrides` |
-| 649 | `windows` | `let elevated_read_roots_include_platform_defaults = windows_sandbox_filesystem_overrides` |
-| 651 | `windows` | `let elevated_write_roots_override = windows_sandbox_filesystem_overrides` |
-| 655 | `windows` | `run_windows_sandbox_capture_for_permission_profile_elevated(` |
-| 656 | `windows` | `codex_windows_sandbox::ElevatedSandboxProfileCaptureRequest {` |
-| 665 | `windows` | `use_private_desktop: windows_sandbox_private_desktop,` |
-| 677 | `windows` | `run_windows_sandbox_capture_with_filesystem_overrides(` |
-| 688 | `windows` | `windows_sandbox_private_desktop,` |
-| 697 | `windows` | `record_windows_sandbox_spawn_failure(` |
-| 703 | `windows` | `"windows sandbox: {err}"` |
-| 708 | `windows` | `"windows sandbox join error: {join_err}"` |
-| 899 | `windows` | `windows_sandbox_level: _,` |
-| 900 | `windows` | `windows_sandbox_private_desktop: _,` |
-| 1149 | `windows` | `#[cfg(windows)]` |
-| 1151 | `windows` | `use std::os::windows::process::ExitStatusExt;` |
-| 1152 | `windows` | `// On Windows the raw status is a u32. Use a direct cast to avoid` |
-| 1157 | `windows` | `#[cfg(windows)]` |
+| 131 | `windows` | `windows_sandbox_level,` |
+| 204 | `windows` | `#[cfg(target_os = "windows")]` |
+| 216 | `windows` | `#[cfg_attr(not(target_os = "windows"), allow(dead_code))]` |
+| 299 | `windows` | `windows_sandbox_workspace_roots: &[AbsolutePathBuf],` |
+| 309 | `windows` | `windows_sandbox_workspace_roots,` |
+| 325 | `windows` | `windows_sandbox_workspace_roots: &[AbsolutePathBuf],` |
+| 338 | `windows` | `windows_sandbox_level,` |
+| 339 | `windows` | `windows_sandbox_private_desktop,` |
+| 351 | `windows` | `windows_sandbox_level,` |
+| 398 | `windows` | `windows_sandbox_level,` |
+| 399 | `windows` | `windows_sandbox_private_desktop,` |
+| 402 | `windows` | `let windows_sandbox_workspace_roots = if windows_sandbox_workspace_roots.is_empty() {` |
+| 405 | `windows` | `windows_sandbox_workspace_roots.to_vec()` |
+| 407 | `windows` | `ExecRequest::from_sandbox_exec_request(request, options, windows_sandbox_workspace_roots)` |
+| 425 | `windows` | `windows_sandbox_policy_cwd,` |
+| 426 | `windows` | `windows_sandbox_workspace_roots,` |
+| 427 | `windows` | `windows_sandbox_level,` |
+| 428 | `windows` | `windows_sandbox_private_desktop,` |
+| 430 | `windows` | `windows_sandbox_filesystem_overrides,` |
+| 444 | `windows` | `// TODO(anp): Keep PathUri through the Windows sandbox launch boundary.` |
+| 445 | `windows` | `let windows_sandbox_policy_cwd = windows_sandbox_policy_cwd` |
+| 458 | `windows` | `windows_sandbox_level,` |
+| 459 | `windows` | `windows_sandbox_private_desktop,` |
+| 472 | `windows` | `&windows_sandbox_policy_cwd,` |
+| 473 | `windows` | `&windows_sandbox_workspace_roots,` |
+| 474 | `windows` | `windows_sandbox_filesystem_overrides.as_ref(),` |
+| 487 | `windows` | `#[cfg_attr(not(windows), allow(unused_variables))] sandbox: SandboxType,` |
+| 488 | `windows` | `#[cfg_attr(not(windows), allow(unused_variables))] permission_profile: &PermissionProfile,` |
+| 489 | `windows` | `#[cfg_attr(not(windows), allow(unused_variables))] windows_sandbox_policy_cwd: &AbsolutePathBuf,` |
+| 490 | `windows` | `#[cfg_attr(not(windows), allow(unused_variables))]` |
+| 491 | `windows` | `windows_sandbox_workspace_roots: &[AbsolutePathBuf],` |
+| 492 | `windows` | `#[cfg_attr(not(windows), allow(unused_variables))] windows_sandbox_filesystem_overrides: Option<` |
+| 493 | `windows` | `&WindowsSandboxFilesystemOverrides,` |
+| 496 | `windows` | `#[cfg(target_os = "windows")]` |
+| 497 | `windows` | `if sandbox == SandboxType::WindowsRestrictedToken {` |
+| 498 | `windows` | `return exec_windows_sandbox(` |
+| 501 | `windows` | `windows_sandbox_policy_cwd,` |
+| 502 | `windows` | `windows_sandbox_workspace_roots,` |
+| 503 | `windows` | `windows_sandbox_filesystem_overrides,` |
+| 511 | `windows` | `#[cfg(target_os = "windows")]` |
+| 524 | `windows` | `#[cfg(target_os = "windows")]` |
+| 525 | `windows` | `fn windowsapps_path_kind(path: &str) -> &'static str {` |
+| 527 | `windows` | `if lower.contains("\\program files\\windowsapps\\") {` |
+| 528 | `windows` | `return "windowsapps_package";` |
+| 530 | `windows` | `if lower.contains("\\appdata\\local\\microsoft\\windowsapps\\") {` |
+| 531 | `windows` | `return "windowsapps_alias";` |
+| 533 | `windows` | `if lower.contains("\\windowsapps\\") {` |
+| 534 | `windows` | `return "windowsapps_other";` |
+| 539 | `windows` | `#[cfg(target_os = "windows")]` |
+| 540 | `windows` | `fn record_windows_sandbox_spawn_failure(` |
+| 542 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,` |
+| 554 | `windows` | `let path_kind = windowsapps_path_kind(path);` |
+| 556 | `windows` | `windows_sandbox_level,` |
+| 557 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::Elevated` |
+| 565 | `windows` | `"codex.windows_sandbox.createprocessasuserw_failed",` |
+| 577 | `windows` | `#[cfg(target_os = "windows")]` |
+| 578 | `windows` | `async fn exec_windows_sandbox(` |
+| 581 | `windows` | `windows_sandbox_policy_cwd: &AbsolutePathBuf,` |
+| 582 | `windows` | `windows_sandbox_workspace_roots: &[AbsolutePathBuf],` |
+| 583 | `windows` | `windows_sandbox_filesystem_overrides: Option<&WindowsSandboxFilesystemOverrides>,` |
+| 586 | `windows` | `use codex_windows_sandbox::run_windows_sandbox_capture_for_permission_profile_elevated;` |
+| 587 | `windows` | `use codex_windows_sandbox::run_windows_sandbox_capture_with_filesystem_overrides;` |
+| 597 | `windows` | `windows_sandbox_level,` |
+| 598 | `windows` | `windows_sandbox_private_desktop,` |
+| 615 | `windows` | `"managed Windows proxy route is missing its restricting SID",` |
+| 621 | `windows` | `// Windows sandbox capture still receives timeout and cancellation separately.` |
+| 624 | `windows` | `codex_windows_sandbox::WindowsSandboxCancellationToken::new(move \|\| {` |
+| 633 | `windows` | `let workspace_roots = if windows_sandbox_workspace_roots.is_empty() {` |
+| 634 | `windows` | `vec![windows_sandbox_policy_cwd.clone()]` |
+| 636 | `windows` | `windows_sandbox_workspace_roots.to_vec()` |
+| 641 | `windows` | `"windows sandbox: failed to resolve codex_home: {err}"` |
+| 645 | `windows` | `let sandbox_level = windows_sandbox_level;` |
+| 647 | `windows` | `let use_elevated = windows_sandbox_uses_elevated_backend(sandbox_level);` |
+| 648 | `windows` | `let additional_deny_write_paths = windows_sandbox_filesystem_overrides` |
+| 651 | `windows` | `let additional_deny_read_paths = windows_sandbox_filesystem_overrides` |
+| 654 | `windows` | `let elevated_read_roots_override = windows_sandbox_filesystem_overrides` |
+| 656 | `windows` | `let elevated_read_roots_include_platform_defaults = windows_sandbox_filesystem_overrides` |
+| 658 | `windows` | `let elevated_write_roots_override = windows_sandbox_filesystem_overrides` |
+| 662 | `windows` | `run_windows_sandbox_capture_for_permission_profile_elevated(` |
+| 663 | `windows` | `codex_windows_sandbox::ElevatedSandboxProfileCaptureRequest {` |
+| 672 | `windows` | `use_private_desktop: windows_sandbox_private_desktop,` |
+| 684 | `windows` | `run_windows_sandbox_capture_with_filesystem_overrides(` |
+| 695 | `windows` | `windows_sandbox_private_desktop,` |
+| 704 | `windows` | `record_windows_sandbox_spawn_failure(` |
+| 710 | `windows` | `"windows sandbox: {err}"` |
+| 715 | `windows` | `"windows sandbox join error: {join_err}"` |
+| 906 | `windows` | `windows_sandbox_level: _,` |
+| 907 | `windows` | `windows_sandbox_private_desktop: _,` |
+| 1156 | `windows` | `#[cfg(windows)]` |
+| 1158 | `windows` | `use std::os::windows::process::ExitStatusExt;` |
+| 1159 | `windows` | `// On Windows the raw status is a u32. Use a direct cast to avoid` |
+| 1164 | `windows` | `#[cfg(windows)]` |
 
 #### `codex-rs/core/src/exec_env.rs`（2 处）
 
@@ -1362,104 +1362,104 @@
 | 345 | `windows` | `#[cfg(not(windows))]` |
 | 364 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
 | 365 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 385 | `windows` | `fn windows_restricted_token_skips_external_sandbox_policies() {` |
-| 390 | `windows` | `assert!(!permission_profile_supports_windows_restricted_token_sandbox(&permission_profile));` |
-| 394 | `windows` | `fn windows_restricted_token_supports_read_only_profiles() {` |
-| 397 | `windows` | `assert!(permission_profile_supports_windows_restricted_token_sandbox(&permission_profile));` |
-| 401 | `windows` | `fn windows_sandbox_backend_honors_unelevated_configuration() {` |
-| 402 | `windows` | `assert!(!windows_sandbox_uses_elevated_backend(` |
-| 403 | `windows` | `WindowsSandboxLevel::RestrictedToken` |
-| 405 | `windows` | `assert!(windows_sandbox_uses_elevated_backend(` |
-| 406 | `windows` | `WindowsSandboxLevel::Elevated` |
-| 411 | `windows` | `fn windows_restricted_token_rejects_network_only_restrictions() {` |
-| 419 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
-| 420 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 423 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
-| 426 | `windows` | `"windows sandbox backend cannot enforce file_system=Unrestricted, network=Restricted, permission_profile=Managed; refusing to run unsandboxed".to_string()` |
-| 432 | `windows` | `fn windows_restricted_token_rejects_managed_root_write_profiles() {` |
-| 449 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
-| 450 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 453 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
-| 456 | `windows` | `"windows sandbox backend cannot enforce file_system=Restricted, network=Restricted, permission_profile=Managed; refusing to run unsandboxed"` |
-| 463 | `windows` | `fn windows_restricted_token_allows_read_only_profiles() {` |
-| 468 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
-| 469 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 472 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
-| 479 | `windows` | `fn windows_restricted_token_allows_workspace_write_profiles() {` |
-| 489 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
-| 490 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 493 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
-| 500 | `windows` | `fn windows_elevated_allows_split_restricted_read_policies() {` |
-| 520 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
-| 521 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 524 | `windows` | `WindowsSandboxLevel::Elevated,` |
-| 531 | `windows` | `fn windows_restricted_token_rejects_split_only_filesystem_policies() {` |
-| 559 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
-| 560 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 563 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
-| 566 | `windows` | `"windows unelevated restricted-token sandbox cannot enforce split filesystem read restrictions directly; refusing to run unsandboxed"` |
-| 573 | `windows` | `fn windows_restricted_token_rejects_root_write_read_only_carveouts() {` |
-| 599 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
-| 600 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 603 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
-| 606 | `windows` | `"windows unelevated restricted-token sandbox cannot enforce split writable root sets directly; refusing to run unsandboxed"` |
-| 613 | `windows` | `fn windows_restricted_token_supports_full_read_split_write_read_carveouts() {` |
-| 654 | `windows` | `resolve_windows_restricted_token_filesystem_overrides(` |
-| 655 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 658 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
-| 660 | `windows` | `Ok(Some(WindowsSandboxFilesystemOverrides {` |
-| 671 | `windows` | `fn windows_restricted_token_rejects_unreadable_split_carveouts() {` |
-| 707 | `windows` | `resolve_windows_restricted_token_filesystem_overrides(` |
-| 708 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 711 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
-| 714 | `windows` | `"windows unelevated restricted-token sandbox cannot enforce deny-read restrictions directly; refusing to run unsandboxed"` |
-| 721 | `windows` | `fn windows_elevated_supports_split_restricted_read_roots() {` |
-| 741 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
-| 742 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 745 | `windows` | `/*use_windows_elevated_backend*/ true,` |
-| 747 | `windows` | `Ok(Some(WindowsSandboxFilesystemOverrides {` |
-| 758 | `windows` | `fn windows_elevated_supports_split_write_read_carveouts() {` |
-| 794 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
-| 795 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 798 | `windows` | `/*use_windows_elevated_backend*/ true,` |
-| 800 | `windows` | `Ok(Some(WindowsSandboxFilesystemOverrides {` |
-| 813 | `windows` | `#[cfg(target_os = "windows")]` |
-| 815 | `windows` | `fn windows_workspace_defaults_do_not_hide_explicit_metadata_carveouts() {` |
-| 820 | `windows` | `let default_overrides = resolve_windows_elevated_filesystem_overrides(` |
-| 821 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 824 | `windows` | `/*use_windows_elevated_backend*/ true,` |
-| 847 | `windows` | `let overrides = resolve_windows_elevated_filesystem_overrides(` |
-| 848 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 851 | `windows` | `/*use_windows_elevated_backend*/ true,` |
-| 860 | `windows` | `fn windows_elevated_supports_unreadable_split_carveouts() {` |
-| 896 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
-| 897 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 900 | `windows` | `/*use_windows_elevated_backend*/ true,` |
-| 902 | `windows` | `Ok(Some(WindowsSandboxFilesystemOverrides {` |
-| 921 | `windows` | `fn windows_elevated_supports_unreadable_globs() {` |
-| 957 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
-| 958 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 961 | `windows` | `/*use_windows_elevated_backend*/ true,` |
-| 963 | `windows` | `Ok(Some(WindowsSandboxFilesystemOverrides {` |
-| 977 | `windows` | `fn windows_elevated_rejects_reopened_writable_descendants() {` |
-| 1020 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
-| 1021 | `windows` | `SandboxType::WindowsRestrictedToken,` |
-| 1024 | `windows` | `WindowsSandboxLevel::Elevated,` |
-| 1027 | `windows` | `"windows elevated sandbox cannot reopen writable descendants under read-only carveouts directly; refusing to run unsandboxed"` |
-| 1035 | `windows` | `let expected = codex_sandboxing::get_platform_sandbox(/*windows_sandbox_enabled*/ false)` |
-| 1044 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::Disabled,` |
-| 1052 | `windows` | `fn build_exec_request_preserves_windows_workspace_roots() -> Result<()> {` |
-| 1068 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
-| 1069 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 1081 | `windows` | `exec_request.windows_sandbox_workspace_roots,` |
-| 1098 | `macos` | `// On Linux/macOS, /bin/bash is typically present; on FreeBSD/OpenBSD,` |
-| 1123 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Disabled,` |
-| 1124 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 1179 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Disabled,` |
-| 1180 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 1263 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Disabled,` |
-| 1264 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 1329 | `windows` | `#[cfg(windows)]` |
+| 386 | `windows` | `fn windows_restricted_token_skips_external_sandbox_policies() {` |
+| 391 | `windows` | `assert!(!permission_profile_supports_windows_restricted_token_sandbox(&permission_profile));` |
+| 395 | `windows` | `fn windows_restricted_token_supports_read_only_profiles() {` |
+| 398 | `windows` | `assert!(permission_profile_supports_windows_restricted_token_sandbox(&permission_profile));` |
+| 402 | `windows` | `fn windows_sandbox_backend_honors_unelevated_configuration() {` |
+| 403 | `windows` | `assert!(!windows_sandbox_uses_elevated_backend(` |
+| 404 | `windows` | `WindowsSandboxLevel::RestrictedToken` |
+| 406 | `windows` | `assert!(windows_sandbox_uses_elevated_backend(` |
+| 407 | `windows` | `WindowsSandboxLevel::Elevated` |
+| 412 | `windows` | `fn windows_restricted_token_rejects_network_only_restrictions() {` |
+| 420 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
+| 421 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 424 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
+| 427 | `windows` | `"windows sandbox backend cannot enforce file_system=Unrestricted, network=Restricted, permission_profile=Managed; refusing to run unsandboxed".to_string()` |
+| 433 | `windows` | `fn windows_restricted_token_rejects_managed_root_write_profiles() {` |
+| 450 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
+| 451 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 454 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
+| 457 | `windows` | `"windows sandbox backend cannot enforce file_system=Restricted, network=Restricted, permission_profile=Managed; refusing to run unsandboxed"` |
+| 464 | `windows` | `fn windows_restricted_token_allows_read_only_profiles() {` |
+| 469 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
+| 470 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 473 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
+| 480 | `windows` | `fn windows_restricted_token_allows_workspace_write_profiles() {` |
+| 490 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
+| 491 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 494 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
+| 501 | `windows` | `fn windows_elevated_allows_split_restricted_read_policies() {` |
+| 521 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
+| 522 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 525 | `windows` | `WindowsSandboxLevel::Elevated,` |
+| 532 | `windows` | `fn windows_restricted_token_rejects_split_only_filesystem_policies() {` |
+| 560 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
+| 561 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 564 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
+| 567 | `windows` | `"windows unelevated restricted-token sandbox cannot enforce split filesystem read restrictions directly; refusing to run unsandboxed"` |
+| 574 | `windows` | `fn windows_restricted_token_rejects_root_write_read_only_carveouts() {` |
+| 600 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
+| 601 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 604 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
+| 607 | `windows` | `"windows unelevated restricted-token sandbox cannot enforce split writable root sets directly; refusing to run unsandboxed"` |
+| 614 | `windows` | `fn windows_restricted_token_supports_full_read_split_write_read_carveouts() {` |
+| 655 | `windows` | `resolve_windows_restricted_token_filesystem_overrides(` |
+| 656 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 659 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
+| 661 | `windows` | `Ok(Some(WindowsSandboxFilesystemOverrides {` |
+| 672 | `windows` | `fn windows_restricted_token_rejects_unreadable_split_carveouts() {` |
+| 708 | `windows` | `resolve_windows_restricted_token_filesystem_overrides(` |
+| 709 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 712 | `windows` | `WindowsSandboxLevel::RestrictedToken,` |
+| 715 | `windows` | `"windows unelevated restricted-token sandbox cannot enforce deny-read restrictions directly; refusing to run unsandboxed"` |
+| 722 | `windows` | `fn windows_elevated_supports_split_restricted_read_roots() {` |
+| 742 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
+| 743 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 746 | `windows` | `/*use_windows_elevated_backend*/ true,` |
+| 748 | `windows` | `Ok(Some(WindowsSandboxFilesystemOverrides {` |
+| 759 | `windows` | `fn windows_elevated_supports_split_write_read_carveouts() {` |
+| 795 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
+| 796 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 799 | `windows` | `/*use_windows_elevated_backend*/ true,` |
+| 801 | `windows` | `Ok(Some(WindowsSandboxFilesystemOverrides {` |
+| 814 | `windows` | `#[cfg(target_os = "windows")]` |
+| 816 | `windows` | `fn windows_workspace_defaults_do_not_hide_explicit_metadata_carveouts() {` |
+| 821 | `windows` | `let default_overrides = resolve_windows_elevated_filesystem_overrides(` |
+| 822 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 825 | `windows` | `/*use_windows_elevated_backend*/ true,` |
+| 848 | `windows` | `let overrides = resolve_windows_elevated_filesystem_overrides(` |
+| 849 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 852 | `windows` | `/*use_windows_elevated_backend*/ true,` |
+| 861 | `windows` | `fn windows_elevated_supports_unreadable_split_carveouts() {` |
+| 897 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
+| 898 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 901 | `windows` | `/*use_windows_elevated_backend*/ true,` |
+| 903 | `windows` | `Ok(Some(WindowsSandboxFilesystemOverrides {` |
+| 922 | `windows` | `fn windows_elevated_supports_unreadable_globs() {` |
+| 958 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
+| 959 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 962 | `windows` | `/*use_windows_elevated_backend*/ true,` |
+| 964 | `windows` | `Ok(Some(WindowsSandboxFilesystemOverrides {` |
+| 978 | `windows` | `fn windows_elevated_rejects_reopened_writable_descendants() {` |
+| 1021 | `windows` | `unsupported_windows_restricted_token_sandbox_reason(` |
+| 1022 | `windows` | `SandboxType::WindowsRestrictedToken,` |
+| 1025 | `windows` | `WindowsSandboxLevel::Elevated,` |
+| 1028 | `windows` | `"windows elevated sandbox cannot reopen writable descendants under read-only carveouts directly; refusing to run unsandboxed"` |
+| 1037 | `windows` | `/*windows_sandbox_enabled*/ false,` |
+| 1048 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::Disabled,` |
+| 1057 | `windows` | `fn build_exec_request_preserves_windows_workspace_roots() -> Result<()> {` |
+| 1073 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
+| 1074 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 1087 | `windows` | `exec_request.windows_sandbox_workspace_roots,` |
+| 1104 | `macos` | `// On Linux/macOS, /bin/bash is typically present; on FreeBSD/OpenBSD,` |
+| 1129 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Disabled,` |
+| 1130 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 1185 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Disabled,` |
+| 1186 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 1270 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Disabled,` |
+| 1271 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 1337 | `windows` | `#[cfg(windows)]` |
 
 #### `codex-rs/core/src/git_info_tests.rs`（2 处）
 
@@ -1511,20 +1511,20 @@
 |---:|---|---|
 | 7 | `windows` | `use codex_protocol::config_types::WindowsSandboxLevel;` |
 | 32 | `windows` | `windows_sandbox_level: WindowsSandboxLevel,` |
-| 72 | `windows` | `match get_platform_sandbox(windows_sandbox_level != WindowsSandboxLevel::Disabled) {` |
+| 74 | `windows` | `windows_sandbox_level != WindowsSandboxLevel::Disabled,` |
 
 #### `codex-rs/core/src/safety_tests.rs`（8 处）
 
 | 行号 | 关键词 | 内容 |
 |---:|---|---|
-| 89 | `windows` | `WindowsSandboxLevel::Disabled` |
-| 119 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 136 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 172 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 203 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 253 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 303 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 346 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 89 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 120 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 138 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 175 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 207 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 258 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 309 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 353 | `windows` | `WindowsSandboxLevel::Disabled,` |
 
 #### `codex-rs/core/src/sandbox_tags.rs`（5 处）
 
@@ -1532,9 +1532,9 @@
 |---:|---|---|
 | 1 | `windows` | `use codex_protocol::config_types::WindowsSandboxLevel;` |
 | 10 | `windows` | `windows_sandbox_level: WindowsSandboxLevel,` |
-| 30 | `windows` | `if cfg!(target_os = "windows") && matches!(windows_sandbox_level, WindowsSandboxLevel::Elevated)` |
-| 32 | `windows` | `return "windows_elevated";` |
-| 35 | `windows` | `get_platform_sandbox(windows_sandbox_level != WindowsSandboxLevel::Disabled)` |
+| 31 | `windows` | `if cfg!(target_os = "windows") && matches!(windows_sandbox_level, WindowsSandboxLevel::Elevated)` |
+| 33 | `windows` | `return "windows_elevated";` |
+| 37 | `windows` | `windows_sandbox_level != WindowsSandboxLevel::Disabled,` |
 
 #### `codex-rs/core/src/sandbox_tags_tests.rs`（11 处）
 
@@ -1542,17 +1542,17 @@
 |---:|---|---|
 | 3 | `windows` | `use codex_protocol::config_types::WindowsSandboxLevel;` |
 | 22 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 34 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 44 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 47 | `windows` | `let expected = get_platform_sandbox(/*windows_sandbox_enabled*/ false)` |
-| 58 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 68 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 85 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 111 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 124 | `windows` | `let expected = get_platform_sandbox(/*windows_sandbox_enabled*/ false)` |
-| 131 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 35 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 46 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 51 | `windows` | `get_platform_sandbox(/*windows_sandbox_enabled*/ false, /*proot_enabled*/ false)` |
+| 62 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 73 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 91 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 118 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 133 | `windows` | `get_platform_sandbox(/*windows_sandbox_enabled*/ false, /*proot_enabled*/ false)` |
+| 140 | `windows` | `WindowsSandboxLevel::Disabled,` |
 
-#### `codex-rs/core/src/sandboxing/mod.rs`（40 处）
+#### `codex-rs/core/src/sandboxing/mod.rs`（41 处）
 
 | 行号 | 关键词 | 内容 |
 |---:|---|---|
@@ -1596,6 +1596,7 @@
 | 197 | `windows` | `windows_sandbox_level,` |
 | 198 | `windows` | `windows_sandbox_private_desktop,` |
 | 200 | `windows` | `windows_sandbox_filesystem_overrides,` |
+| 210 | `windows` | `/// Readiness probe for the PRoot backend, mirroring the Windows sandbox` |
 
 #### `codex-rs/core/src/session/mcp_runtime.rs`（1 处）
 
@@ -1624,7 +1625,7 @@
 | 行号 | 关键词 | 内容 |
 |---:|---|---|
 | 128 | `windows` | `parent_turn_context.windows_sandbox_level,` |
-| 166 | `windows` | `windows_sandbox_level: parent_turn_context.windows_sandbox_level,` |
+| 167 | `windows` | `windows_sandbox_level: parent_turn_context.windows_sandbox_level,` |
 
 #### `codex-rs/core/src/session/session.rs`（12 处）
 
@@ -1712,7 +1713,7 @@
 | 217 | `windows` | `pub(crate) windows_sandbox_level: WindowsSandboxLevel,` |
 | 524 | `windows` | `windows_sandbox_level: self.windows_sandbox_level,` |
 | 751 | `windows` | `session_configuration.windows_sandbox_level,` |
-| 785 | `windows` | `windows_sandbox_level: session_configuration.windows_sandbox_level,` |
+| 786 | `windows` | `windows_sandbox_level: session_configuration.windows_sandbox_level,` |
 
 #### `codex-rs/core/src/shell.rs`（1 处）
 
@@ -1885,14 +1886,14 @@
 
 | 行号 | 关键词 | 内容 |
 |---:|---|---|
-| 96 | `windows` | `windows_sandbox_level: attempt.windows_sandbox_level,` |
-| 97 | `windows` | `windows_sandbox_private_desktop: attempt.windows_sandbox_private_desktop,` |
-| 277 | `windows` | `sandbox_config.windows_sandbox_level,` |
-| 299 | `windows` | `windows_sandbox_level: sandbox_config.windows_sandbox_level,` |
-| 300 | `windows` | `windows_sandbox_private_desktop: sandbox_config.windows_sandbox_private_desktop,` |
-| 451 | `windows` | `sandbox_config.windows_sandbox_level,` |
-| 473 | `windows` | `windows_sandbox_level: sandbox_config.windows_sandbox_level,` |
-| 474 | `windows` | `windows_sandbox_private_desktop: sandbox_config.windows_sandbox_private_desktop,` |
+| 97 | `windows` | `windows_sandbox_level: attempt.windows_sandbox_level,` |
+| 98 | `windows` | `windows_sandbox_private_desktop: attempt.windows_sandbox_private_desktop,` |
+| 279 | `windows` | `sandbox_config.windows_sandbox_level,` |
+| 303 | `windows` | `windows_sandbox_level: sandbox_config.windows_sandbox_level,` |
+| 304 | `windows` | `windows_sandbox_private_desktop: sandbox_config.windows_sandbox_private_desktop,` |
+| 455 | `windows` | `sandbox_config.windows_sandbox_level,` |
+| 484 | `windows` | `windows_sandbox_level: sandbox_config.windows_sandbox_level,` |
+| 485 | `windows` | `windows_sandbox_private_desktop: sandbox_config.windows_sandbox_private_desktop,` |
 
 #### `codex-rs/core/src/tools/registry.rs`（1 处）
 
@@ -1918,17 +1919,17 @@
 | 31 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
 | 32 | `windows` | `windows_sandbox_private_desktop: true,` |
 | 241 | `macos` | `sandbox: SandboxType::MacosSeatbelt,` |
-| 251 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::RestrictedToken,` |
-| 252 | `windows` | `windows_sandbox_private_desktop: true,` |
-| 279 | `windows` | `sandbox.windows_sandbox_level,` |
-| 280 | `windows` | `WindowsSandboxLevel::RestrictedToken` |
-| 282 | `windows` | `assert_eq!(sandbox.windows_sandbox_private_desktop, true);` |
-| 320 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
-| 321 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 331 | `windows` | `let cwd = PathUri::parse("file:///C:/workspace").expect("Windows workspace URI");` |
-| 349 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::RestrictedToken,` |
-| 350 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 351 | `windows` | `windows_sandbox_proxy_settings_mode: None,` |
+| 252 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::RestrictedToken,` |
+| 253 | `windows` | `windows_sandbox_private_desktop: true,` |
+| 280 | `windows` | `sandbox.windows_sandbox_level,` |
+| 281 | `windows` | `WindowsSandboxLevel::RestrictedToken` |
+| 283 | `windows` | `assert_eq!(sandbox.windows_sandbox_private_desktop, true);` |
+| 322 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
+| 323 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 333 | `windows` | `let cwd = PathUri::parse("file:///C:/workspace").expect("Windows workspace URI");` |
+| 351 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::RestrictedToken,` |
+| 352 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 353 | `windows` | `windows_sandbox_proxy_settings_mode: None,` |
 
 #### `codex-rs/core/src/tools/runtimes/mod.rs`（23 处）
 
@@ -2034,24 +2035,24 @@
 | 行号 | 关键词 | 内容 |
 |---:|---|---|
 | 18 | `windows` | `use codex_protocol::config_types::WindowsSandboxLevel;` |
-| 401 | `windows` | `pub windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,` |
-| 402 | `windows` | `pub windows_sandbox_private_desktop: bool,` |
-| 407 | `windows` | `pub(crate) fn executor_windows_sandbox_level(` |
-| 408 | `windows` | `windows_sandbox_level: WindowsSandboxLevel,` |
-| 410 | `windows` | `) -> WindowsSandboxLevel {` |
-| 411 | `windows` | `if windows_sandbox_level == WindowsSandboxLevel::Disabled` |
-| 412 | `windows` | `&& cwd.infer_path_convention() == Some(PathConvention::Windows)` |
-| 414 | `windows` | `WindowsSandboxLevel::RestrictedToken` |
-| 416 | `windows` | `windows_sandbox_level` |
-| 466 | `windows` | `windows_sandbox_level: self.windows_sandbox_level,` |
-| 467 | `windows` | `windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,` |
-| 501 | `windows` | `windows_sandbox_level: self.windows_sandbox_level,` |
-| 502 | `windows` | `windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,` |
-| 514 | `windows` | `cwd: Some(exec_request.windows_sandbox_policy_cwd.clone()),` |
-| 517 | `windows` | `windows_sandbox_level: executor_windows_sandbox_level(` |
-| 518 | `windows` | `self.windows_sandbox_level,` |
-| 521 | `windows` | `windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,` |
-| 522 | `windows` | `windows_sandbox_proxy_settings_mode: None,` |
+| 403 | `windows` | `pub windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,` |
+| 404 | `windows` | `pub windows_sandbox_private_desktop: bool,` |
+| 409 | `windows` | `pub(crate) fn executor_windows_sandbox_level(` |
+| 410 | `windows` | `windows_sandbox_level: WindowsSandboxLevel,` |
+| 412 | `windows` | `) -> WindowsSandboxLevel {` |
+| 413 | `windows` | `if windows_sandbox_level == WindowsSandboxLevel::Disabled` |
+| 414 | `windows` | `&& cwd.infer_path_convention() == Some(PathConvention::Windows)` |
+| 416 | `windows` | `WindowsSandboxLevel::RestrictedToken` |
+| 418 | `windows` | `windows_sandbox_level` |
+| 469 | `windows` | `windows_sandbox_level: self.windows_sandbox_level,` |
+| 470 | `windows` | `windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,` |
+| 505 | `windows` | `windows_sandbox_level: self.windows_sandbox_level,` |
+| 506 | `windows` | `windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,` |
+| 518 | `windows` | `cwd: Some(exec_request.windows_sandbox_policy_cwd.clone()),` |
+| 521 | `windows` | `windows_sandbox_level: executor_windows_sandbox_level(` |
+| 522 | `windows` | `self.windows_sandbox_level,` |
+| 525 | `windows` | `windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,` |
+| 526 | `windows` | `windows_sandbox_proxy_settings_mode: None,` |
 
 #### `codex-rs/core/src/tools/sandboxing_tests.rs`（19 处）
 
@@ -2059,23 +2060,23 @@
 |---:|---|---|
 | 208 | `windows` | `fn windows_sandbox_env_preserves_denied_reads_or_rejects_unsupported_backend() {` |
 | 250 | `windows` | `sandbox: SandboxType::WindowsRestrictedToken,` |
-| 260 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Elevated,` |
-| 261 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 285 | `windows` | `.expect("prepare elevated Windows sandbox request");` |
-| 287 | `windows` | `.windows_sandbox_filesystem_overrides` |
-| 288 | `windows` | `.expect("elevated Windows sandbox should preserve deny-read overrides");` |
-| 290 | `windows` | `assert_eq!(request.windows_sandbox_workspace_roots, vec![cwd]);` |
-| 292 | `windows` | `attempt.windows_sandbox_level =` |
-| 293 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::RestrictedToken;` |
-| 301 | `windows` | `.expect_err("restricted-token Windows sandbox cannot enforce deny-read restrictions");` |
-| 304 | `windows` | `"unsupported operation: windows unelevated restricted-token sandbox cannot enforce deny-read restrictions directly; refusing to run unsandboxed"` |
-| 331 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Disabled,` |
-| 332 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 374 | `windows` | `windows_sandbox_level: if cfg!(windows) {` |
-| 375 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::RestrictedToken` |
-| 377 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::Disabled` |
-| 379 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 380 | `windows` | `windows_sandbox_proxy_settings_mode: None,` |
+| 261 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Elevated,` |
+| 262 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 286 | `windows` | `.expect("prepare elevated Windows sandbox request");` |
+| 288 | `windows` | `.windows_sandbox_filesystem_overrides` |
+| 289 | `windows` | `.expect("elevated Windows sandbox should preserve deny-read overrides");` |
+| 291 | `windows` | `assert_eq!(request.windows_sandbox_workspace_roots, vec![cwd]);` |
+| 293 | `windows` | `attempt.windows_sandbox_level =` |
+| 294 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::RestrictedToken;` |
+| 302 | `windows` | `.expect_err("restricted-token Windows sandbox cannot enforce deny-read restrictions");` |
+| 305 | `windows` | `"unsupported operation: windows unelevated restricted-token sandbox cannot enforce deny-read restrictions directly; refusing to run unsandboxed"` |
+| 333 | `windows` | `windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel::Disabled,` |
+| 334 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 376 | `windows` | `windows_sandbox_level: if cfg!(windows) {` |
+| 377 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::RestrictedToken` |
+| 379 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::Disabled` |
+| 381 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 382 | `windows` | `windows_sandbox_proxy_settings_mode: None,` |
 
 #### `codex-rs/core/src/tools/spec_plan_tests.rs`（3 处）
 
@@ -2106,28 +2107,28 @@
 |---:|---|---|
 | 35 | `windows` | `use codex_protocol::config_types::WindowsSandboxLevel;` |
 | 156 | `windows` | `windows_sandbox_level: WindowsSandboxLevel,` |
-| 165 | `windows` | `windows_sandbox_level,` |
+| 166 | `windows` | `windows_sandbox_level,` |
 
 #### `codex-rs/core/src/turn_metadata_tests.rs`（16 处）
 
 | 行号 | 关键词 | 内容 |
 |---:|---|---|
 | 237 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 254 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 287 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 328 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 370 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 422 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 457 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 489 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 543 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 598 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 685 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 931 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 1031 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 1072 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 1127 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 1170 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 255 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 289 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 331 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 374 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 427 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 463 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 496 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 551 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 607 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 695 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 942 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 1043 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 1085 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 1141 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 1185 | `windows` | `WindowsSandboxLevel::Disabled,` |
 
 #### `codex-rs/core/src/unified_exec/async_watcher_tests.rs`（1 处）
 
@@ -3277,27 +3278,27 @@
 | 131 | `windows` | `codex_home_for_windows_sandbox_test("windows-restricted-token-deny-read-codex-home")?;` |
 | 192 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::RestrictedToken,` |
 | 193 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 209 | `windows` | `"unsupported operation: windows unelevated restricted-token sandbox cannot enforce deny-read restrictions directly; refusing to run unsandboxed"` |
-| 216 | `windows` | `async fn windows_elevated_does_not_create_missing_workspace_metadata() -> anyhow::Result<()> {` |
-| 218 | `windows` | `codex_home_for_windows_sandbox_test("windows-elevated-missing-metadata-codex-home")?;` |
-| 220 | `windows` | `stage_windows_sandbox_helpers()?;` |
-| 241 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Elevated,` |
-| 242 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 269 | `windows` | `async fn windows_elevated_enforces_deny_read_and_protects_setup_marker() -> anyhow::Result<()> {` |
-| 270 | `windows` | `let codex_home = codex_home_for_windows_sandbox_test("windows-elevated-deny-read-codex-home")?;` |
-| 272 | `windows` | `stage_windows_sandbox_helpers()?;` |
-| 348 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Elevated,` |
-| 349 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 409 | `windows` | `async fn windows_elevated_unified_exec_enforces_managed_deny_reads() -> anyhow::Result<()> {` |
-| 411 | `windows` | `codex_home_for_windows_sandbox_test("windows-elevated-tool-runtime-deny-read-codex-home")?;` |
-| 413 | `windows` | `stage_windows_sandbox_helpers()?;` |
-| 417 | `windows` | `.with_windows_cmd_shell()` |
-| 420 | `windows` | `config.set_windows_elevated_sandbox_enabled(true);` |
-| 483 | `windows` | `let call_id = "windows-managed-deny-read-exec-command";` |
-| 494 | `windows` | `ev_response_created("resp-windows-unified-deny-read"),` |
-| 500 | `windows` | `ev_completed("resp-windows-unified-deny-read"),` |
-| 503 | `windows` | `ev_assistant_message("msg-windows-deny-read", "done"),` |
-| 504 | `windows` | `ev_completed("resp-windows-deny-read-complete"),` |
+| 210 | `windows` | `"unsupported operation: windows unelevated restricted-token sandbox cannot enforce deny-read restrictions directly; refusing to run unsandboxed"` |
+| 217 | `windows` | `async fn windows_elevated_does_not_create_missing_workspace_metadata() -> anyhow::Result<()> {` |
+| 219 | `windows` | `codex_home_for_windows_sandbox_test("windows-elevated-missing-metadata-codex-home")?;` |
+| 221 | `windows` | `stage_windows_sandbox_helpers()?;` |
+| 242 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Elevated,` |
+| 243 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 271 | `windows` | `async fn windows_elevated_enforces_deny_read_and_protects_setup_marker() -> anyhow::Result<()> {` |
+| 272 | `windows` | `let codex_home = codex_home_for_windows_sandbox_test("windows-elevated-deny-read-codex-home")?;` |
+| 274 | `windows` | `stage_windows_sandbox_helpers()?;` |
+| 350 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Elevated,` |
+| 351 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 412 | `windows` | `async fn windows_elevated_unified_exec_enforces_managed_deny_reads() -> anyhow::Result<()> {` |
+| 414 | `windows` | `codex_home_for_windows_sandbox_test("windows-elevated-tool-runtime-deny-read-codex-home")?;` |
+| 416 | `windows` | `stage_windows_sandbox_helpers()?;` |
+| 420 | `windows` | `.with_windows_cmd_shell()` |
+| 423 | `windows` | `config.set_windows_elevated_sandbox_enabled(true);` |
+| 486 | `windows` | `let call_id = "windows-managed-deny-read-exec-command";` |
+| 497 | `windows` | `ev_response_created("resp-windows-unified-deny-read"),` |
+| 503 | `windows` | `ev_completed("resp-windows-unified-deny-read"),` |
+| 506 | `windows` | `ev_assistant_message("msg-windows-deny-read", "done"),` |
+| 507 | `windows` | `ev_completed("resp-windows-deny-read-complete"),` |
 
 #### `codex-rs/core/tests/suite/workspace_roots.rs`（16 处）
 
@@ -3562,37 +3563,37 @@
 | 41 | `windows` | `#[cfg(any(windows, test))]` |
 | 43 | `windows` | `#[cfg(any(windows, test))]` |
 | 135 | `windows` | `sandbox_context.windows_sandbox_level,` |
-| 154 | `windows` | `windows_sandbox_proxy_settings_mode:` |
-| 155 | `windows` | `codex_sandboxing::WindowsSandboxProxySettingsMode::Preserve,` |
-| 166 | `windows` | `windows_sandbox_level: sandbox_context.windows_sandbox_level,` |
-| 167 | `windows` | `windows_sandbox_private_desktop: sandbox_context` |
-| 168 | `windows` | `.windows_sandbox_private_desktop,` |
-| 302 | `macos` | `\|\| (cfg!(target_os = "macos") && key == "__CF_USER_TEXT_ENCODING")` |
-| 304 | `windows` | `\|\| (cfg!(windows) && key.eq_ignore_ascii_case("PATH"))` |
-| 327 | `windows` | `#[cfg(windows)]` |
+| 155 | `windows` | `windows_sandbox_proxy_settings_mode:` |
+| 156 | `windows` | `codex_sandboxing::WindowsSandboxProxySettingsMode::Preserve,` |
+| 168 | `windows` | `windows_sandbox_level: sandbox_context.windows_sandbox_level,` |
+| 169 | `windows` | `windows_sandbox_private_desktop: sandbox_context` |
+| 170 | `windows` | `.windows_sandbox_private_desktop,` |
+| 304 | `macos` | `\|\| (cfg!(target_os = "macos") && key == "__CF_USER_TEXT_ENCODING")` |
+| 306 | `windows` | `\|\| (cfg!(windows) && key.eq_ignore_ascii_case("PATH"))` |
 | 329 | `windows` | `#[cfg(windows)]` |
-| 333 | `windows` | `#[cfg(windows)]` |
-| 347 | `windows` | `#[cfg(not(windows))]` |
-| 361 | `windows` | `#[cfg(any(windows, test))]` |
-| 378 | `windows` | `#[cfg(any(windows, test))]` |
-| 396 | `windows` | `#[cfg(any(windows, test))]` |
-| 429 | `windows` | `#[cfg(not(windows))]` |
-| 475 | `macos` | `// macOS cannot receive passed fds with close-on-exec set atomically.` |
-| 476 | `macos` | `#[cfg(target_os = "macos")]` |
-| 498 | `windows` | `#[path = "fs_sandbox_windows_tests.rs"]` |
-| 499 | `windows` | `mod windows_tests;` |
-| 619 | `macos` | `#[cfg(target_os = "macos")]` |
-| 639 | `windows` | `#[cfg(windows)]` |
-| 641 | `windows` | `fn helper_env_preserves_windows_path_key_for_system_bwrap_discovery() {` |
-| 644 | `windows` | `("Path", r"C:\Windows\System32"),` |
-| 653 | `windows` | `HashMap::from([("Path".to_string(), r"C:\Windows\System32".to_string())])` |
-| 661 | `windows` | `key == "PATH" \|\| (cfg!(windows) && key.eq_ignore_ascii_case("PATH"))` |
-| 675 | `windows` | `#[cfg(windows)]` |
-| 687 | `windows` | `#[cfg(windows)]` |
-| 696 | `windows` | `.expect_err("disabled Windows sandbox must not run the helper unsandboxed");` |
-| 702 | `windows` | `windows_sandbox_level:` |
-| 703 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::RestrictedToken,` |
-| 858 | `windows` | `#[cfg(windows)]` |
+| 331 | `windows` | `#[cfg(windows)]` |
+| 335 | `windows` | `#[cfg(windows)]` |
+| 349 | `windows` | `#[cfg(not(windows))]` |
+| 363 | `windows` | `#[cfg(any(windows, test))]` |
+| 380 | `windows` | `#[cfg(any(windows, test))]` |
+| 398 | `windows` | `#[cfg(any(windows, test))]` |
+| 431 | `windows` | `#[cfg(not(windows))]` |
+| 477 | `macos` | `// macOS cannot receive passed fds with close-on-exec set atomically.` |
+| 478 | `macos` | `#[cfg(target_os = "macos")]` |
+| 500 | `windows` | `#[path = "fs_sandbox_windows_tests.rs"]` |
+| 501 | `windows` | `mod windows_tests;` |
+| 621 | `macos` | `#[cfg(target_os = "macos")]` |
+| 641 | `windows` | `#[cfg(windows)]` |
+| 643 | `windows` | `fn helper_env_preserves_windows_path_key_for_system_bwrap_discovery() {` |
+| 646 | `windows` | `("Path", r"C:\Windows\System32"),` |
+| 655 | `windows` | `HashMap::from([("Path".to_string(), r"C:\Windows\System32".to_string())])` |
+| 663 | `windows` | `key == "PATH" \|\| (cfg!(windows) && key.eq_ignore_ascii_case("PATH"))` |
+| 677 | `windows` | `#[cfg(windows)]` |
+| 689 | `windows` | `#[cfg(windows)]` |
+| 698 | `windows` | `.expect_err("disabled Windows sandbox must not run the helper unsandboxed");` |
+| 704 | `windows` | `windows_sandbox_level:` |
+| 705 | `windows` | `codex_protocol::config_types::WindowsSandboxLevel::RestrictedToken,` |
+| 860 | `windows` | `#[cfg(windows)]` |
 
 #### `codex-rs/exec-server/src/fs_sandbox_windows_tests.rs`（27 处）
 
@@ -3652,24 +3653,24 @@
 |---:|---|---|
 | 365 | `macos` | `SandboxType::MacosSeatbelt => Some(ProcessSandboxType::MacosSeatbelt),` |
 | 367 | `windows` | `SandboxType::WindowsRestrictedToken => Some(ProcessSandboxType::WindowsRestrictedToken),` |
-| 390 | `windows` | `windows_sandbox: prepared.windows_sandbox_spawn_request(),` |
-| 1137 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 1139 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 1144 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 1146 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 1148 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 1150 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 1328 | `windows` | `#[cfg(windows)]` |
-| 1384 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 1390 | `windows` | `#[cfg(target_os = "windows")]` |
-| 1445 | `windows` | `if cfg!(target_os = "windows") {` |
-| 1693 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 1695 | `windows` | `#[cfg(target_os = "windows")]` |
-| 1757 | `windows` | `#[cfg(target_os = "windows")]` |
-| 1762 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 1809 | `windows` | `#[cfg(target_os = "windows")]` |
-| 1811 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 1950 | `windows` | `#[cfg(windows)]` |
+| 393 | `windows` | `windows_sandbox: prepared.windows_sandbox_spawn_request(),` |
+| 1140 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 1142 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 1147 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 1149 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 1151 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 1153 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 1331 | `windows` | `#[cfg(windows)]` |
+| 1387 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 1393 | `windows` | `#[cfg(target_os = "windows")]` |
+| 1448 | `windows` | `if cfg!(target_os = "windows") {` |
+| 1696 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 1698 | `windows` | `#[cfg(target_os = "windows")]` |
+| 1760 | `windows` | `#[cfg(target_os = "windows")]` |
+| 1765 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 1812 | `windows` | `#[cfg(target_os = "windows")]` |
+| 1814 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 1953 | `windows` | `#[cfg(windows)]` |
 
 #### `codex-rs/exec-server/src/no_follow/mod.rs`（8 处）
 
@@ -3771,24 +3772,24 @@
 | 121 | `windows` | `let windows_sandbox_proxy_settings_mode = sandbox_context` |
 | 122 | `windows` | `.windows_sandbox_proxy_settings_mode` |
 | 188 | `windows` | `sandbox_context.windows_sandbox_level,` |
-| 222 | `windows` | `windows_sandbox_proxy_settings_mode,` |
-| 240 | `windows` | `windows_sandbox_level: sandbox_context.windows_sandbox_level,` |
-| 241 | `windows` | `windows_sandbox_private_desktop: sandbox_context.windows_sandbox_private_desktop,` |
-| 244 | `windows` | `let mut request = if sandbox == SandboxType::WindowsRestrictedToken {` |
-| 245 | `windows` | `// The shared launcher invokes the native Windows session spawner directly.` |
-| 251 | `windows` | `let windows_sandbox = if sandbox == SandboxType::WindowsRestrictedToken {` |
-| 255 | `windows` | `windows_sandbox_uses_elevated_backend(sandbox_context.windows_sandbox_level);` |
-| 257 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
-| 264 | `windows` | `resolve_windows_restricted_token_filesystem_overrides(` |
-| 268 | `windows` | `sandbox_context.windows_sandbox_level,` |
-| 272 | `windows` | `Some(PreparedWindowsSandboxRequest {` |
-| 275 | `windows` | `windows_sandbox_level: sandbox_context.windows_sandbox_level,` |
-| 278 | `windows` | `proxy_settings_mode: windows_sandbox_proxy_settings_mode,` |
-| 280 | `windows` | `use_private_desktop: sandbox_context.windows_sandbox_private_desktop,` |
-| 292 | `windows` | `windows_sandbox,` |
-| 331 | `windows` | `#[cfg(target_os = "windows")]` |
-| 337 | `windows` | `"managed Windows proxy route is missing its restricting SID".to_string(),` |
-| 341 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 223 | `windows` | `windows_sandbox_proxy_settings_mode,` |
+| 242 | `windows` | `windows_sandbox_level: sandbox_context.windows_sandbox_level,` |
+| 243 | `windows` | `windows_sandbox_private_desktop: sandbox_context.windows_sandbox_private_desktop,` |
+| 246 | `windows` | `let mut request = if sandbox == SandboxType::WindowsRestrictedToken {` |
+| 247 | `windows` | `// The shared launcher invokes the native Windows session spawner directly.` |
+| 253 | `windows` | `let windows_sandbox = if sandbox == SandboxType::WindowsRestrictedToken {` |
+| 257 | `windows` | `windows_sandbox_uses_elevated_backend(sandbox_context.windows_sandbox_level);` |
+| 259 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
+| 266 | `windows` | `resolve_windows_restricted_token_filesystem_overrides(` |
+| 270 | `windows` | `sandbox_context.windows_sandbox_level,` |
+| 274 | `windows` | `Some(PreparedWindowsSandboxRequest {` |
+| 277 | `windows` | `windows_sandbox_level: sandbox_context.windows_sandbox_level,` |
+| 280 | `windows` | `proxy_settings_mode: windows_sandbox_proxy_settings_mode,` |
+| 282 | `windows` | `use_private_desktop: sandbox_context.windows_sandbox_private_desktop,` |
+| 294 | `windows` | `windows_sandbox,` |
+| 333 | `windows` | `#[cfg(target_os = "windows")]` |
+| 339 | `windows` | `"managed Windows proxy route is missing its restricting SID".to_string(),` |
+| 343 | `windows` | `#[cfg(not(target_os = "windows"))]` |
 
 #### `codex-rs/exec-server/src/process_sandbox_tests.rs`（27 处）
 
@@ -4644,8 +4645,8 @@
 | 9 | `windows` | `use codex_protocol::config_types::WindowsSandboxLevel;` |
 | 183 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
 | 184 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 521 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
-| 522 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 522 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
+| 523 | `windows` | `windows_sandbox_private_desktop: false,` |
 
 ### 模块 `login`（1 个文件 / 2 行）
 
@@ -5461,7 +5462,7 @@
 | 79 | `windows` | `cwd: "file:///C:/windows".parse()?,` |
 | 119 | `windows` | `"cwd": r"C:\windows",` |
 
-### 模块 `sandboxing`（12 个文件 / 308 行）
+### 模块 `sandboxing`（14 个文件 / 323 行）
 
 #### `codex-rs/sandboxing/Cargo.toml`（2 处）
 
@@ -5481,21 +5482,21 @@
 
 | 行号 | 关键词 | 内容 |
 |---:|---|---|
-| 7 | `macos` | `#[cfg(target_os = "macos")]` |
-| 11 | `windows` | `mod windows;` |
-| 17 | `windows` | `pub use codex_windows_sandbox::WindowsSandboxProxySettingsMode;` |
-| 32 | `windows` | `pub use spawn::WindowsSandboxSpawnRequest;` |
-| 42 | `windows` | `pub use windows::WindowsSandboxFilesystemOverrides;` |
-| 43 | `windows` | `pub use windows::permission_profile_supports_windows_restricted_token_sandbox;` |
-| 44 | `windows` | `pub use windows::resolve_windows_elevated_filesystem_overrides;` |
-| 45 | `windows` | `pub use windows::resolve_windows_restricted_token_filesystem_overrides;` |
-| 46 | `windows` | `pub use windows::unsupported_windows_restricted_token_sandbox_reason;` |
-| 47 | `windows` | `pub use windows::windows_sandbox_uses_elevated_backend;` |
-| 71 | `macos` | `#[cfg(target_os = "macos")]` |
-| 79 | `macos` | `#[cfg(not(target_os = "macos"))]` |
-| 81 | `macos` | `"seatbelt sandbox is only available on macOS".to_string(),` |
-| 83 | `windows` | `#[cfg(target_os = "windows")]` |
-| 84 | `windows` | `SandboxTransformError::WindowsSandboxPreparation(message) => {` |
+| 8 | `macos` | `#[cfg(target_os = "macos")]` |
+| 12 | `windows` | `mod windows;` |
+| 18 | `windows` | `pub use codex_windows_sandbox::WindowsSandboxProxySettingsMode;` |
+| 44 | `windows` | `pub use spawn::WindowsSandboxSpawnRequest;` |
+| 54 | `windows` | `pub use windows::WindowsSandboxFilesystemOverrides;` |
+| 55 | `windows` | `pub use windows::permission_profile_supports_windows_restricted_token_sandbox;` |
+| 56 | `windows` | `pub use windows::resolve_windows_elevated_filesystem_overrides;` |
+| 57 | `windows` | `pub use windows::resolve_windows_restricted_token_filesystem_overrides;` |
+| 58 | `windows` | `pub use windows::unsupported_windows_restricted_token_sandbox_reason;` |
+| 59 | `windows` | `pub use windows::windows_sandbox_uses_elevated_backend;` |
+| 86 | `macos` | `#[cfg(target_os = "macos")]` |
+| 94 | `macos` | `#[cfg(not(target_os = "macos"))]` |
+| 96 | `macos` | `"seatbelt sandbox is only available on macOS".to_string(),` |
+| 98 | `windows` | `#[cfg(target_os = "windows")]` |
+| 99 | `windows` | `SandboxTransformError::WindowsSandboxPreparation(message) => {` |
 
 #### `codex-rs/sandboxing/src/manager.rs`（94 处）
 
@@ -5514,87 +5515,87 @@
 | 34 | `windows` | `const WINDOWS_SANDBOX_WRAPPER_SETUP_ENV_ALLOWLIST: &[&str] = &["USERNAME", "USERPROFILE"];` |
 | 39 | `macos` | `MacosSeatbelt,` |
 | 41 | `windows` | `WindowsRestrictedToken,` |
-| 48 | `macos` | `SandboxType::MacosSeatbelt => "seatbelt",` |
-| 50 | `windows` | `SandboxType::WindowsRestrictedToken => "windows_sandbox",` |
-| 62 | `windows` | `pub fn get_platform_sandbox(windows_sandbox_enabled: bool) -> Option<SandboxType> {` |
-| 63 | `macos` | `if cfg!(target_os = "macos") {` |
-| 64 | `macos` | `Some(SandboxType::MacosSeatbelt)` |
-| 67 | `windows` | `} else if cfg!(target_os = "windows") {` |
-| 68 | `windows` | `if windows_sandbox_enabled {` |
-| 69 | `windows` | `Some(SandboxType::WindowsRestrictedToken)` |
-| 124 | `windows` | `pub windows_sandbox_level: WindowsSandboxLevel,` |
-| 125 | `windows` | `pub windows_sandbox_private_desktop: bool,` |
-| 147 | `windows` | `pub windows_sandbox_level: WindowsSandboxLevel,` |
-| 148 | `windows` | `pub windows_sandbox_private_desktop: bool,` |
-| 159 | `windows` | `pub windows_sandbox_proxy_settings_mode: codex_windows_sandbox::WindowsSandboxProxySettingsMode,` |
-| 214 | `macos` | `#[cfg(target_os = "macos")]` |
-| 218 | `macos` | `#[cfg(not(target_os = "macos"))]` |
-| 220 | `windows` | `#[cfg(target_os = "windows")]` |
-| 221 | `windows` | `WindowsSandboxPreparation(String),` |
-| 243 | `macos` | `#[cfg(target_os = "macos")]` |
-| 249 | `macos` | `#[cfg(not(target_os = "macos"))]` |
-| 250 | `macos` | `Self::SeatbeltUnavailable => write!(f, "seatbelt sandbox is only available on macOS"),` |
-| 251 | `windows` | `#[cfg(target_os = "windows")]` |
-| 252 | `windows` | `Self::WindowsSandboxPreparation(err) => {` |
-| 253 | `windows` | `write!(f, "failed to prepare windows sandbox wrapper: {err}")` |
-| 266 | `macos` | `#[cfg(target_os = "macos")]` |
-| 270 | `macos` | `#[cfg(not(target_os = "macos"))]` |
-| 272 | `windows` | `#[cfg(target_os = "windows")]` |
-| 273 | `windows` | `Self::WindowsSandboxPreparation(_) => None,` |
-| 280 | `macos` | `#[cfg(target_os = "macos")]` |
-| 281 | `macos` | `seatbelt_profile: MacosSeatbeltProfile,` |
-| 292 | `macos` | `#[cfg(target_os = "macos")]` |
-| 293 | `macos` | `seatbelt_profile: MacosSeatbeltProfile::FileSystemHelper,` |
-| 301 | `windows` | `windows_sandbox_level: WindowsSandboxLevel,` |
-| 305 | `windows` | `get_platform_sandbox(windows_sandbox_level != WindowsSandboxLevel::Disabled)` |
-| 349 | `windows` | `windows_sandbox_level,` |
-| 350 | `windows` | `windows_sandbox_private_desktop,` |
-| 352 | `macos` | `#[cfg(target_os = "macos")]` |
-| 371 | `macos` | `#[cfg(target_os = "macos")]` |
-| 372 | `macos` | `SandboxType::MacosSeatbelt => {` |
-| 374 | `macos` | `use crate::seatbelt::MACOS_PATH_TO_SEATBELT_EXECUTABLE;` |
-| 405 | `macos` | `full_command.push(MACOS_PATH_TO_SEATBELT_EXECUTABLE.to_string());` |
-| 409 | `macos` | `#[cfg(not(target_os = "macos"))]` |
-| 410 | `macos` | `SandboxType::MacosSeatbelt => return Err(SandboxTransformError::SeatbeltUnavailable),` |
-| 442 | `windows` | `#[cfg(target_os = "windows")]` |
-| 443 | `windows` | `SandboxType::WindowsRestrictedToken => {` |
-| 444 | `windows` | `if enforce_managed_network && windows_sandbox_level != WindowsSandboxLevel::Elevated` |
-| 446 | `windows` | `return Err(SandboxTransformError::WindowsSandboxPreparation(` |
-| 447 | `windows` | `"managed networking requires the elevated Windows sandbox backend"` |
-| 457 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 458 | `windows` | `SandboxType::WindowsRestrictedToken => (` |
-| 481 | `windows` | `windows_sandbox_level,` |
-| 482 | `windows` | `windows_sandbox_private_desktop,` |
-| 492 | `windows` | `#[cfg(target_os = "windows")]` |
-| 495 | `windows` | `.map_err(\|err\| SandboxTransformError::WindowsSandboxPreparation(err.to_string()))?;` |
-| 499 | `windows` | `#[cfg(not(target_os = "windows"))]` |
-| 505 | `windows` | `#[cfg(target_os = "windows")]` |
-| 512 | `windows` | `let proxy_settings_mode = request.windows_sandbox_proxy_settings_mode;` |
-| 514 | `windows` | `if request.sandbox == SandboxType::WindowsRestrictedToken {` |
-| 515 | `windows` | `wrap_windows_sandbox_exec_request_for_direct_spawn(` |
-| 526 | `windows` | `#[cfg(target_os = "windows")]` |
-| 527 | `windows` | `fn wrap_windows_sandbox_exec_request_for_direct_spawn(` |
-| 531 | `windows` | `proxy_settings_mode: codex_windows_sandbox::WindowsSandboxProxySettingsMode,` |
-| 533 | `windows` | `// TODO(anp): Keep PathUri through the Windows sandbox wrapper boundary.` |
-| 549 | `windows` | `return Err(SandboxTransformError::WindowsSandboxPreparation(` |
-| 554 | `windows` | `let helper = codex_windows_sandbox::resolve_exe_for_launch(source.as_path(), codex_home);` |
-| 566 | `windows` | `SandboxTransformError::WindowsSandboxPreparation(` |
-| 567 | `windows` | `"managed Windows proxy route is missing its restricting SID".to_string(),` |
-| 572 | `windows` | `let use_elevated = windows_sandbox_uses_elevated_backend(request.windows_sandbox_level);` |
-| 574 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
-| 581 | `windows` | `resolve_windows_restricted_token_filesystem_overrides(` |
-| 585 | `windows` | `request.windows_sandbox_level,` |
-| 588 | `windows` | `.map_err(SandboxTransformError::WindowsSandboxPreparation)?;` |
-| 606 | `windows` | `codex_windows_sandbox::create_windows_sandbox_command_args_for_permission_profile(` |
-| 612 | `windows` | `request.windows_sandbox_level,` |
-| 613 | `windows` | `request.windows_sandbox_private_desktop,` |
-| 630 | `windows` | `add_windows_sandbox_wrapper_setup_env(&mut request.env);` |
-| 634 | `windows` | `#[cfg(target_os = "windows")]` |
-| 635 | `windows` | `fn add_windows_sandbox_wrapper_setup_env(env: &mut HashMap<String, String>) {` |
-| 636 | `windows` | `add_windows_sandbox_wrapper_setup_env_from_vars(env, std::env::vars_os());` |
-| 639 | `windows` | `#[cfg(target_os = "windows")]` |
-| 640 | `windows` | `fn add_windows_sandbox_wrapper_setup_env_from_vars(` |
-| 646 | `windows` | `if !WINDOWS_SANDBOX_WRAPPER_SETUP_ENV_ALLOWLIST` |
+| 50 | `macos` | `SandboxType::MacosSeatbelt => "seatbelt",` |
+| 52 | `windows` | `SandboxType::WindowsRestrictedToken => "windows_sandbox",` |
+| 66 | `windows` | `windows_sandbox_enabled: bool,` |
+| 69 | `macos` | `if cfg!(target_os = "macos") {` |
+| 70 | `macos` | `Some(SandboxType::MacosSeatbelt)` |
+| 73 | `windows` | `} else if cfg!(target_os = "windows") {` |
+| 74 | `windows` | `if windows_sandbox_enabled {` |
+| 75 | `windows` | `Some(SandboxType::WindowsRestrictedToken)` |
+| 136 | `windows` | `pub windows_sandbox_level: WindowsSandboxLevel,` |
+| 137 | `windows` | `pub windows_sandbox_private_desktop: bool,` |
+| 161 | `windows` | `pub windows_sandbox_level: WindowsSandboxLevel,` |
+| 162 | `windows` | `pub windows_sandbox_private_desktop: bool,` |
+| 173 | `windows` | `pub windows_sandbox_proxy_settings_mode: codex_windows_sandbox::WindowsSandboxProxySettingsMode,` |
+| 229 | `macos` | `#[cfg(target_os = "macos")]` |
+| 233 | `macos` | `#[cfg(not(target_os = "macos"))]` |
+| 235 | `windows` | `#[cfg(target_os = "windows")]` |
+| 236 | `windows` | `WindowsSandboxPreparation(String),` |
+| 261 | `macos` | `#[cfg(target_os = "macos")]` |
+| 267 | `macos` | `#[cfg(not(target_os = "macos"))]` |
+| 268 | `macos` | `Self::SeatbeltUnavailable => write!(f, "seatbelt sandbox is only available on macOS"),` |
+| 269 | `windows` | `#[cfg(target_os = "windows")]` |
+| 270 | `windows` | `Self::WindowsSandboxPreparation(err) => {` |
+| 271 | `windows` | `write!(f, "failed to prepare windows sandbox wrapper: {err}")` |
+| 285 | `macos` | `#[cfg(target_os = "macos")]` |
+| 289 | `macos` | `#[cfg(not(target_os = "macos"))]` |
+| 291 | `windows` | `#[cfg(target_os = "windows")]` |
+| 292 | `windows` | `Self::WindowsSandboxPreparation(_) => None,` |
+| 299 | `macos` | `#[cfg(target_os = "macos")]` |
+| 300 | `macos` | `seatbelt_profile: MacosSeatbeltProfile,` |
+| 311 | `macos` | `#[cfg(target_os = "macos")]` |
+| 312 | `macos` | `seatbelt_profile: MacosSeatbeltProfile::FileSystemHelper,` |
+| 320 | `windows` | `windows_sandbox_level: WindowsSandboxLevel,` |
+| 326 | `windows` | `windows_sandbox_level != WindowsSandboxLevel::Disabled,` |
+| 373 | `windows` | `windows_sandbox_level,` |
+| 374 | `windows` | `windows_sandbox_private_desktop,` |
+| 376 | `macos` | `#[cfg(target_os = "macos")]` |
+| 395 | `macos` | `#[cfg(target_os = "macos")]` |
+| 396 | `macos` | `SandboxType::MacosSeatbelt => {` |
+| 398 | `macos` | `use crate::seatbelt::MACOS_PATH_TO_SEATBELT_EXECUTABLE;` |
+| 429 | `macos` | `full_command.push(MACOS_PATH_TO_SEATBELT_EXECUTABLE.to_string());` |
+| 433 | `macos` | `#[cfg(not(target_os = "macos"))]` |
+| 434 | `macos` | `SandboxType::MacosSeatbelt => return Err(SandboxTransformError::SeatbeltUnavailable),` |
+| 466 | `windows` | `#[cfg(target_os = "windows")]` |
+| 467 | `windows` | `SandboxType::WindowsRestrictedToken => {` |
+| 468 | `windows` | `if enforce_managed_network && windows_sandbox_level != WindowsSandboxLevel::Elevated` |
+| 470 | `windows` | `return Err(SandboxTransformError::WindowsSandboxPreparation(` |
+| 471 | `windows` | `"managed networking requires the elevated Windows sandbox backend"` |
+| 513 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 514 | `windows` | `SandboxType::WindowsRestrictedToken => (` |
+| 537 | `windows` | `windows_sandbox_level,` |
+| 538 | `windows` | `windows_sandbox_private_desktop,` |
+| 548 | `windows` | `#[cfg(target_os = "windows")]` |
+| 551 | `windows` | `.map_err(\|err\| SandboxTransformError::WindowsSandboxPreparation(err.to_string()))?;` |
+| 555 | `windows` | `#[cfg(not(target_os = "windows"))]` |
+| 561 | `windows` | `#[cfg(target_os = "windows")]` |
+| 568 | `windows` | `let proxy_settings_mode = request.windows_sandbox_proxy_settings_mode;` |
+| 570 | `windows` | `if request.sandbox == SandboxType::WindowsRestrictedToken {` |
+| 571 | `windows` | `wrap_windows_sandbox_exec_request_for_direct_spawn(` |
+| 582 | `windows` | `#[cfg(target_os = "windows")]` |
+| 583 | `windows` | `fn wrap_windows_sandbox_exec_request_for_direct_spawn(` |
+| 587 | `windows` | `proxy_settings_mode: codex_windows_sandbox::WindowsSandboxProxySettingsMode,` |
+| 589 | `windows` | `// TODO(anp): Keep PathUri through the Windows sandbox wrapper boundary.` |
+| 605 | `windows` | `return Err(SandboxTransformError::WindowsSandboxPreparation(` |
+| 610 | `windows` | `let helper = codex_windows_sandbox::resolve_exe_for_launch(source.as_path(), codex_home);` |
+| 622 | `windows` | `SandboxTransformError::WindowsSandboxPreparation(` |
+| 623 | `windows` | `"managed Windows proxy route is missing its restricting SID".to_string(),` |
+| 628 | `windows` | `let use_elevated = windows_sandbox_uses_elevated_backend(request.windows_sandbox_level);` |
+| 630 | `windows` | `resolve_windows_elevated_filesystem_overrides(` |
+| 637 | `windows` | `resolve_windows_restricted_token_filesystem_overrides(` |
+| 641 | `windows` | `request.windows_sandbox_level,` |
+| 644 | `windows` | `.map_err(SandboxTransformError::WindowsSandboxPreparation)?;` |
+| 662 | `windows` | `codex_windows_sandbox::create_windows_sandbox_command_args_for_permission_profile(` |
+| 668 | `windows` | `request.windows_sandbox_level,` |
+| 669 | `windows` | `request.windows_sandbox_private_desktop,` |
+| 686 | `windows` | `add_windows_sandbox_wrapper_setup_env(&mut request.env);` |
+| 690 | `windows` | `#[cfg(target_os = "windows")]` |
+| 691 | `windows` | `fn add_windows_sandbox_wrapper_setup_env(env: &mut HashMap<String, String>) {` |
+| 692 | `windows` | `add_windows_sandbox_wrapper_setup_env_from_vars(env, std::env::vars_os());` |
+| 695 | `windows` | `#[cfg(target_os = "windows")]` |
+| 696 | `windows` | `fn add_windows_sandbox_wrapper_setup_env_from_vars(` |
+| 702 | `windows` | `if !WINDOWS_SANDBOX_WRAPPER_SETUP_ENV_ALLOWLIST` |
 
 #### `codex-rs/sandboxing/src/manager_tests.rs`（36 处）
 
@@ -5603,39 +5604,39 @@
 | 2 | `windows` | `#[cfg(target_os = "windows")]` |
 | 10 | `windows` | `use codex_protocol::config_types::WindowsSandboxLevel;` |
 | 34 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 44 | `windows` | `get_platform_sandbox(/*windows_sandbox_enabled*/ false).unwrap_or(SandboxType::None);` |
-| 48 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 58 | `windows` | `get_platform_sandbox(/*windows_sandbox_enabled*/ false).unwrap_or(SandboxType::None);` |
-| 72 | `windows` | `WindowsSandboxLevel::Disabled,` |
-| 81 | `windows` | `let cwd_uri = if cfg!(windows) {` |
-| 84 | `windows` | `PathUri::parse("file:///C:/workspace/remote").expect("Windows path URI")` |
-| 108 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
-| 109 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 125 | `macos` | `#[cfg(target_os = "macos")]` |
-| 158 | `macos` | `sandbox: SandboxType::MacosSeatbelt,` |
-| 165 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
-| 166 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 220 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
-| 221 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 291 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
-| 292 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 393 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
-| 394 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 491 | `windows` | `#[cfg(target_os = "windows")]` |
-| 493 | `windows` | `fn transform_for_direct_spawn_windows_preserves_only_wrapper_setup_identity() {` |
-| 495 | `windows` | `("Path".to_string(), r"C:\Windows\System32".to_string()),` |
-| 500 | `windows` | `super::add_windows_sandbox_wrapper_setup_env_from_vars(` |
-| 518 | `windows` | `("Path".to_string(), r"C:\Windows\System32".to_string()),` |
-| 525 | `windows` | `#[cfg(target_os = "windows")]` |
-| 527 | `windows` | `fn transform_for_direct_spawn_windows_materializes_inner_helper() {` |
-| 569 | `windows` | `windows_sandbox_proxy_settings_mode:` |
-| 570 | `windows` | `codex_windows_sandbox::WindowsSandboxProxySettingsMode::Preserve,` |
-| 578 | `windows` | `r"C:\Windows\System32".to_string(),` |
-| 584 | `windows` | `sandbox: SandboxType::WindowsRestrictedToken,` |
-| 591 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Elevated,` |
-| 592 | `windows` | `windows_sandbox_private_desktop: false,` |
-| 614 | `windows` | `.any(\|arg\| arg == "--run-as-windows-sandbox")` |
-| 635 | `windows` | `.windows(2)` |
+| 45 | `windows` | `get_platform_sandbox(/*windows_sandbox_enabled*/ false, /*proot_enabled*/ false)` |
+| 50 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 61 | `windows` | `get_platform_sandbox(/*windows_sandbox_enabled*/ false, /*proot_enabled*/ false)` |
+| 76 | `windows` | `WindowsSandboxLevel::Disabled,` |
+| 86 | `windows` | `let cwd_uri = if cfg!(windows) {` |
+| 89 | `windows` | `PathUri::parse("file:///C:/workspace/remote").expect("Windows path URI")` |
+| 114 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
+| 115 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 131 | `macos` | `#[cfg(target_os = "macos")]` |
+| 164 | `macos` | `sandbox: SandboxType::MacosSeatbelt,` |
+| 171 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
+| 172 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 227 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
+| 228 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 299 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
+| 300 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 401 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
+| 402 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 499 | `windows` | `#[cfg(target_os = "windows")]` |
+| 501 | `windows` | `fn transform_for_direct_spawn_windows_preserves_only_wrapper_setup_identity() {` |
+| 503 | `windows` | `("Path".to_string(), r"C:\Windows\System32".to_string()),` |
+| 508 | `windows` | `super::add_windows_sandbox_wrapper_setup_env_from_vars(` |
+| 526 | `windows` | `("Path".to_string(), r"C:\Windows\System32".to_string()),` |
+| 533 | `windows` | `#[cfg(target_os = "windows")]` |
+| 535 | `windows` | `fn transform_for_direct_spawn_windows_materializes_inner_helper() {` |
+| 577 | `windows` | `windows_sandbox_proxy_settings_mode:` |
+| 578 | `windows` | `codex_windows_sandbox::WindowsSandboxProxySettingsMode::Preserve,` |
+| 586 | `windows` | `r"C:\Windows\System32".to_string(),` |
+| 592 | `windows` | `sandbox: SandboxType::WindowsRestrictedToken,` |
+| 600 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Elevated,` |
+| 601 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 623 | `windows` | `.any(\|arg\| arg == "--run-as-windows-sandbox")` |
+| 644 | `windows` | `.windows(2)` |
 
 #### `codex-rs/sandboxing/src/policy_transforms_tests.rs`（5 处）
 
@@ -5646,6 +5647,31 @@
 | 457 | `windows` | `#[cfg(windows)]` |
 | 458 | `windows` | `use std::os::windows::ffi::OsStringExt;` |
 | 470 | `windows` | `#[cfg(windows)]` |
+
+#### `codex-rs/sandboxing/src/proot.rs`（6 处）
+
+| 行号 | 关键词 | 内容 |
+|---:|---|---|
+| 124 | `macos` | `/// 'MACOS_PATH_TO_SEATBELT_EXECUTABLE' (absolute, caller-controlled path).` |
+| 202 | `windows` | `/// Readiness of the PRoot backend, mirroring the Windows sandbox readiness` |
+| 203 | `windows` | `/// surface ('WindowsSandboxReadiness'). Host apps probe this before the first` |
+| 385 | `windows` | `/// Windows hosts (guest paths are interpreted inside Linux).` |
+| 415 | `windows` | `/// mirroring 'permission_profile_supports_windows_restricted_token_sandbox'.` |
+| 434 | `windows` | `/// mirroring 'unsupported_windows_restricted_token_sandbox_reason'.` |
+
+#### `codex-rs/sandboxing/src/proot_tests.rs`（9 处）
+
+| 行号 | 关键词 | 内容 |
+|---:|---|---|
+| 7 | `windows` | `use codex_protocol::config_types::WindowsSandboxLevel;` |
+| 19 | `windows` | `/// Host-native absolute test path: POSIX on unix, 'C:'-prefixed on Windows.` |
+| 23 | `windows` | `if cfg!(windows) {` |
+| 55 | `windows` | `args.windows(2)` |
+| 63 | `windows` | `args.windows(2)` |
+| 466 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
+| 467 | `windows` | `windows_sandbox_private_desktop: false,` |
+| 519 | `windows` | `windows_sandbox_level: WindowsSandboxLevel::Disabled,` |
+| 520 | `windows` | `windows_sandbox_private_desktop: false,` |
 
 #### `codex-rs/sandboxing/src/seatbelt.rs`（18 处）
 
@@ -5762,10 +5788,10 @@
 
 | 行号 | 关键词 | 内容 |
 |---:|---|---|
-| 52 | `windows` | `WindowsSandbox,` |
-| 61 | `windows` | `Self::WindowsSandbox => "windows_sandbox",` |
-| 143 | `macos` | `SandboxType::MacosSeatbelt => SandboxViolationBackend::Seatbelt,` |
-| 145 | `windows` | `SandboxType::WindowsRestrictedToken => SandboxViolationBackend::WindowsSandbox,` |
+| 53 | `windows` | `WindowsSandbox,` |
+| 63 | `windows` | `Self::WindowsSandbox => "windows_sandbox",` |
+| 145 | `macos` | `SandboxType::MacosSeatbelt => SandboxViolationBackend::Seatbelt,` |
+| 148 | `windows` | `SandboxType::WindowsRestrictedToken => SandboxViolationBackend::WindowsSandbox,` |
 
 #### `codex-rs/sandboxing/src/violation_tests.rs`（4 处）
 

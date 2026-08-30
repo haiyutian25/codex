@@ -145,6 +145,13 @@ fn managed_network_enforcement_tags_unrestricted_profiles_as_sandboxed() {
     );
 }
 
+/// ProRoot telemetry tag mapping: proves the PRoot backend reports "proot"
+/// in the sandbox-backend telemetry surface, independent of the host platform.
+#[test]
+fn proot_backend_reports_proot_metric_tag() {
+    assert_eq!(SandboxType::Proot.as_metric_tag(), "proot");
+}
+
 #[test]
 fn profile_policy_tag_reports_closest_legacy_mode() {
     let cwd = AbsolutePathBuf::from_absolute_path(Path::new("/tmp/codex")).expect("absolute cwd");

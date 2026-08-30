@@ -235,3 +235,17 @@ fn converts_blocked_request_to_network_violation() {
         }
     );
 }
+
+/// ProRoot violation telemetry: proves a filesystem denial observed under the
+/// PRoot backend is classified with `SandboxViolationBackend::Proot` and that
+/// the backend serializes to the "proot" telemetry string.
+#[test]
+fn proot_backend_violations_report_proot() {
+    assert_eq!(SandboxViolationBackend::Proot.as_str(), "proot");
+
+    let output = make_exec_output(/*exit_code*/ 1, "", "permission denied", "");
+    let violation = classify_filesystem_sandbox_violation(SandboxType::Proot, &output)
+        .expect("proot denial should classify");
+    assert_eq!(violation.backend, SandboxViolationBackend::Proot);
+    assert_eq!(violation.backend.as_str(), "proot");
+}
