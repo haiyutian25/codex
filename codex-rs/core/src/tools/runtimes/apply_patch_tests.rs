@@ -2,7 +2,6 @@ use super::*;
 use crate::config::PermissionProfileSnapshot;
 use crate::environment_selection::EnvironmentConfigOrigin;
 use crate::tools::sandboxing::SandboxAttempt;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::models::AdditionalPermissionProfile;
 use codex_protocol::models::FileSystemPermissions;
 use codex_protocol::models::PermissionProfile;
@@ -28,8 +27,6 @@ fn test_turn_environment(environment_id: &str) -> crate::session::turn_context::
             config: EnvironmentConfigState::Ready(EnvironmentConfig {
                 allow_login_shell: true,
                 workspace_roots: Vec::new(),
-                windows_sandbox_level: WindowsSandboxLevel::Disabled,
-                windows_sandbox_private_desktop: true,
                 use_legacy_landlock: false,
                 permission_profile: PermissionProfileSnapshot::legacy(
                     PermissionProfile::read_only(),

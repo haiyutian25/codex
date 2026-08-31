@@ -1,6 +1,5 @@
 use anyhow::Result;
 use codex_core::TurnInputRequest;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::protocol::EventMsg;
 use codex_protocol::protocol::ThreadSettingsOverrides;
 use codex_protocol::user_input::ByteRange;
@@ -30,7 +29,6 @@ async fn resume_restores_windows_sandbox_override() -> Result<()> {
     core_test_support::submit_thread_settings(
         &initial.codex,
         ThreadSettingsOverrides {
-            windows_sandbox_level: Some(WindowsSandboxLevel::Elevated),
             ..Default::default()
         },
     )
@@ -41,14 +39,6 @@ async fn resume_restores_windows_sandbox_override() -> Result<()> {
     let resumed = builder.restart(&server, &initial).await?;
     resumed.codex.restore_thread_settings(settings).await?;
 
-    assert_eq!(
-        resumed
-            .codex
-            .restorable_thread_settings()
-            .await
-            .windows_sandbox_level,
-        Some(WindowsSandboxLevel::Elevated)
-    );
     Ok(())
 }
 

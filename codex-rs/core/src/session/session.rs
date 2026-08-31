@@ -91,10 +91,6 @@ pub(crate) struct SessionConfiguration {
     pub(super) permission_profile_state: PermissionProfileState,
     pub(super) allow_login_shell: bool,
     pub(super) shell_environment_policy: ShellEnvironmentPolicy,
-    // TODO(anp): Reconcile these legacy thread defaults with TurnEnvironment::sandbox_context;
-    // internal sandbox decisions should use the selected environment's configuration.
-    pub(super) windows_sandbox_level: WindowsSandboxLevel,
-    pub(super) windows_sandbox_private_desktop: bool,
     pub(super) use_legacy_landlock: bool,
 
     /// Legacy thread cwd used when a turn does not select an environment.
@@ -143,8 +139,6 @@ impl SessionConfiguration {
             workspace_roots: Vec::new(),
             permission_profile: self.permission_profile_state.snapshot(),
             shell_environment_policy: self.shell_environment_policy.clone(),
-            windows_sandbox_level: self.windows_sandbox_level,
-            windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,
             use_legacy_landlock: self.use_legacy_landlock,
             exec_policy: None,
             mcp_policy: None,
@@ -303,7 +297,6 @@ impl SessionConfiguration {
             approvals_reviewer: Some(self.step_settings.approvals_reviewer),
             permission_profile: Some(self.permission_profile()),
             active_permission_profile: self.active_permission_profile(),
-            windows_sandbox_level: Some(self.windows_sandbox_level),
             summary: self.step_settings.reasoning_summary,
             service_tier: Some(self.step_settings.service_tier.clone()),
             collaboration_mode: Some(self.step_settings.collaboration_mode.clone()),
@@ -365,10 +358,6 @@ impl SessionConfiguration {
                             }
                         )
                 });
-        if let Some(windows_sandbox_level) = updates.windows_sandbox_level {
-            next_configuration.windows_sandbox_level = windows_sandbox_level;
-        }
-
         let current_cwd = self.cwd().clone();
         if let Some(environments) = &updates.environments {
             next_configuration.legacy_fallback_cwd = environments.legacy_fallback_cwd.clone();
@@ -537,7 +526,6 @@ pub(crate) struct SessionSettingsUpdate {
     pub(crate) sandbox_policy: Option<SandboxPolicy>,
     pub(crate) permission_profile: Option<PermissionProfile>,
     pub(crate) active_permission_profile: Option<ActivePermissionProfile>,
-    pub(crate) windows_sandbox_level: Option<WindowsSandboxLevel>,
     pub(crate) service_tier_for_turn: Option<String>,
     pub(crate) app_server_client_name: Option<String>,
     pub(crate) app_server_client_version: Option<String>,

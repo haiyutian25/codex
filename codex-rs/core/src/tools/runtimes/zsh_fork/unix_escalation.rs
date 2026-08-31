@@ -135,7 +135,6 @@ pub(crate) async fn prepare_unified_exec_zsh_fork(
         env: exec_request.env.clone(),
         network: exec_request.network.clone(),
         network_environment_id: exec_request.network_environment_id.clone(),
-        windows_sandbox_level: exec_request.windows_sandbox_level,
         arg0: exec_request.arg0.clone(),
         sandbox_policy_cwd,
         sandbox_workspace_roots: exec_request.sandbox_workspace_roots.clone(),
@@ -425,7 +424,6 @@ impl CoreShellActionProvider {
                 InterceptedExecPolicyContext {
                     approval_policy: self.approval_policy,
                     permission_profile: self.permission_profile.clone(),
-                    windows_sandbox_level: self.review_context.turn().windows_sandbox_level,
                     sandbox_permissions: self.approval_sandbox_permissions,
                     enable_shell_wrapper_parsing:
                         ENABLE_INTERCEPTED_EXEC_POLICY_SHELL_WRAPPER_PARSING,
@@ -648,8 +646,6 @@ impl CoreShellCommandExecutor {
                 sandbox: self.sandbox,
                 sandbox_policy_cwd: self.sandbox_policy_cwd.clone().into(),
                 sandbox_workspace_roots: self.sandbox_workspace_roots.clone(),
-                windows_sandbox_level: self.windows_sandbox_level,
-                windows_sandbox_private_desktop: false,
                 permission_profile: self.permission_profile.clone(),
                 windows_sandbox_filesystem_overrides: None,
                 arg0: self.arg0.clone(),
@@ -787,8 +783,6 @@ impl CoreShellCommandExecutor {
             sandbox_policy_cwd: &sandbox_policy_cwd,
             codex_linux_sandbox_exe: self.codex_linux_sandbox_exe.as_deref(),
             use_legacy_landlock: self.use_legacy_landlock,
-            windows_sandbox_level: self.windows_sandbox_level,
-            windows_sandbox_private_desktop: false,
         })?;
         let mut exec_request = crate::sandboxing::ExecRequest::from_sandbox_exec_request(
             exec_request,

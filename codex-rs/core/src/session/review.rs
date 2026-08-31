@@ -163,7 +163,6 @@ pub(super) async fn spawn_review_thread(
         developer_instructions: None,
         multi_agent_version: MultiAgentVersion::Disabled,
         network: parent_turn_context.network.clone(),
-        windows_sandbox_level: parent_turn_context.windows_sandbox_level,
         #[allow(deprecated)]
         cwd: parent_turn_context.cwd.clone(),
         final_output_json_schema: None,

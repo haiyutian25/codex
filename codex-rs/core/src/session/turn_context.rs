@@ -205,9 +205,6 @@ pub struct TurnContext {
     pub(crate) developer_instructions: Option<String>,
     pub(crate) multi_agent_version: MultiAgentVersion,
     pub(crate) network: Option<NetworkProxy>,
-    // TODO(anp): Reconcile this parallel turn snapshot with TurnEnvironment::sandbox_context
-    // so owner-provided environment settings govern the remaining sandbox decisions.
-    pub(crate) windows_sandbox_level: WindowsSandboxLevel,
     pub(crate) available_models: Vec<ModelPreset>,
     pub(crate) unified_exec_shell_mode: UnifiedExecShellMode,
     pub(crate) final_output_json_schema: Option<Value>,
@@ -514,7 +511,6 @@ impl TurnContext {
             developer_instructions: self.developer_instructions.clone(),
             multi_agent_version: self.multi_agent_version,
             network: self.network.clone(),
-            windows_sandbox_level: self.windows_sandbox_level,
             available_models,
             unified_exec_shell_mode: self.unified_exec_shell_mode.clone(),
             final_output_json_schema: self.final_output_json_schema.clone(),
@@ -775,7 +771,6 @@ impl Session {
             developer_instructions: session_configuration.developer_instructions.clone(),
             multi_agent_version,
             network,
-            windows_sandbox_level: session_configuration.windows_sandbox_level,
             available_models,
             unified_exec_shell_mode,
             final_output_json_schema: None,

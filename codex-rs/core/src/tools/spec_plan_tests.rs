@@ -1091,11 +1091,6 @@ async fn zsh_fork_unified_exec_keeps_shell_parameter_when_remote_environment_ava
                             codex_protocol::protocol::EnvironmentConfig {
                                 allow_login_shell: true,
                                 workspace_roots: Vec::new(),
-                                windows_sandbox_level: turn.windows_sandbox_level,
-                                windows_sandbox_private_desktop: turn
-                                    .config
-                                    .permissions
-                                    .windows_sandbox_private_desktop,
                                 use_legacy_landlock: turn.config.features.use_legacy_landlock(),
                                 permission_profile: turn
                                     .config

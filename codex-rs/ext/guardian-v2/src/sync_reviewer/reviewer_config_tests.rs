@@ -4,13 +4,11 @@ use std::sync::Arc;
 use anyhow::Result;
 use codex_core::StartThreadOptions;
 use codex_core::config::Config;
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
 use codex_features::Feature;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
 use codex_models_manager::bundled_models_response;
 use codex_models_manager::manager::StaticModelsManager;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::models::PermissionProfileSnapshot;
 use codex_protocol::openai_models::ModelsResponse;
@@ -156,8 +154,6 @@ async fn read_only_permissions_preserve_parent_environments_and_denied_reads() -
         workspace_roots: environment.workspace_roots.clone(),
         permission_profile: PermissionProfileSnapshot::legacy(parent_profile.clone()),
         shell_environment_policy: Default::default(),
-        windows_sandbox_level: WindowsSandboxLevel::from_config(&parent_config),
-        windows_sandbox_private_desktop: parent_config.permissions.windows_sandbox_private_desktop,
         use_legacy_landlock: parent_config.features.use_legacy_landlock(),
         exec_policy: None,
         mcp_policy: None,

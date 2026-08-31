@@ -21,7 +21,6 @@ use codex_protocol::config_types::ApprovalsReviewer;
 use codex_protocol::config_types::CollaborationMode;
 use codex_protocol::config_types::Personality;
 use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::error::CodexErr;
 use codex_protocol::error::Result as CodexResult;
 use codex_protocol::mcp::CallToolResult;
@@ -141,7 +140,6 @@ pub struct CodexThreadSettingsOverrides {
     pub sandbox_policy: Option<SandboxPolicy>,
     pub permission_profile: Option<PermissionProfile>,
     pub active_permission_profile: Option<ActivePermissionProfile>,
-    pub windows_sandbox_level: Option<WindowsSandboxLevel>,
     pub model: Option<String>,
     pub effort: Option<Option<ReasoningEffort>>,
     pub summary: Option<ReasoningSummary>,
@@ -553,7 +551,6 @@ impl CodexThread {
             sandbox_policy,
             permission_profile,
             active_permission_profile,
-            windows_sandbox_level,
             model,
             effort,
             summary,
@@ -577,7 +574,6 @@ impl CodexThread {
             sandbox_policy,
             permission_profile,
             active_permission_profile,
-            windows_sandbox_level,
             ..Default::default()
         }
     }

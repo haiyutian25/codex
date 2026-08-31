@@ -46,7 +46,6 @@ pub(super) fn prepare_update(overrides: ThreadSettingsOverrides) -> SessionSetti
         sandbox_policy,
         permission_profile,
         active_permission_profile,
-        windows_sandbox_level,
         model,
         effort,
         summary,
@@ -70,7 +69,6 @@ pub(super) fn prepare_update(overrides: ThreadSettingsOverrides) -> SessionSetti
         sandbox_policy,
         permission_profile,
         active_permission_profile,
-        windows_sandbox_level,
         ..Default::default()
     }
 }
