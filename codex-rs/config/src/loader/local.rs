@@ -253,7 +253,7 @@ async fn append_project_layers(
 fn append_legacy_config_layers(
     output: &mut Vec<LocalTomlLayer<ConfigLayerSource>>,
     loaded: layer_io::LoadedConfigLayers,
-    codex_home: &AbsolutePathBuf,
+    _codex_home: &AbsolutePathBuf,
 ) -> io::Result<()> {
     if let Some(config) = loaded.managed_config {
         let base_dir = config.file.parent().ok_or_else(|| {
@@ -268,13 +268,6 @@ fn append_legacy_config_layers(
         output.push(LocalTomlLayer {
             source: ConfigLayerSource::LegacyManagedConfigTomlFromFile { file: config.file },
             base_dir,
-            toml: config.managed_config,
-        });
-    }
-    if let Some(config) = loaded.managed_config_from_mdm {
-        output.push(LocalTomlLayer {
-            source: ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
-            base_dir: codex_home.clone(),
             toml: config.managed_config,
         });
     }
@@ -296,20 +289,6 @@ async fn local_requirements_layers(
         loaded_managed,
         codex_home,
     )?);
-
-    #[cfg(target_os = "macos")]
-    {
-        let codex_home = AbsolutePathBuf::from_absolute_path(codex_home)?;
-        entries.extend(
-            super::macos::load_managed_admin_requirements_layer(
-                overrides
-                    .macos_managed_config_requirements_base64
-                    .as_deref(),
-            )
-            .await?
-            .map(|layer| layer.with_base_dir(codex_home)),
-        );
-    }
 
     let mut layers = Vec::with_capacity(entries.len());
     for entry in entries {

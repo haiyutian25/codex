@@ -19,7 +19,6 @@ use codex_execpolicy::RuleMatch;
 use codex_hooks::HooksConfig;
 use codex_network_proxy::PROXY_ACTIVE_ENV_KEY;
 use codex_network_proxy::PROXY_ENV_KEYS;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::models::AdditionalPermissionProfile;
 use codex_protocol::models::FileSystemPermissions;
 use codex_protocol::models::PermissionProfile;
@@ -365,9 +364,10 @@ async fn unsandboxed_intercepted_exec_strips_managed_network_env() -> anyhow::Re
         env: HashMap::new(),
         network: Some(network.clone()),
         network_environment_id: None,
+        proot_enabled: false,
         arg0: None,
         sandbox_policy_cwd: workdir.clone(),
-        windows_sandbox_workspace_roots: vec![workdir.clone()],
+        sandbox_workspace_roots: vec![workdir.clone()],
         codex_linux_sandbox_exe: None,
         use_legacy_landlock: false,
     };

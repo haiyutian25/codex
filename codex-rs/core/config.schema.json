@@ -644,12 +644,6 @@
             "deferred_tool_world_state": {
               "type": "boolean"
             },
-            "elevated_windows_sandbox": {
-              "type": "boolean"
-            },
-            "enable_experimental_windows_sandbox": {
-              "type": "boolean"
-            },
             "enable_fanout": {
               "type": "boolean"
             },
@@ -669,9 +663,6 @@
               "type": "boolean"
             },
             "experimental_use_unified_exec_tool": {
-              "type": "boolean"
-            },
-            "experimental_windows_sandbox": {
               "type": "boolean"
             },
             "external_agent_memory_import": {
@@ -1039,14 +1030,6 @@
         },
         "web_search": {
           "$ref": "#/definitions/WebSearchMode"
-        },
-        "windows": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/WindowsToml"
-            }
-          ],
-          "default": null
         }
       },
       "type": "object"
@@ -5524,26 +5507,6 @@
       },
       "type": "object"
     },
-    "WindowsSandboxModeToml": {
-      "enum": [
-        "elevated",
-        "unelevated"
-      ],
-      "type": "string"
-    },
-    "WindowsToml": {
-      "additionalProperties": false,
-      "properties": {
-        "sandbox": {
-          "$ref": "#/definitions/WindowsSandboxModeToml"
-        },
-        "sandbox_private_desktop": {
-          "description": "Defaults to `true`. Set to `false` to launch the final sandboxed child process on `Winsta0\\\\Default` instead of a private desktop.",
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
     "WireApi": {
       "description": "Wire protocol that the provider speaks.",
       "oneOf": [
@@ -5833,12 +5796,6 @@
         "deferred_tool_world_state": {
           "type": "boolean"
         },
-        "elevated_windows_sandbox": {
-          "type": "boolean"
-        },
-        "enable_experimental_windows_sandbox": {
-          "type": "boolean"
-        },
         "enable_fanout": {
           "type": "boolean"
         },
@@ -5858,9 +5815,6 @@
           "type": "boolean"
         },
         "experimental_use_unified_exec_tool": {
-          "type": "boolean"
-        },
-        "experimental_windows_sandbox": {
           "type": "boolean"
         },
         "external_agent_memory_import": {
@@ -6599,15 +6553,6 @@
         }
       ],
       "description": "Controls the web search tool mode: disabled, cached, indexed, or live."
-    },
-    "windows": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/WindowsToml"
-        }
-      ],
-      "default": null,
-      "description": "Windows-specific configuration."
     }
   },
   "title": "ConfigToml",

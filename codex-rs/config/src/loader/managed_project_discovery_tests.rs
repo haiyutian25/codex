@@ -261,37 +261,3 @@ async fn managed_project_discovery_uses_managed_project_trust() -> anyhow::Resul
     }
     Ok(())
 }
-
-#[cfg(target_os = "macos")]
-#[tokio::test]
-async fn managed_project_discovery_mdm_overrides_file_markers() -> anyhow::Result<()> {
-    use base64::Engine;
-    use base64::prelude::BASE64_STANDARD;
-
-    let mut fixture = Fixture::new()?;
-    std::fs::write(&fixture.managed, "project_root_markers = [\".git\"]\n")?;
-    for (markers, dirs) in [
-        (vec![], vec![&fixture.cwd]),
-        (vec![".company-root"], vec![&fixture.project, &fixture.cwd]),
-    ] {
-        let markers_toml = TomlValue::try_from(&markers)?;
-        fixture.overrides.managed_preferences_base64 =
-            Some(BASE64_STANDARD.encode(format!("project_root_markers = {markers_toml}\n")));
-        let (canonical, local) = fixture.load().await?;
-        assert_discovery(&canonical, &local, &dirs, &markers)?;
-        assert_eq!(
-            (
-                canonical
-                    .layers_high_to_low()
-                    .next()
-                    .map(|layer| &layer.name),
-                local.config.layers.last().map(|layer| &layer.source),
-            ),
-            (
-                Some(&ConfigLayerSource::LegacyManagedConfigTomlFromMdm),
-                Some(&ConfigLayerSource::LegacyManagedConfigTomlFromMdm),
-            )
-        );
-    }
-    Ok(())
-}

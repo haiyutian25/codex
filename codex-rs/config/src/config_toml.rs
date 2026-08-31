@@ -30,7 +30,7 @@ use crate::types::SkillsConfig;
 use crate::types::ToolSuggestConfig;
 use crate::types::Tui;
 use crate::types::UriBasedFileOpener;
-use crate::types::WindowsToml;
+
 use codex_features::FeaturesToml;
 use codex_model_provider_info::ModelProviderInfo;
 use codex_model_provider_info::OPENAI_PROVIDER_ID;
@@ -493,10 +493,6 @@ pub struct ConfigToml {
     /// OTEL configuration.
     pub otel: Option<OtelConfigToml>,
 
-    /// Windows-specific configuration.
-    #[serde(default)]
-    pub windows: Option<WindowsToml>,
-
     /// PRoot sandbox backend configuration (Android guest rootfs).
     #[serde(default)]
     pub proot: Option<ProotToml>,
@@ -810,8 +806,7 @@ impl ConfigToml {
 }
 
 /// Canonicalize the path and convert it to a string to be used as a key in the
-/// projects trust map. On Windows, strips UNC, when possible, to try to ensure
-/// that different paths that point to the same location have the same key.
+/// projects trust map.
 fn normalized_project_lookup_keys(path: &Path) -> Vec<String> {
     let normalized_path = normalize_project_lookup_key(path.to_string_lossy().to_string());
     let normalized_canonical_path = normalize_project_lookup_key(
@@ -828,11 +823,7 @@ fn normalized_project_lookup_keys(path: &Path) -> Vec<String> {
 }
 
 fn normalize_project_lookup_key(key: String) -> String {
-    if cfg!(windows) {
-        key.to_ascii_lowercase()
-    } else {
-        key
-    }
+    key
 }
 
 fn project_config_for_lookup_key(
@@ -959,6 +950,9 @@ mod tests {
     fn provider_auth_command_must_not_be_empty() {
         let err = toml::from_str::<ConfigToml>(
             r#"
+[model_providers.custom-provider]
+name = "Custom Provider"
+
 [model_providers.custom-provider.auth]
 command = "   "
 "#,

@@ -35,7 +35,7 @@ use crate::mcp_types::AppToolApproval;
 use crate::permissions_toml::PermissionProfileToml;
 use crate::types::AuthCredentialsStoreMode;
 use crate::types::FeedbackConfigToml;
-use crate::types::WindowsSandboxModeToml;
+
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RequirementSource {
@@ -721,25 +721,13 @@ fn split_glob_pattern(input: &str) -> (&str, &str) {
 
     match separator_index {
         Some(0) => ("/", &input[1..]),
-        Some(index)
-            if cfg!(windows)
-                && index == 2
-                && input.as_bytes().get(1) == Some(&b':')
-                && input.as_bytes().get(2).is_some() =>
-        {
-            (&input[..=index], &input[index + 1..])
-        }
         Some(index) => (&input[..index], &input[index + 1..]),
         None => ("", input),
     }
 }
 
 fn is_path_separator(ch: char) -> bool {
-    if cfg!(windows) {
-        ch == '/' || ch == '\\'
-    } else {
-        ch == '/'
-    }
+    ch == '/'
 }
 
 fn is_glob_metacharacter(ch: char) -> bool {
@@ -785,18 +773,6 @@ impl fmt::Display for WebSearchModeRequirement {
             WebSearchModeRequirement::Indexed => write!(f, "indexed"),
             WebSearchModeRequirement::Live => write!(f, "live"),
         }
-    }
-}
-
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
-pub struct WindowsRequirementsToml {
-    pub allowed_sandbox_implementations: Option<Vec<WindowsSandboxModeToml>>,
-    pub sandbox_private_desktop: Option<bool>,
-}
-
-impl WindowsRequirementsToml {
-    pub fn is_empty(&self) -> bool {
-        self.allowed_sandbox_implementations.is_none() && self.sandbox_private_desktop.is_none()
     }
 }
 
@@ -921,7 +897,6 @@ pub struct ConfigRequirementsToml {
     pub computer_use: Option<ComputerUseRequirementsToml>,
     pub browser_use: Option<BrowserUseRequirementsToml>,
     pub in_app_browser: Option<InAppBrowserRequirementsToml>,
-    pub windows: Option<WindowsRequirementsToml>,
     #[serde(rename = "features", alias = "feature_requirements")]
     pub feature_requirements: Option<FeatureRequirementsToml>,
     pub hooks: Option<ManagedHooksRequirementsToml>,
@@ -1025,7 +1000,6 @@ pub struct ConfigRequirementsWithSources {
     pub computer_use: Option<Sourced<ComputerUseRequirementsToml>>,
     pub browser_use: Option<Sourced<BrowserUseRequirementsToml>>,
     pub in_app_browser: Option<Sourced<InAppBrowserRequirementsToml>>,
-    pub windows: Option<Sourced<WindowsRequirementsToml>>,
     pub feature_requirements: Option<Sourced<FeatureRequirementsToml>>,
     pub hooks: Option<Sourced<ManagedHooksRequirementsToml>>,
     pub mcp_servers: Option<Sourced<BTreeMap<String, McpServerRequirement>>>,
@@ -1085,7 +1059,6 @@ impl ConfigRequirementsWithSources {
             computer_use: _,
             browser_use: _,
             in_app_browser: _,
-            windows: _,
             feature_requirements: _,
             hooks: _,
             mcp_servers: _,
@@ -1138,7 +1111,6 @@ impl ConfigRequirementsWithSources {
                 computer_use,
                 browser_use,
                 in_app_browser,
-                windows,
                 feature_requirements,
                 hooks,
                 mcp_servers,
@@ -1220,7 +1192,6 @@ impl ConfigRequirementsWithSources {
             computer_use,
             browser_use,
             in_app_browser,
-            windows,
             feature_requirements,
             hooks,
             mcp_servers,
@@ -1262,7 +1233,6 @@ impl ConfigRequirementsWithSources {
             computer_use: computer_use.map(|sourced| sourced.value),
             browser_use: browser_use.map(|sourced| sourced.value),
             in_app_browser: in_app_browser.map(|sourced| sourced.value),
-            windows: windows.map(|sourced| sourced.value),
             feature_requirements: feature_requirements.map(|sourced| sourced.value),
             hooks: hooks.map(|sourced| sourced.value),
             mcp_servers: mcp_servers.map(|sourced| sourced.value),
@@ -1383,10 +1353,6 @@ impl ConfigRequirementsToml {
                 .as_ref()
                 .is_none_or(|requirements| requirements == &InAppBrowserRequirementsToml::default())
             && self
-                .windows
-                .as_ref()
-                .is_none_or(WindowsRequirementsToml::is_empty)
-            && self
                 .feature_requirements
                 .as_ref()
                 .is_none_or(FeatureRequirementsToml::is_empty)
@@ -1460,21 +1426,11 @@ impl ConfigRequirementsToml {
         if let Some(enabled) = self.feedback.as_ref().and_then(|feedback| feedback.enabled) {
             config.feedback.get_or_insert_default().enabled = Some(enabled);
         }
-        if let Some(sandbox_private_desktop) = self
-            .windows
-            .as_ref()
-            .and_then(|windows| windows.sandbox_private_desktop)
-        {
-            config
-                .windows
-                .get_or_insert_default()
-                .sandbox_private_desktop = Some(sandbox_private_desktop);
-        }
     }
 
     /// Returns the exact managed field affected by editing `segments`.
     pub fn exact_requirement_for_config_path(&self, segments: &[String]) -> Option<&'static str> {
-        let managed_fields: [(bool, &[&str], &'static str); 9] = [
+        let managed_fields: [(bool, &[&str], &'static str); 8] = [
             (self.sqlite_home.is_some(), &["sqlite_home"], "sqlite_home"),
             (self.log_dir.is_some(), &["log_dir"], "log_dir"),
             (
@@ -1499,14 +1455,6 @@ impl ConfigRequirementsToml {
                     .is_some(),
                 &["feedback", "enabled"],
                 "feedback.enabled",
-            ),
-            (
-                self.windows
-                    .as_ref()
-                    .and_then(|windows| windows.sandbox_private_desktop)
-                    .is_some(),
-                &["windows", "sandbox_private_desktop"],
-                "windows.sandbox_private_desktop",
             ),
             (
                 self.cli_auth_credentials_store.is_some(),
@@ -1586,7 +1534,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             computer_use,
             browser_use: _,
             in_app_browser: _,
-            windows: _,
             feature_requirements,
             hooks,
             mcp_servers,
@@ -1975,10 +1922,6 @@ mod tests {
             feedback: Some(FeedbackConfigToml {
                 enabled: Some(false),
             }),
-            windows: Some(WindowsRequirementsToml {
-                sandbox_private_desktop: Some(false),
-                ..Default::default()
-            }),
             ..Default::default()
         };
         let cases: &[(&[&str], Option<&str>)] = &[
@@ -1996,16 +1939,8 @@ mod tests {
             ),
             (&["allow_login_shell"], Some("allow_login_shell")),
             (&["feedback", "enabled"], Some("feedback.enabled")),
-            (
-                &["windows", "sandbox_private_desktop"],
-                Some("windows.sandbox_private_desktop"),
-            ),
             (&[], Some("sqlite_home")),
             (&["feedback"], Some("feedback.enabled")),
-            (
-                &["windows", "sandbox_private_desktop", "value"],
-                Some("windows.sandbox_private_desktop"),
-            ),
             (&["feedback", "other"], None),
             (&["windows", "sandbox"], None),
         ];
@@ -2065,7 +2000,6 @@ mod tests {
             computer_use,
             browser_use,
             in_app_browser,
-            windows,
             feature_requirements,
             hooks,
             mcp_servers,
@@ -2123,7 +2057,6 @@ mod tests {
             browser_use: browser_use.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             in_app_browser: in_app_browser
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
-            windows: windows.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             feature_requirements: feature_requirements
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
             hooks: hooks.map(|value| Sourced::new(value, RequirementSource::Unknown)),
@@ -2591,10 +2524,6 @@ mod tests {
         let feedback = FeedbackConfigToml {
             enabled: Some(false),
         };
-        let windows = WindowsRequirementsToml {
-            allowed_sandbox_implementations: None,
-            sandbox_private_desktop: Some(true),
-        };
         let enforce_residency = ResidencyRequirement::Us;
         let enforce_source = source.clone();
         let additional_developer_instructions = "Follow the company policy.".to_string();
@@ -2627,7 +2556,6 @@ mod tests {
             computer_use: Some(computer_use.clone()),
             browser_use: Some(browser_use.clone()),
             in_app_browser: None,
-            windows: Some(windows.clone()),
             feature_requirements: Some(feature_requirements.clone()),
             hooks: None,
             mcp_servers: None,
@@ -2708,7 +2636,6 @@ mod tests {
                 computer_use: Some(Sourced::new(computer_use, enforce_source.clone())),
                 browser_use: Some(Sourced::new(browser_use, enforce_source.clone())),
                 in_app_browser: None,
-                windows: Some(Sourced::new(windows, enforce_source.clone())),
                 feature_requirements: Some(Sourced::new(
                     feature_requirements,
                     enforce_source.clone(),
@@ -2766,7 +2693,6 @@ mod tests {
                 computer_use: None,
                 browser_use: None,
                 in_app_browser: None,
-                windows: None,
                 feature_requirements: None,
                 hooks: None,
                 mcp_servers: None,
@@ -2825,7 +2751,6 @@ mod tests {
                 computer_use: None,
                 browser_use: None,
                 in_app_browser: None,
-                windows: None,
                 feature_requirements: None,
                 hooks: None,
                 mcp_servers: None,
@@ -2922,16 +2847,10 @@ allowed_approvals_reviewers = ["user"]
 
     #[test]
     fn deserialize_filesystem_deny_read_requirements() -> Result<()> {
-        let deny_read_0 = if cfg!(windows) {
-            r"C:\Users\alice\.gitconfig"
-        } else {
-            "/home/alice/.gitconfig"
-        };
-        let deny_read_1 = if cfg!(windows) {
-            r"C:\Users\alice\.ssh"
-        } else {
-            "/home/alice/.ssh"
-        };
+        let temp_dir = std::env::temp_dir();
+        let _guard = AbsolutePathBufGuard::new(&temp_dir);
+        let deny_read_0 = "./home/alice/.gitconfig";
+        let deny_read_1 = "./home/alice/.ssh";
         let toml_str = format!(
             r#"
             [permissions.filesystem]
@@ -2947,8 +2866,8 @@ allowed_approvals_reviewers = ["user"]
             Some(Sourced::new(
                 FilesystemConstraints {
                     deny_read: vec![
-                        AbsolutePathBuf::from_absolute_path(deny_read_0)?.into(),
-                        AbsolutePathBuf::from_absolute_path(deny_read_1)?.into(),
+                        AbsolutePathBuf::resolve_path_against_base(deny_read_0, &temp_dir).into(),
+                        AbsolutePathBuf::resolve_path_against_base(deny_read_1, &temp_dir).into(),
                     ],
                 },
                 RequirementSource::Unknown,
@@ -3506,7 +3425,7 @@ allowed_approvals_reviewers = ["user"]
         let config: ConfigRequirementsToml = from_str(toml_str)?;
         let requirements: ConfigRequirements = with_unknown_source(config).try_into()?;
 
-        let root = if cfg!(windows) { "C:\\repo" } else { "/repo" };
+        let root = "/repo";
         assert!(
             requirements
                 .permission_profile
@@ -3621,7 +3540,7 @@ allowed_approvals_reviewers = ["user"]
         );
 
         let requirements = ConfigRequirements::try_from(requirements_with_sources)?;
-        let root = if cfg!(windows) { "C:\\repo" } else { "/repo" };
+        let root = "/repo";
         let workspace_write_profile = PermissionProfile::workspace_write_with(
             &[AbsolutePathBuf::from_absolute_path(root)?],
             NetworkSandboxPolicy::Restricted,

@@ -16,7 +16,6 @@ use codex_execpolicy::Evaluation;
 use codex_execpolicy::MatchOptions;
 use codex_execpolicy::Policy;
 use codex_execpolicy::RuleMatch;
-use codex_protocol::config_types::WindowsSandboxLevel;
 use codex_protocol::error::CodexErr;
 use codex_protocol::models::AdditionalPermissionProfile;
 use codex_protocol::models::PermissionProfile;
@@ -135,6 +134,7 @@ pub(crate) async fn prepare_unified_exec_zsh_fork(
         env: exec_request.env.clone(),
         network: exec_request.network.clone(),
         network_environment_id: exec_request.network_environment_id.clone(),
+        proot_enabled: ctx.step_context.turn.config.proot.is_some(),
         arg0: exec_request.arg0.clone(),
         sandbox_policy_cwd,
         sandbox_workspace_roots: exec_request.sandbox_workspace_roots.clone(),
@@ -492,7 +492,6 @@ fn evaluate_intercepted_exec_policy(
     let InterceptedExecPolicyContext {
         approval_policy,
         permission_profile,
-        windows_sandbox_level,
         sandbox_permissions,
         enable_shell_wrapper_parsing,
     } = context;
@@ -532,9 +531,6 @@ fn evaluate_intercepted_exec_policy(
 struct InterceptedExecPolicyContext {
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
-    // TODO(anp): Reconcile this policy input with TurnEnvironment::sandbox_context
-    // so intercepted commands use the selected environment's Windows backend.
-    windows_sandbox_level: WindowsSandboxLevel,
     sandbox_permissions: SandboxPermissions,
     enable_shell_wrapper_parsing: bool,
 }
@@ -569,7 +565,7 @@ struct CoreShellCommandExecutor {
     env: HashMap<String, String>,
     network: Option<codex_network_proxy::NetworkProxy>,
     network_environment_id: Option<String>,
-    windows_sandbox_level: WindowsSandboxLevel,
+    proot_enabled: bool,
     arg0: Option<String>,
     sandbox_policy_cwd: AbsolutePathBuf,
     sandbox_workspace_roots: Vec<AbsolutePathBuf>,
@@ -756,7 +752,7 @@ impl CoreShellCommandExecutor {
         let sandbox = sandbox_manager.select_initial(
             permission_profile,
             SandboxablePreference::Auto,
-            self.windows_sandbox_level,
+            self.proot_enabled,
             self.network.is_some(),
         );
         let cwd = PathUri::from_abs_path(workdir);

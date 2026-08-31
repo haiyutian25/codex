@@ -1,7 +1,5 @@
 mod layer_io;
 mod local;
-#[cfg(target_os = "macos")]
-mod macos;
 mod project_discovery;
 #[cfg(test)]
 mod tests;
@@ -48,13 +46,11 @@ use codex_protocol::protocol::AskForApproval;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_absolute_path::AbsolutePathBufGuard;
 use codex_utils_path_uri::PathUri;
-use dunce::canonicalize as normalize_path;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::fs::canonicalize as normalize_path;
 use std::io;
 use std::path::Path;
-#[cfg(windows)]
-use std::path::PathBuf;
 use toml::Value as TomlValue;
 
 pub use local::LocalConfigLayers;
@@ -62,11 +58,7 @@ pub use local::LocalTomlLayer;
 pub use local::LocalTomlLayerStack;
 pub use local::load_local_config_layers;
 
-#[cfg(unix)]
 const SYSTEM_CONFIG_TOML_FILE_UNIX: &str = "/etc/codex/config.toml";
-
-#[cfg(windows)]
-const DEFAULT_PROGRAM_DATA_DIR_WINDOWS: &str = r"C:\ProgramData";
 
 // Project-local config comes from repository contents, so it should not get to
 // choose where a user's credentials are sent or which local commands are run.
@@ -96,22 +88,18 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 /// composed with config-style TOML merging plus field-specific handling for
 /// hooks, rules, deny-read permissions, and remote sandbox config:
 ///
-/// - system    `/etc/codex/requirements.toml` (Unix) or
-///   `%ProgramData%\OpenAI\Codex\requirements.toml` (Windows)
+/// - system    `/etc/codex/requirements.toml`
 /// - cloud:    enterprise-managed cloud config bundle requirements
-/// - legacy:   `/etc/codex/managed_config.toml` (Unix) reinterpreted as
+/// - legacy:   `/etc/codex/managed_config.toml` reinterpreted as
 ///   requirements.toml
-/// - admin:    managed preferences (*)
 ///
-/// For backwards compatibility, Unix continues to load
+/// For backwards compatibility, the loader continues to load
 /// `/etc/codex/managed_config.toml` and map it to `requirements.toml`.
 ///
 /// Configuration is built up from multiple layers in the following order:
 ///
 /// - package:  optional default configuration supplied with the Codex package
-/// - admin:    managed preferences (*)
-/// - system    `/etc/codex/config.toml` (Unix) or
-///   `%ProgramData%\OpenAI\Codex\config.toml` (Windows)
+/// - system    `/etc/codex/config.toml`
 /// - cloud     enterprise-managed cloud config bundle fragments
 /// - user      `${CODEX_HOME}/config.toml`
 /// - profile   `${CODEX_HOME}/<name>.config.toml`, when selected
@@ -119,8 +107,6 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 /// - tree      parent directories up to root looking for `./.codex/config.toml` (loaded but disabled when untrusted)
 /// - repo      `$(git rev-parse --show-toplevel)/.codex/config.toml` (loaded but disabled when untrusted)
 /// - runtime   e.g., --config flags, model selector in UI
-///
-/// (*) Only available on macOS via managed device profiles.
 ///
 /// See https://developers.openai.com/codex/security for details.
 ///
@@ -194,7 +180,6 @@ pub async fn load_config_layers_state(
     let mut requirements_layers = Vec::new();
     let mut bundle_requirements_layers = Vec::new();
     let mut system_requirements_layer = None;
-    let managed_preferences_requirements_layer;
     let mut cloud_config_layers = Vec::new();
 
     if !ignore_managed_requirements {
@@ -213,27 +198,9 @@ pub async fn load_config_layers_state(
             cloud_config_layers = enterprise_managed_config;
         }
 
-        #[cfg(target_os = "macos")]
-        {
-            let managed_preferences_base_dir = AbsolutePathBuf::from_absolute_path(codex_home)?;
-            managed_preferences_requirements_layer = macos::load_managed_admin_requirements_layer(
-                overrides
-                    .macos_managed_config_requirements_base64
-                    .as_deref(),
-            )
-            .await?
-            .map(|layer| layer.with_base_dir(managed_preferences_base_dir));
-        }
-        #[cfg(not(target_os = "macos"))]
-        {
-            managed_preferences_requirements_layer = None;
-        }
-
         // Honor the system requirements.toml location.
         let requirements_toml_file = system_requirements_toml_file_with_overrides(&overrides)?;
         system_requirements_layer = load_requirements_toml(fs, &requirements_toml_file).await?;
-    } else {
-        managed_preferences_requirements_layer = None;
     }
 
     let loaded_config_layers =
@@ -250,7 +217,6 @@ pub async fn load_config_layers_state(
             loaded_config_layers.clone(),
             codex_home,
         )?);
-        requirements_layers.extend(managed_preferences_requirements_layer);
     }
 
     let mut config_requirements_toml =
@@ -456,7 +422,6 @@ pub async fn load_config_layers_state(
     // per-turn basis in the TUI and VS Code.
     let LoadedConfigLayers {
         managed_config,
-        managed_config_from_mdm,
         ..
     } = loaded_config_layers;
     if let Some(config) = managed_config {
@@ -474,25 +439,6 @@ pub async fn load_config_layers_state(
         layers.push(ConfigLayerEntry::new(
             ConfigLayerSource::LegacyManagedConfigTomlFromFile { file: config.file },
             managed_config,
-        ));
-    }
-    if let Some(config) = managed_config_from_mdm {
-        // As a general rule, config from MDM should _not_ include relative
-        // paths, starting with `./`, but a path starting with `~/` _is_ a
-        // supported use case. Because resolve_relative_paths_in_config_toml()
-        // relies on AbsolutePathBufGuard to resolve `~/`, we must supply a
-        // value for base_dir. Preserve that same base on the layer so later
-        // raw-TOML diagnostics parse with the same path semantics.
-        let raw_toml_base_dir = AbsolutePathBuf::from_absolute_path(codex_home)?;
-        let managed_config = resolve_relative_paths_in_config_toml(
-            config.managed_config,
-            raw_toml_base_dir.as_path(),
-        )?;
-        layers.push(ConfigLayerEntry::new_with_raw_toml(
-            ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
-            managed_config,
-            config.raw_toml,
-            raw_toml_base_dir,
         ));
     }
 
@@ -742,14 +688,8 @@ pub async fn load_requirements_toml(
     }
 }
 
-#[cfg(unix)]
 fn system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
     AbsolutePathBuf::from_absolute_path(Path::new("/etc/codex/requirements.toml"))
-}
-
-#[cfg(windows)]
-fn system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
-    windows_system_requirements_toml_file()
 }
 
 fn system_requirements_toml_file_with_overrides(
@@ -777,10 +717,6 @@ fn has_local_managed_configuration_with_system_requirements_path(
     codex_home: &Path,
     system_requirements_path: &Path,
 ) -> io::Result<bool> {
-    #[cfg(windows)]
-    let _ = codex_home;
-
-    #[cfg(not(windows))]
     if layer_io::managed_config_default_path(codex_home).try_exists()? {
         return Ok(true);
     }
@@ -789,22 +725,11 @@ fn has_local_managed_configuration_with_system_requirements_path(
         return Ok(true);
     }
 
-    #[cfg(target_os = "macos")]
-    if macos::has_managed_preferences()? {
-        return Ok(true);
-    }
-
     Ok(false)
 }
 
-#[cfg(unix)]
 pub fn system_config_toml_file() -> io::Result<AbsolutePathBuf> {
     AbsolutePathBuf::from_absolute_path(Path::new(SYSTEM_CONFIG_TOML_FILE_UNIX))
-}
-
-#[cfg(windows)]
-pub fn system_config_toml_file() -> io::Result<AbsolutePathBuf> {
-    windows_system_config_toml_file()
 }
 
 fn system_config_toml_file_with_overrides(
@@ -816,96 +741,17 @@ fn system_config_toml_file_with_overrides(
     }
 }
 
-#[cfg(windows)]
-fn windows_codex_system_dir() -> PathBuf {
-    let program_data = windows_program_data_dir_from_known_folder().unwrap_or_else(|err| {
-        tracing::warn!(
-            error = %err,
-            "Failed to resolve ProgramData known folder; using default path"
-        );
-        PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS)
-    });
-    program_data.join("OpenAI").join("Codex")
-}
-
-#[cfg(windows)]
-fn windows_system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
-    let requirements_toml_file = windows_codex_system_dir().join("requirements.toml");
-    AbsolutePathBuf::try_from(requirements_toml_file)
-}
-
-#[cfg(windows)]
-fn windows_system_config_toml_file() -> io::Result<AbsolutePathBuf> {
-    let config_toml_file = windows_codex_system_dir().join("config.toml");
-    AbsolutePathBuf::try_from(config_toml_file)
-}
-
-#[cfg(windows)]
-fn windows_program_data_dir_from_known_folder() -> io::Result<PathBuf> {
-    use std::ffi::OsString;
-    use std::os::windows::ffi::OsStringExt;
-    use windows_sys::Win32::System::Com::CoTaskMemFree;
-    use windows_sys::Win32::UI::Shell::FOLDERID_ProgramData;
-    use windows_sys::Win32::UI::Shell::KF_FLAG_DEFAULT;
-    use windows_sys::Win32::UI::Shell::SHGetKnownFolderPath;
-
-    let mut path_ptr = std::ptr::null_mut::<u16>();
-    let known_folder_flags = u32::try_from(KF_FLAG_DEFAULT).map_err(|_| {
-        io::Error::other(format!(
-            "KF_FLAG_DEFAULT did not fit in u32: {KF_FLAG_DEFAULT}"
-        ))
-    })?;
-    // Known folder IDs reference:
-    // https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid
-    // SAFETY: SHGetKnownFolderPath initializes path_ptr with a CoTaskMem-allocated,
-    // null-terminated UTF-16 string on success.
-    let hr = unsafe {
-        SHGetKnownFolderPath(&FOLDERID_ProgramData, known_folder_flags, 0, &mut path_ptr)
-    };
-    if hr != 0 {
-        return Err(io::Error::other(format!(
-            "SHGetKnownFolderPath(FOLDERID_ProgramData) failed with HRESULT {hr:#010x}"
-        )));
-    }
-    if path_ptr.is_null() {
-        return Err(io::Error::other(
-            "SHGetKnownFolderPath(FOLDERID_ProgramData) returned a null pointer",
-        ));
-    }
-
-    // SAFETY: path_ptr is a valid null-terminated UTF-16 string allocated by
-    // SHGetKnownFolderPath and must be freed with CoTaskMemFree.
-    let path = unsafe {
-        let mut len = 0usize;
-        while *path_ptr.add(len) != 0 {
-            len += 1;
-        }
-        let wide = std::slice::from_raw_parts(path_ptr, len);
-        let path = PathBuf::from(OsString::from_wide(wide));
-        CoTaskMemFree(path_ptr.cast());
-        path
-    };
-
-    Ok(path)
-}
-
 fn requirements_layers_from_legacy_scheme(
     loaded_config_layers: LoadedConfigLayers,
     codex_home: &Path,
 ) -> io::Result<Vec<RequirementsLayerEntry>> {
-    // List the file-backed legacy layer first because requirements layers are
-    // composed lowest-precedence to highest-precedence, and MDM has higher
-    // precedence than the legacy managed_config.toml file.
     let LoadedConfigLayers {
         managed_config,
-        managed_config_from_mdm,
         ..
     } = loaded_config_layers;
 
-    let layer_count =
-        usize::from(managed_config.is_some()) + usize::from(managed_config_from_mdm.is_some());
-    let mut layers = Vec::with_capacity(layer_count);
-    let codex_home = AbsolutePathBuf::from_absolute_path(codex_home)?;
+    let mut layers = Vec::with_capacity(usize::from(managed_config.is_some()));
+    let _ = codex_home;
     for (source, config, base_dir) in managed_config
         .map(|c| {
             let base_dir = c.file.parent().ok_or_else(|| {
@@ -925,13 +771,6 @@ fn requirements_layers_from_legacy_scheme(
         })
         .transpose()?
         .into_iter()
-        .chain(managed_config_from_mdm.map(|config| {
-            (
-                RequirementSource::LegacyManagedConfigTomlFromMdm,
-                config.managed_config,
-                codex_home.clone(),
-            )
-        }))
     {
         let legacy_config: LegacyManagedConfigToml =
             config.try_into().map_err(|err: toml::de::Error| {
@@ -1378,13 +1217,7 @@ async fn project_trust_context(
             .filter_map(|key| {
                 let trusted_override = trusted_policy_overrides
                     .and_then(|overrides| {
-                        overrides.iter().find(|(candidate, _)| {
-                            if cfg!(windows) {
-                                candidate.eq_ignore_ascii_case(key)
-                            } else {
-                                candidate.as_str() == key
-                            }
-                        })
+                        overrides.iter().find(|(candidate, _)| candidate.as_str() == key)
                     })
                     .and_then(|(name, value)| {
                         value
@@ -1429,9 +1262,6 @@ fn credential_broker_trusted_config(
     if let Some(config) = loaded_config_layers.managed_config.as_ref() {
         merge_toml_values(&mut trusted_config, &config.managed_config);
     }
-    if let Some(config) = loaded_config_layers.managed_config_from_mdm.as_ref() {
-        merge_toml_values(&mut trusted_config, &config.managed_config);
-    }
     trusted_config
 }
 
@@ -1461,11 +1291,7 @@ fn normalized_project_trust_keys(path: &Path) -> Vec<String> {
 }
 
 fn normalize_project_trust_lookup_key(key: String) -> String {
-    if cfg!(windows) {
-        key.to_ascii_lowercase()
-    } else {
-        key
-    }
+    key
 }
 fn project_trust_for_lookup_key(
     projects_trust: &std::collections::HashMap<String, TrustLevel>,
@@ -1922,8 +1748,6 @@ struct LegacyManagedConfigToml {
 #[cfg(test)]
 mod unit_tests {
     use super::*;
-    #[cfg(windows)]
-    use std::path::Path;
     use tempfile::tempdir;
 
     #[test]
@@ -2023,47 +1847,4 @@ foo = "xyzzy"
         Ok(())
     }
 
-    #[cfg(windows)]
-    #[test]
-    fn windows_system_requirements_toml_file_uses_expected_suffix() {
-        let expected = windows_program_data_dir_from_known_folder()
-            .unwrap_or_else(|_| PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS))
-            .join("OpenAI")
-            .join("Codex")
-            .join("requirements.toml");
-        assert_eq!(
-            windows_system_requirements_toml_file()
-                .expect("requirements.toml path")
-                .as_path(),
-            expected.as_path()
-        );
-        assert!(
-            windows_system_requirements_toml_file()
-                .expect("requirements.toml path")
-                .as_path()
-                .ends_with(Path::new("OpenAI").join("Codex").join("requirements.toml"))
-        );
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn windows_system_config_toml_file_uses_expected_suffix() {
-        let expected = windows_program_data_dir_from_known_folder()
-            .unwrap_or_else(|_| PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS))
-            .join("OpenAI")
-            .join("Codex")
-            .join("config.toml");
-        assert_eq!(
-            windows_system_config_toml_file()
-                .expect("config.toml path")
-                .as_path(),
-            expected.as_path()
-        );
-        assert!(
-            windows_system_config_toml_file()
-                .expect("config.toml path")
-                .as_path()
-                .ends_with(Path::new("OpenAI").join("Codex").join("config.toml"))
-        );
-    }
 }

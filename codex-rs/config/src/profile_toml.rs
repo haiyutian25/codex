@@ -8,7 +8,7 @@ use crate::types::AnalyticsConfigToml;
 use crate::types::ApprovalsReviewer;
 use crate::types::Personality;
 use crate::types::SessionPickerViewMode;
-use crate::types::WindowsToml;
+
 use codex_features::FeaturesToml;
 use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::SandboxMode;
@@ -61,8 +61,6 @@ pub struct ConfigProfile {
     /// TUI settings scoped to this profile.
     #[serde(default)]
     pub tui: Option<ProfileTui>,
-    #[serde(default)]
-    pub windows: Option<WindowsToml>,
     /// Optional feature toggles scoped to this profile.
     #[serde(default)]
     // Injects known feature keys into the schema and forbids unknown keys.

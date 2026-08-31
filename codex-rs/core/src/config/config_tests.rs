@@ -68,8 +68,6 @@ use codex_config::types::Tui;
 use codex_config::types::TuiKeymap;
 use codex_config::types::TuiNotificationSettings;
 use codex_config::types::TuiPetAnchor;
-use codex_config::types::WindowsSandboxModeToml;
-use codex_config::types::WindowsToml;
 use codex_exec_server::LOCAL_FS;
 use codex_features::Feature;
 use codex_features::FeaturesToml;
@@ -1692,10 +1690,6 @@ async fn network_proxy_feature_matrix_preserves_sandbox_network_semantics() -> s
                     network_access: case.network_enabled,
                     ..Default::default()
                 }),
-                windows: Some(WindowsToml {
-                    sandbox: Some(WindowsSandboxModeToml::Elevated),
-                    sandbox_private_desktop: None,
-                }),
                 features,
                 ..Default::default()
             },
@@ -3317,10 +3311,6 @@ async fn implicit_builtin_workspace_profile_preserves_sandbox_workspace_write_se
                 exclude_tmpdir_env_var: true,
                 exclude_slash_tmp: false,
             }),
-            windows: Some(WindowsToml {
-                sandbox: Some(WindowsSandboxModeToml::Elevated),
-                sandbox_private_desktop: None,
-            }),
             ..Default::default()
         },
         ConfigOverrides {
@@ -3382,10 +3372,6 @@ async fn implicit_builtin_workspace_profile_preserves_add_dir_metadata_carveouts
                     trust_level: Some(TrustLevel::Trusted),
                 },
             )])),
-            windows: Some(WindowsToml {
-                sandbox: Some(WindowsSandboxModeToml::Elevated),
-                sandbox_private_desktop: None,
-            }),
             ..Default::default()
         },
         ConfigOverrides {
@@ -9657,7 +9643,6 @@ async fn test_requirements_web_search_mode_allowlist_does_not_warn_when_unset() 
         computer_use: None,
         browser_use: None,
         in_app_browser: None,
-        windows: None,
         feature_requirements: None,
         hooks: None,
         mcp_servers: None,
@@ -9926,7 +9911,7 @@ async fn derive_sandbox_policy_falls_back_to_read_only_for_implicit_defaults() -
 }
 
 #[tokio::test]
-async fn derive_sandbox_policy_preserves_windows_downgrade_for_unsupported_fallback()
+async fn derive_sandbox_policy_preserves_workspace_write_for_unsupported_fallback()
 -> anyhow::Result<()> {
     let project_dir = TempDir::new()?;
     let project_path = project_dir.path().to_path_buf();
