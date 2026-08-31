@@ -1,8 +1,6 @@
 mod find_up;
 
 use bytes::Bytes;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::config_types::WindowsSandboxProxySettingsMode;
 use codex_protocol::models::ManagedFileSystemPermissions;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::models::SandboxEnforcement;
@@ -336,11 +334,6 @@ pub struct FileSystemSandboxContext {
     /// Executor-local default directories used to resolve `:tmpdir` policy entries.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub temporary_directories: Option<Vec<PathUri>>,
-    pub windows_sandbox_level: WindowsSandboxLevel,
-    #[serde(default)]
-    pub windows_sandbox_private_desktop: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub windows_sandbox_proxy_settings_mode: Option<WindowsSandboxProxySettingsMode>,
     #[serde(default)]
     pub use_legacy_landlock: bool,
 }
@@ -381,9 +374,6 @@ impl FileSystemSandboxContext {
             cwd,
             workspace_roots,
             temporary_directories: None,
-            windows_sandbox_level: WindowsSandboxLevel::Disabled,
-            windows_sandbox_private_desktop: false,
-            windows_sandbox_proxy_settings_mode: None,
             use_legacy_landlock: false,
         }
     }

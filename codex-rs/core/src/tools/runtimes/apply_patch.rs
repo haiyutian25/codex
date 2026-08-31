@@ -100,9 +100,6 @@ impl ApplyPatchRuntime {
             cwd: Some(attempt.sandbox_cwd.clone()),
             workspace_roots: attempt.workspace_roots.to_vec(),
             temporary_directories: None,
-            windows_sandbox_level: Default::default(),
-            windows_sandbox_private_desktop: false,
-            windows_sandbox_proxy_settings_mode: None,
             use_legacy_landlock: attempt.use_legacy_landlock,
         })
     }

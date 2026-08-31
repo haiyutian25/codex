@@ -9272,9 +9272,6 @@ async fn capability_discovery_uses_environment_permission_profile() {
         cwd: Some(environment.cwd().clone()),
         workspace_roots: environment.workspace_roots().to_vec(),
         temporary_directories: environment.temporary_directories.clone(),
-        windows_sandbox_level: WindowsSandboxLevel::Disabled,
-        windows_sandbox_private_desktop: false,
-        windows_sandbox_proxy_settings_mode: None,
         use_legacy_landlock: true,
     };
     let environment_id = environment.selection.environment_id.clone();

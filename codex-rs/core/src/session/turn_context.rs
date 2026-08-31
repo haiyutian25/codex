@@ -128,9 +128,6 @@ impl TurnEnvironment {
             cwd: Some(self.cwd().clone()),
             workspace_roots: self.workspace_roots().to_vec(),
             temporary_directories: self.temporary_directories.clone(),
-            windows_sandbox_level: Default::default(),
-            windows_sandbox_private_desktop: false,
-            windows_sandbox_proxy_settings_mode: None,
             use_legacy_landlock: config.use_legacy_landlock,
         }
     }

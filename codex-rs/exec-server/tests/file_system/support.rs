@@ -102,7 +102,6 @@ pub(crate) fn read_only_sandbox(readable_root: std::path::PathBuf) -> FileSystem
     }])
 }
 
-#[cfg(not(windows))]
 pub(crate) fn workspace_write_sandbox(
     writable_root: std::path::PathBuf,
 ) -> FileSystemSandboxContext {
@@ -116,54 +115,11 @@ pub(crate) fn workspace_write_sandbox(
     }])
 }
 
-#[cfg(windows)]
-pub(crate) fn workspace_write_sandbox(
-    writable_root: std::path::PathBuf,
-) -> FileSystemSandboxContext {
-    let writable_root = absolute_path(writable_root);
-    // Keep the runtime policy aligned with the legacy workspace-write projection used by the
-    // unelevated restricted-token preflight.
-    let policy = FileSystemSandboxPolicy::restricted(vec![
-        FileSystemSandboxEntry::new(
-            FileSystemPath::Special {
-                value: FileSystemSpecialPath::Root,
-            },
-            FileSystemAccessMode::Read,
-        ),
-        FileSystemSandboxEntry::new(
-            FileSystemPath::Special {
-                value: FileSystemSpecialPath::project_roots(/*subpath*/ None),
-            },
-            FileSystemAccessMode::Write,
-        ),
-    ]);
-    let mut sandbox = FileSystemSandboxContext::from_permission_profile_with_cwd(
-        PermissionProfile::from_runtime_permissions(&policy, NetworkSandboxPolicy::Restricted),
-        PathUri::from_abs_path(&writable_root),
-    );
-    sandbox.windows_sandbox_level = WindowsSandboxLevel::RestrictedToken;
-    sandbox
-}
-
-fn sandbox_context(mut entries: Vec<FileSystemSandboxEntry>) -> FileSystemSandboxContext {
-    if cfg!(windows) {
-        // Restricted-token sandboxing cannot enforce read restrictions, so leave the root
-        // readable while exercising the requested write restrictions.
-        entries.push(FileSystemSandboxEntry::new(
-            FileSystemPath::Special {
-                value: FileSystemSpecialPath::Root,
-            },
-            FileSystemAccessMode::Read,
-        ));
-    }
-    let mut sandbox = FileSystemSandboxContext::from_permission_profile(
+fn sandbox_context(entries: Vec<FileSystemSandboxEntry>) -> FileSystemSandboxContext {
+    FileSystemSandboxContext::from_permission_profile(
         PermissionProfile::from_runtime_permissions(
             &FileSystemSandboxPolicy::restricted(entries),
             NetworkSandboxPolicy::Restricted,
         ),
-    );
-    if cfg!(windows) {
-        sandbox.windows_sandbox_level = WindowsSandboxLevel::RestrictedToken;
-    }
-    sandbox
+    )
 }

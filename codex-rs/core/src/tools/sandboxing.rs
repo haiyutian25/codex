@@ -497,9 +497,6 @@ impl<'a> SandboxAttempt<'a> {
                 cwd: Some(exec_request.sandbox_policy_cwd.clone()),
                 workspace_roots: self.workspace_roots.to_vec(),
                 temporary_directories: None,
-                windows_sandbox_level: Default::default(),
-                windows_sandbox_private_desktop: false,
-                windows_sandbox_proxy_settings_mode: None,
                 use_legacy_landlock: self.use_legacy_landlock,
             });
             exec_request.exec_server_enforce_managed_network = self.enforce_managed_network;
