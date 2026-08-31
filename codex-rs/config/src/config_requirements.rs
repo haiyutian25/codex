@@ -171,8 +171,6 @@ pub struct ConfigRequirements {
     pub approvals_reviewer: ConstrainedWithSource<ApprovalsReviewer>,
     pub auto_review_required_models: Option<Sourced<BTreeSet<String>>>,
     pub permission_profile: ConstrainedWithSource<PermissionProfile>,
-    pub windows_sandbox_mode: ConstrainedWithSource<Option<WindowsSandboxModeToml>>,
-    pub windows_sandbox_private_desktop: Option<Sourced<bool>>,
     pub web_search_mode: ConstrainedWithSource<WebSearchMode>,
     pub allow_managed_hooks_only: Option<Sourced<bool>>,
     pub allow_appshots: Option<Sourced<bool>>,
@@ -221,11 +219,6 @@ impl Default for ConfigRequirements {
                 Constrained::allow_any(PermissionProfile::read_only()),
                 /*source*/ None,
             ),
-            windows_sandbox_mode: ConstrainedWithSource::new(
-                Constrained::allow_any(/*initial_value*/ None),
-                /*source*/ None,
-            ),
-            windows_sandbox_private_desktop: None,
             web_search_mode: ConstrainedWithSource::new(
                 Constrained::allow_any(WebSearchMode::Cached),
                 /*source*/ None,
@@ -1593,7 +1586,7 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             computer_use,
             browser_use: _,
             in_app_browser: _,
-            windows,
+            windows: _,
             feature_requirements,
             hooks,
             mcp_servers,
@@ -1753,62 +1746,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
                 /*source*/ None,
             ),
         };
-        let (windows_sandbox_mode, windows_sandbox_private_desktop) = match windows {
-            Some(Sourced {
-                value:
-                    WindowsRequirementsToml {
-                        allowed_sandbox_implementations,
-                        sandbox_private_desktop,
-                    },
-                source: requirement_source,
-            }) => {
-                let sandbox_private_desktop = sandbox_private_desktop
-                    .map(|value| Sourced::new(value, requirement_source.clone()));
-                let sandbox_mode = match allowed_sandbox_implementations {
-                    Some(implementations) => {
-                        if implementations.is_empty() {
-                            return Err(ConstraintError::empty_field(
-                                "windows.allowed_sandbox_implementations",
-                            ));
-                        }
-                        // Prefer elevated when both Windows sandbox implementations are allowed.
-                        let initial_value =
-                            if implementations.contains(&WindowsSandboxModeToml::Elevated) {
-                                WindowsSandboxModeToml::Elevated
-                            } else {
-                                WindowsSandboxModeToml::Unelevated
-                            };
-
-                        let requirement_source_for_error = requirement_source.clone();
-                        let constrained = Constrained::new(
-                            Some(initial_value),
-                            move |candidate| match candidate {
-                                Some(candidate) if implementations.contains(candidate) => Ok(()),
-                                _ => Err(ConstraintError::InvalidValue {
-                                    field_name: "windows.sandbox",
-                                    candidate: format!("{candidate:?}"),
-                                    allowed: format!("{implementations:?}"),
-                                    requirement_source: requirement_source_for_error.clone(),
-                                }),
-                            },
-                        )?;
-                        ConstrainedWithSource::new(constrained, Some(requirement_source))
-                    }
-                    None => ConstrainedWithSource::new(
-                        Constrained::allow_any(/*initial_value*/ None),
-                        /*source*/ None,
-                    ),
-                };
-                (sandbox_mode, sandbox_private_desktop)
-            }
-            None => (
-                ConstrainedWithSource::new(
-                    Constrained::allow_any(/*initial_value*/ None),
-                    /*source*/ None,
-                ),
-                None,
-            ),
-        };
         let exec_policy = match rules {
             Some(Sourced { value, source }) => {
                 let policy = value.to_requirements_policy().map_err(|err| {
@@ -1947,8 +1884,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             approvals_reviewer,
             auto_review_required_models,
             permission_profile,
-            windows_sandbox_mode,
-            windows_sandbox_private_desktop,
             web_search_mode,
             allow_managed_hooks_only,
             allow_appshots,
@@ -3527,70 +3462,6 @@ allowed_approvals_reviewers = ["user"]
         Ok(())
     }
 
-    #[test]
-    fn deserialize_allowed_windows_sandbox_implementations() -> Result<()> {
-        let toml_str = r#"
-            [windows]
-            allowed_sandbox_implementations = ["elevated"]
-        "#;
-        let config: ConfigRequirementsToml = from_str(toml_str)?;
-        let requirements: ConfigRequirements = with_unknown_source(config).try_into()?;
-
-        assert_eq!(
-            requirements.windows_sandbox_mode.value(),
-            Some(WindowsSandboxModeToml::Elevated)
-        );
-        assert!(
-            requirements
-                .windows_sandbox_mode
-                .can_set(&Some(WindowsSandboxModeToml::Elevated))
-                .is_ok()
-        );
-        assert!(
-            requirements
-                .windows_sandbox_mode
-                .can_set(&Some(WindowsSandboxModeToml::Unelevated))
-                .is_err()
-        );
-        assert!(requirements.windows_sandbox_mode.can_set(&None).is_err());
-
-        Ok(())
-    }
-
-    #[test]
-    fn empty_allowed_windows_sandbox_implementations_is_rejected() -> Result<()> {
-        let toml_str = r#"
-            [windows]
-            allowed_sandbox_implementations = []
-        "#;
-        let config: ConfigRequirementsToml = from_str(toml_str)?;
-
-        assert_eq!(
-            ConfigRequirements::try_from(with_unknown_source(config)),
-            Err(ConstraintError::EmptyField {
-                field_name: "windows.allowed_sandbox_implementations".to_string(),
-            })
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn allowed_windows_sandbox_implementations_prefer_elevated_fallback() -> Result<()> {
-        let toml_str = r#"
-            [windows]
-            allowed_sandbox_implementations = ["unelevated", "elevated"]
-        "#;
-        let config: ConfigRequirementsToml = from_str(toml_str)?;
-        let requirements: ConfigRequirements = with_unknown_source(config).try_into()?;
-
-        assert_eq!(
-            requirements.windows_sandbox_mode.value(),
-            Some(WindowsSandboxModeToml::Elevated)
-        );
-
-        Ok(())
-    }
 
     #[test]
     fn deserialize_legacy_allowed_approvals_reviewer() -> Result<()> {

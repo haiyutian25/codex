@@ -49,7 +49,6 @@ async fn workspace_roots_test(server: &MockServer) -> Result<TestCodex> {
                 .abs();
         }
         config.workspace_roots = vec![config.cwd.clone()];
-        config.set_windows_sandbox_enabled(/*value*/ true);
     });
     builder.build_with_auto_env(server).await
 }
@@ -232,7 +231,6 @@ async fn workspace_roots_allow_file_and_command_writes_in_secondary_root(
             if !owner_resolved_roots {
                 config.workspace_roots.push(secondary_root);
             }
-            config.set_windows_sandbox_enabled(/*value*/ true);
         })
         .with_workspace_setup(|cwd, fs| async move {
             let secondary_root = cwd

@@ -184,14 +184,12 @@ fn http_mcp(url: &str) -> McpServerConfig {
 async fn derive_legacy_sandbox_policy_for_test(
     cfg: &ConfigToml,
     sandbox_mode_override: Option<SandboxMode>,
-    windows_sandbox_level: WindowsSandboxLevel,
     active_project: Option<&ProjectConfig>,
     permission_profile_constraint: Option<&Constrained<PermissionProfile>>,
 ) -> SandboxPolicy {
     let permission_profile = cfg
         .derive_permission_profile(
             sandbox_mode_override,
-            windows_sandbox_level,
             active_project,
             permission_profile_constraint,
         )
@@ -3235,27 +3233,16 @@ async fn empty_config_defaults_to_builtin_profile_for_trusted_project() -> std::
             .active_permission_profile()
             .as_ref()
             .map(|active| active.id.as_str()),
-        Some(if cfg!(target_os = "windows") {
-            BUILT_IN_PERMISSION_PROFILE_READ_ONLY
-        } else {
-            BUILT_IN_PERMISSION_PROFILE_WORKSPACE
-        })
+        Some(BUILT_IN_PERMISSION_PROFILE_WORKSPACE)
     );
-    if cfg!(target_os = "windows") {
-        assert!(
-            !policy.can_write_path_with_cwd(cwd.path(), cwd.path()),
-            "expected trusted project fallback to stay read-only without Windows sandbox support, policy: {policy:?}"
-        );
-    } else {
-        assert!(
-            policy.can_write_path_with_cwd(cwd.path(), cwd.path()),
-            "expected trusted project fallback to use :workspace, policy: {policy:?}"
-        );
-        assert!(
-            !policy.can_write_path_with_cwd(&cwd.path().join(".codex"), cwd.path()),
-            "expected :workspace metadata carveouts, policy: {policy:?}"
-        );
-    }
+    assert!(
+        policy.can_write_path_with_cwd(cwd.path(), cwd.path()),
+        "expected trusted project fallback to use :workspace, policy: {policy:?}"
+    );
+    assert!(
+        !policy.can_write_path_with_cwd(&cwd.path().join(".codex"), cwd.path()),
+        "expected :workspace metadata carveouts, policy: {policy:?}"
+    );
     Ok(())
 }
 
@@ -3290,31 +3277,20 @@ async fn empty_config_defaults_to_builtin_profile_for_untrusted_project() -> std
             .active_permission_profile()
             .as_ref()
             .map(|active| active.id.as_str()),
-        Some(if cfg!(target_os = "windows") {
-            BUILT_IN_PERMISSION_PROFILE_READ_ONLY
-        } else {
-            BUILT_IN_PERMISSION_PROFILE_WORKSPACE
-        })
+        Some(BUILT_IN_PERMISSION_PROFILE_WORKSPACE)
     );
     assert!(
         policy.can_read_path_with_cwd(cwd.path(), cwd.path()),
         "expected untrusted project fallback to allow reads, policy: {policy:?}"
     );
-    if cfg!(target_os = "windows") {
-        assert!(
-            !policy.can_write_path_with_cwd(cwd.path(), cwd.path()),
-            "expected untrusted project fallback to stay read-only without Windows sandbox support, policy: {policy:?}"
-        );
-    } else {
-        assert!(
-            policy.can_write_path_with_cwd(cwd.path(), cwd.path()),
-            "expected untrusted project fallback to use :workspace, policy: {policy:?}"
-        );
-        assert!(
-            !policy.can_write_path_with_cwd(&cwd.path().join(".codex"), cwd.path()),
-            "expected :workspace metadata carveouts, policy: {policy:?}"
-        );
-    }
+    assert!(
+        policy.can_write_path_with_cwd(cwd.path(), cwd.path()),
+        "expected untrusted project fallback to use :workspace, policy: {policy:?}"
+    );
+    assert!(
+        !policy.can_write_path_with_cwd(&cwd.path().join(".codex"), cwd.path()),
+        "expected :workspace metadata carveouts, policy: {policy:?}"
+    );
     Ok(())
 }
 
@@ -4343,7 +4319,6 @@ network_access = false  # This should be ignored.
     let resolution = derive_legacy_sandbox_policy_for_test(
         &sandbox_full_access_cfg,
         sandbox_mode_override,
-        WindowsSandboxLevel::Disabled,
         /*active_project*/ None,
         /*permission_profile_constraint*/ None,
     )
@@ -4363,7 +4338,6 @@ network_access = true  # This should be ignored.
     let resolution = derive_legacy_sandbox_policy_for_test(
         &sandbox_read_only_cfg,
         sandbox_mode_override,
-        WindowsSandboxLevel::Disabled,
         /*active_project*/ None,
         /*permission_profile_constraint*/ None,
     )
@@ -4394,24 +4368,19 @@ trust_level = "trusted"
     let resolution = derive_legacy_sandbox_policy_for_test(
         &sandbox_workspace_write_cfg,
         sandbox_mode_override,
-        WindowsSandboxLevel::Disabled,
         /*active_project*/ None,
         /*permission_profile_constraint*/ None,
     )
     .await;
-    if cfg!(target_os = "windows") {
-        assert_eq!(resolution, SandboxPolicy::new_read_only_policy());
-    } else {
-        assert_eq!(
-            resolution,
-            SandboxPolicy::WorkspaceWrite {
-                writable_roots: vec![writable_root.clone()],
-                network_access: false,
-                exclude_tmpdir_env_var: true,
-                exclude_slash_tmp: true,
-            }
-        );
-    }
+    assert_eq!(
+        resolution,
+        SandboxPolicy::WorkspaceWrite {
+            writable_roots: vec![writable_root.clone()],
+            network_access: false,
+            exclude_tmpdir_env_var: true,
+            exclude_slash_tmp: true,
+        }
+    );
 
     let sandbox_workspace_write = format!(
         r#"
@@ -4433,24 +4402,19 @@ exclude_slash_tmp = true
     let resolution = derive_legacy_sandbox_policy_for_test(
         &sandbox_workspace_write_cfg,
         sandbox_mode_override,
-        WindowsSandboxLevel::Disabled,
         /*active_project*/ None,
         /*permission_profile_constraint*/ None,
     )
     .await;
-    if cfg!(target_os = "windows") {
-        assert_eq!(resolution, SandboxPolicy::new_read_only_policy());
-    } else {
-        assert_eq!(
-            resolution,
-            SandboxPolicy::WorkspaceWrite {
-                writable_roots: vec![writable_root],
-                network_access: false,
-                exclude_tmpdir_env_var: true,
-                exclude_slash_tmp: true,
-            }
-        );
-    }
+    assert_eq!(
+        resolution,
+        SandboxPolicy::WorkspaceWrite {
+            writable_roots: vec![writable_root],
+            network_access: false,
+            exclude_tmpdir_env_var: true,
+            exclude_slash_tmp: true,
+        }
+    );
 }
 
 #[tokio::test]
@@ -4528,23 +4492,6 @@ exclude_slash_tmp = true
                 );
             }
             "workspace-write" => {
-                if cfg!(target_os = "windows") {
-                    assert_eq!(
-                        sandbox_policy,
-                        SandboxPolicy::new_read_only_policy(),
-                        "legacy workspace-write should keep the existing Windows downgrade when \
-                         the experimental Windows sandbox is disabled"
-                    );
-                    assert_eq!(
-                        file_system_policy,
-                        FileSystemSandboxPolicy::from_legacy_sandbox_policy_for_cwd(
-                            &sandbox_policy,
-                            cwd.path()
-                        ),
-                        "downgraded workspace-write should match the legacy read-only projection"
-                    );
-                    continue;
-                }
                 assert_eq!(
                     config.permissions.workspace_roots(),
                     &[cwd.abs(), extra_root.clone()]
@@ -5638,26 +5585,19 @@ async fn add_dir_override_extends_workspace_writable_roots() -> std::io::Result<
     .await?;
 
     let expected_backend = backend.abs();
-    if cfg!(target_os = "windows") {
-        match &config.legacy_sandbox_policy() {
-            SandboxPolicy::ReadOnly { .. } => {}
-            other => panic!("expected read-only policy on Windows, got {other:?}"),
+    match &config.legacy_sandbox_policy() {
+        SandboxPolicy::WorkspaceWrite { writable_roots, .. } => {
+            assert_eq!(
+                writable_roots
+                    .iter()
+                    .filter(|root| **root == expected_backend)
+                    .count(),
+                1,
+                "expected single writable root entry for {}",
+                expected_backend.display()
+            );
         }
-    } else {
-        match &config.legacy_sandbox_policy() {
-            SandboxPolicy::WorkspaceWrite { writable_roots, .. } => {
-                assert_eq!(
-                    writable_roots
-                        .iter()
-                        .filter(|root| **root == expected_backend)
-                        .count(),
-                    1,
-                    "expected single writable root entry for {}",
-                    expected_backend.display()
-                );
-            }
-            other => panic!("expected workspace-write policy, got {other:?}"),
-        }
+        other => panic!("expected workspace-write policy, got {other:?}"),
     }
 
     Ok(())
@@ -5722,33 +5662,26 @@ async fn workspace_write_includes_configured_writable_root_once_without_memories
     )
     .await?;
 
-    if cfg!(target_os = "windows") {
-        match &config.legacy_sandbox_policy() {
-            SandboxPolicy::ReadOnly { .. } => {}
-            other => panic!("expected read-only policy on Windows, got {other:?}"),
+    assert!(
+        !memories_root.exists(),
+        "expected config load not to create memories root at {}",
+        memories_root.display()
+    );
+    let expected_memories_root = memories_root.abs();
+    match &config.legacy_sandbox_policy() {
+        SandboxPolicy::WorkspaceWrite { writable_roots, .. } => {
+            assert!(!writable_roots.contains(&expected_memories_root));
+            assert_eq!(
+                writable_roots
+                    .iter()
+                    .filter(|root| **root == writable_root)
+                    .count(),
+                1,
+                "expected single writable root entry for {}",
+                writable_root.display()
+            );
         }
-    } else {
-        assert!(
-            !memories_root.exists(),
-            "expected config load not to create memories root at {}",
-            memories_root.display()
-        );
-        let expected_memories_root = memories_root.abs();
-        match &config.legacy_sandbox_policy() {
-            SandboxPolicy::WorkspaceWrite { writable_roots, .. } => {
-                assert!(!writable_roots.contains(&expected_memories_root));
-                assert_eq!(
-                    writable_roots
-                        .iter()
-                        .filter(|root| **root == writable_root)
-                        .count(),
-                    1,
-                    "expected single writable root entry for {}",
-                    writable_root.display()
-                );
-            }
-            other => panic!("expected workspace-write policy, got {other:?}"),
-        }
+        other => panic!("expected workspace-write policy, got {other:?}"),
     }
 
     Ok(())
@@ -5793,18 +5726,11 @@ async fn memory_tool_makes_memories_root_readable_without_creating_or_widening_w
     assert!(file_system_policy.can_read_path_with_cwd(memories_root_abs.as_path(), cwd.path()));
     assert!(!file_system_policy.can_write_path_with_cwd(memories_root_abs.as_path(), cwd.path()));
 
-    if cfg!(target_os = "windows") {
-        match &config.legacy_sandbox_policy() {
-            SandboxPolicy::ReadOnly { .. } => {}
-            other => panic!("expected read-only policy on Windows, got {other:?}"),
+    match &config.legacy_sandbox_policy() {
+        SandboxPolicy::WorkspaceWrite { writable_roots, .. } => {
+            assert!(!writable_roots.contains(&memories_root_abs));
         }
-    } else {
-        match &config.legacy_sandbox_policy() {
-            SandboxPolicy::WorkspaceWrite { writable_roots, .. } => {
-                assert!(!writable_roots.contains(&memories_root_abs));
-            }
-            other => panic!("expected workspace-write policy, got {other:?}"),
-        }
+        other => panic!("expected workspace-write policy, got {other:?}"),
     }
 
     Ok(())
@@ -9942,24 +9868,16 @@ trust_level = "untrusted"
     let resolution = derive_legacy_sandbox_policy_for_test(
         &cfg,
         /*sandbox_mode_override*/ None,
-        WindowsSandboxLevel::Disabled,
         Some(&active_project),
         /*permission_profile_constraint*/ None,
     )
     .await;
 
-    // Verify that untrusted projects get WorkspaceWrite (or ReadOnly on Windows due to downgrade)
-    if cfg!(target_os = "windows") {
-        assert!(
-            matches!(resolution, SandboxPolicy::ReadOnly { .. }),
-            "Expected ReadOnly on Windows, got {resolution:?}"
-        );
-    } else {
-        assert!(
-            matches!(resolution, SandboxPolicy::WorkspaceWrite { .. }),
-            "Expected WorkspaceWrite for untrusted project, got {resolution:?}"
-        );
-    }
+    // Verify that untrusted projects get WorkspaceWrite.
+    assert!(
+        matches!(resolution, SandboxPolicy::WorkspaceWrite { .. }),
+        "Expected WorkspaceWrite for untrusted project, got {resolution:?}"
+    );
 
     Ok(())
 }
@@ -9998,7 +9916,6 @@ async fn derive_sandbox_policy_falls_back_to_read_only_for_implicit_defaults() -
     let resolution = derive_legacy_sandbox_policy_for_test(
         &cfg,
         /*sandbox_mode_override*/ None,
-        WindowsSandboxLevel::Disabled,
         Some(&active_project),
         Some(&constrained),
     )
@@ -10050,17 +9967,12 @@ async fn derive_sandbox_policy_preserves_windows_downgrade_for_unsupported_fallb
     let resolution = derive_legacy_sandbox_policy_for_test(
         &cfg,
         /*sandbox_mode_override*/ None,
-        WindowsSandboxLevel::Disabled,
         Some(&active_project),
         Some(&constrained),
     )
     .await;
 
-    if cfg!(target_os = "windows") {
-        assert_eq!(resolution, SandboxPolicy::new_read_only_policy());
-    } else {
-        assert_eq!(resolution, SandboxPolicy::new_workspace_write_policy());
-    }
+    assert_eq!(resolution, SandboxPolicy::new_workspace_write_policy());
     Ok(())
 }
 
@@ -10274,24 +10186,14 @@ async fn test_untrusted_project_gets_unless_trusted_approval_policy() -> anyhow:
         "Expected UnlessTrusted approval policy for untrusted project"
     );
 
-    // Verify that untrusted projects still get WorkspaceWrite sandbox (or ReadOnly on Windows)
-    if cfg!(target_os = "windows") {
-        assert!(
-            matches!(
-                &config.legacy_sandbox_policy(),
-                SandboxPolicy::ReadOnly { .. }
-            ),
-            "Expected ReadOnly on Windows"
-        );
-    } else {
-        assert!(
-            matches!(
-                &config.legacy_sandbox_policy(),
-                SandboxPolicy::WorkspaceWrite { .. }
-            ),
-            "Expected WorkspaceWrite sandbox for untrusted project"
-        );
-    }
+    // Verify that untrusted projects still get WorkspaceWrite sandbox.
+    assert!(
+        matches!(
+            &config.legacy_sandbox_policy(),
+            SandboxPolicy::WorkspaceWrite { .. }
+        ),
+        "Expected WorkspaceWrite sandbox for untrusted project"
+    );
 
     Ok(())
 }
@@ -10375,41 +10277,6 @@ async fn explicit_sandbox_mode_falls_back_when_disallowed_by_requirements() -> s
     Ok(())
 }
 
-#[tokio::test]
-async fn windows_sandbox_mode_falls_back_when_disallowed_by_requirements() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
-        r#"[windows]
-sandbox = "unelevated"
-"#,
-    )?;
-
-    let config = ConfigBuilder::without_managed_config_for_tests()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
-        .cloud_config_bundle(
-            CloudConfigBundleFixture::loader_with_enterprise_requirement(
-                r#"[windows]
-allowed_sandbox_implementations = ["elevated"]
-"#,
-            ),
-        )
-        .build()
-        .await?;
-
-    assert_eq!(
-        config.permissions.windows_sandbox_mode,
-        Some(codex_config::types::WindowsSandboxModeToml::Elevated)
-    );
-    assert!(
-        config.startup_warnings.iter().any(|warning| warning
-            .contains("Configured value for `windows.sandbox` is disallowed by requirements")),
-        "{:?}",
-        config.startup_warnings
-    );
-    Ok(())
-}
 
 #[tokio::test]
 async fn danger_full_access_with_never_is_rejected_when_requirements_force_read_only()
@@ -12494,9 +12361,6 @@ allow_login_shell = false
 
 [feedback]
 enabled = false
-
-[windows]
-sandbox_private_desktop = false
 "#,
         required_sqlite_home.display(),
         required_log_dir.display(),
@@ -12510,7 +12374,6 @@ sandbox_private_desktop = false
     assert!(!config.check_for_update_on_startup);
     assert!(!config.permissions.allow_login_shell);
     assert!(!config.feedback_enabled);
-    assert!(!config.permissions.windows_sandbox_private_desktop);
     assert!(config.startup_warnings.iter().any(|warning| {
         warning.contains("Configured value for `check_for_update_on_startup` is overridden")
     }));
