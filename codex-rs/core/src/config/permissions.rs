@@ -10,8 +10,6 @@ use codex_config::permissions_toml::FilesystemPermissionsToml;
 use codex_config::permissions_toml::NetworkDomainPermissionToml;
 use codex_config::permissions_toml::NetworkDomainPermissionsToml;
 use codex_config::permissions_toml::NetworkToml;
-use codex_config::permissions_toml::NetworkUnixSocketPermissionToml;
-use codex_config::permissions_toml::NetworkUnixSocketPermissionsToml;
 use codex_config::permissions_toml::PermissionProfileToml;
 use codex_config::permissions_toml::PermissionsToml;
 use codex_config::permissions_toml::WorkspaceRootsToml;
@@ -19,11 +17,8 @@ use codex_config::types::SandboxWorkspaceWrite;
 use codex_features::NetworkProxyConfigToml;
 use codex_features::NetworkProxyDomainPermissionToml;
 use codex_features::NetworkProxyModeToml;
-use codex_features::NetworkProxyUnixSocketPermissionToml;
 use codex_network_proxy::NetworkMode;
 use codex_network_proxy::NetworkProxyConfig;
-#[cfg(test)]
-use codex_network_proxy::NetworkUnixSocketPermission as ProxyNetworkUnixSocketPermission;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
 use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
@@ -139,7 +134,6 @@ pub(crate) fn apply_network_proxy_feature_config(
         enable_socks5_udp: feature_config.enable_socks5_udp,
         allow_upstream_proxy: feature_config.allow_upstream_proxy,
         dangerously_allow_non_loopback_proxy: feature_config.dangerously_allow_non_loopback_proxy,
-        dangerously_allow_all_unix_sockets: feature_config.dangerously_allow_all_unix_sockets,
         mode: feature_config.mode.map(|mode| match mode {
             NetworkProxyModeToml::Limited => NetworkMode::Limited,
             NetworkProxyModeToml::Full => NetworkMode::Full,
@@ -163,24 +157,6 @@ pub(crate) fn apply_network_proxy_feature_config(
                     })
                     .collect(),
             }),
-        unix_sockets: feature_config.unix_sockets.as_ref().map(|unix_sockets| {
-            NetworkUnixSocketPermissionsToml {
-                entries: unix_sockets
-                    .iter()
-                    .map(|(path, permission)| {
-                        let permission = match permission {
-                            NetworkProxyUnixSocketPermissionToml::Allow => {
-                                NetworkUnixSocketPermissionToml::Allow
-                            }
-                            NetworkProxyUnixSocketPermissionToml::Deny => {
-                                NetworkUnixSocketPermissionToml::Deny
-                            }
-                        };
-                        (path.clone(), permission)
-                    })
-                    .collect(),
-            }
-        }),
         allow_local_binding: feature_config.allow_local_binding,
         mitm: None,
     }

@@ -936,31 +936,6 @@ async fn sync_openai_plugins_repo_falls_back_to_http_when_git_is_unavailable() {
     assert_eq!(read_curated_plugins_sha(tmp.path()).as_deref(), Some(sha));
 }
 
-#[test]
-fn apple_git_without_developer_tools_is_unavailable() {
-    assert_eq!(
-        macos_git_binary_from_path(
-            PathBuf::from("/usr/bin/git"),
-            /*apple_developer_tools_available*/ false,
-        ),
-        None
-    );
-    assert_eq!(
-        macos_git_binary_from_path(
-            PathBuf::from("/usr/bin/git"),
-            /*apple_developer_tools_available*/ true,
-        ),
-        Some(PathBuf::from("/usr/bin/git"))
-    );
-    assert_eq!(
-        macos_git_binary_from_path(
-            PathBuf::from("/opt/homebrew/bin/git"),
-            /*apple_developer_tools_available*/ false,
-        ),
-        Some(PathBuf::from("/opt/homebrew/bin/git"))
-    );
-}
-
 #[tokio::test]
 async fn sync_openai_plugins_repo_uses_http_without_git_transport() {
     let tmp = tempdir().expect("tempdir");

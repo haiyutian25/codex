@@ -658,7 +658,6 @@ pub struct NetworkRequirements {
     pub socks_port: Option<u16>,
     pub allow_upstream_proxy: Option<bool>,
     pub dangerously_allow_non_loopback_proxy: Option<bool>,
-    pub dangerously_allow_all_unix_sockets: Option<bool>,
     /// Canonical network permission map for `experimental_network`.
     pub domains: Option<BTreeMap<String, NetworkDomainPermission>>,
     /// When true, only managed allowlist entries are respected while managed
@@ -668,10 +667,6 @@ pub struct NetworkRequirements {
     pub allowed_domains: Option<Vec<String>>,
     /// Legacy compatibility view derived from `domains`.
     pub denied_domains: Option<Vec<String>>,
-    /// Canonical unix socket permission map for `experimental_network`.
-    pub unix_sockets: Option<BTreeMap<String, NetworkUnixSocketPermission>>,
-    /// Legacy compatibility view derived from `unix_sockets`.
-    pub allow_unix_sockets: Option<Vec<String>>,
     pub allow_local_binding: Option<bool>,
 }
 
@@ -679,14 +674,6 @@ pub struct NetworkRequirements {
 #[serde(rename_all = "lowercase")]
 #[ts(export_to = "v2/")]
 pub enum NetworkDomainPermission {
-    Allow,
-    Deny,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "lowercase")]
-#[ts(export_to = "v2/")]
-pub enum NetworkUnixSocketPermission {
     Allow,
     Deny,
 }

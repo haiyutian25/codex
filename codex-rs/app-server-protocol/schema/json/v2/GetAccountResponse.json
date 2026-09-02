@@ -45,26 +45,6 @@
           ],
           "title": "ChatgptAccount",
           "type": "object"
-        },
-        {
-          "properties": {
-            "type": {
-              "enum": [
-                "amazonBedrock"
-              ],
-              "title": "AmazonBedrockAccountType",
-              "type": "string"
-            },
-            "usesCodexManagedCredentials": {
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "title": "AmazonBedrockAccount",
-          "type": "object"
         }
       ]
     },

@@ -130,16 +130,8 @@ fn managed_hooks_for_current_platform(
 ) -> ManagedHooksRequirementsToml {
     let managed_dir = managed_dir.as_ref().to_path_buf();
     ManagedHooksRequirementsToml {
-        managed_dir: if cfg!(windows) {
-            None
-        } else {
-            Some(managed_dir.clone())
-        },
-        windows_managed_dir: if cfg!(windows) {
-            Some(managed_dir)
-        } else {
-            None
-        },
+        managed_dir: Some(managed_dir),
+        windows_managed_dir: None,
         hooks,
     }
 }
@@ -663,7 +655,7 @@ with Path(r"{log_path}").open("a", encoding="utf-8") as handle:
 }
 
 #[tokio::test]
-async fn requirements_managed_hooks_execute_windows_command_override() {
+async fn requirements_managed_hooks_ignore_windows_command_override() {
     let temp = tempdir().expect("create temp dir");
     let managed_dir =
         AbsolutePathBuf::try_from(temp.path().join("managed-hooks")).expect("absolute path");
@@ -732,7 +724,7 @@ async fn requirements_managed_hooks_execute_windows_command_override() {
         .await;
 
     assert!(!outcome.should_block);
-    let expected_exit_code = if cfg!(windows) { 19 } else { 17 };
+    let expected_exit_code = 17;
     assert_eq!(outcome.hook_events.len(), 1);
     assert_eq!(outcome.hook_events[0].run.status, HookRunStatus::Failed);
     assert_eq!(

@@ -422,15 +422,7 @@ fn config_toml_source_path(layer: &ConfigLayerEntry) -> AbsolutePathBuf {
 }
 
 fn synthetic_layer_path(path: &str) -> AbsolutePathBuf {
-    #[cfg(windows)]
-    {
-        AbsolutePathBuf::resolve_path_against_base(path, r"C:\")
-    }
-
-    #[cfg(not(windows))]
-    {
-        AbsolutePathBuf::resolve_path_against_base(path, "/")
-    }
+    AbsolutePathBuf::resolve_path_against_base(path, "/")
 }
 
 fn escape_xml_text(value: &str) -> String {
@@ -503,17 +495,12 @@ fn append_matcher_groups(
             let normalized = match handler {
                 HookHandlerConfig::Command {
                     command,
-                    command_windows,
+                    command_windows: _,
                     timeout_sec,
                     r#async,
                     status_message,
                     additional_context_limit,
                 } => {
-                    let command = if cfg!(windows) {
-                        command_windows.unwrap_or(command)
-                    } else {
-                        command
-                    };
                     if command.trim().is_empty() {
                         source.record_load_failure(
                             format!("skipping empty hook command in {}", source.path.display()),
@@ -1634,12 +1621,7 @@ mod tests {
         assert_eq!(
             handlers[0].kind,
             ConfiguredHandlerKind::Command {
-                command: if cfg!(windows) {
-                    "echo windows"
-                } else {
-                    "echo unix"
-                }
-                .to_string(),
+                command: "echo unix".to_string(),
                 env: std::collections::HashMap::new(),
                 r#async: false,
             }

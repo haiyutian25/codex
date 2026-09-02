@@ -10,15 +10,12 @@ use crate::network_policy::NetworkPolicyDecision;
 use crate::network_policy::NetworkPolicyRequest;
 use crate::network_policy::NetworkPolicyRequestArgs;
 use crate::network_policy::NetworkProtocol;
-use crate::network_policy::emit_allow_decision_audit_event;
 use crate::network_policy::emit_block_decision_audit_event;
 use crate::network_policy::evaluate_host_policy;
 use crate::policy::normalize_host;
 use crate::reasons::REASON_METHOD_NOT_ALLOWED;
 use crate::reasons::REASON_MITM_REQUIRED;
-use crate::reasons::REASON_NOT_ALLOWED;
 use crate::reasons::REASON_PROXY_DISABLED;
-use crate::reasons::REASON_UNIX_SOCKET_UNSUPPORTED;
 use crate::request_disconnect::NetworkRequestDisconnect;
 use crate::responses::PolicyDecisionDetails;
 use crate::responses::blocked_header_value;
@@ -26,7 +23,6 @@ use crate::responses::blocked_message_with_policy;
 use crate::responses::blocked_text_response_with_policy;
 use crate::responses::json_response;
 use crate::runtime::HostMitmRequirement;
-use crate::runtime::unix_socket_permissions_supported;
 use crate::state::BlockedRequest;
 use crate::state::BlockedRequestArgs;
 use crate::state::NetworkProxyState;
@@ -538,142 +534,6 @@ async fn http_plain_proxy(
         Err(resp) => return Ok(resp),
     };
 
-    // `x-unix-socket` is an escape hatch for talking to local daemons. We keep it tightly scoped:
-    // macOS-only + explicit allowlist by default, to avoid turning the proxy into a general local
-    // capability escalation mechanism.
-    if let Some(unix_socket_header) = req.headers().get("x-unix-socket") {
-        let socket_path = match unix_socket_header.to_str() {
-            Ok(value) => value.to_string(),
-            Err(_) => {
-                warn!("invalid x-unix-socket header value (non-UTF8)");
-                return Ok(text_response(
-                    StatusCode::BAD_REQUEST,
-                    "invalid x-unix-socket header",
-                ));
-            }
-        };
-        let enabled = match app_state
-            .enabled()
-            .await
-            .map_err(|err| internal_error("failed to read enabled state", err))
-        {
-            Ok(enabled) => enabled,
-            Err(resp) => return Ok(resp),
-        };
-        if !enabled {
-            let client = client.as_deref().unwrap_or_default();
-            warn!("unix socket blocked; proxy disabled (client={client}, path={socket_path})");
-            return Ok(proxy_disabled_response(
-                &app_state,
-                socket_path,
-                /*port*/ 0,
-                client_addr(&req),
-                Some(req.method().as_str().to_string()),
-                NetworkProtocol::Http,
-                Some(("unix-socket", 0)),
-            )
-            .await);
-        }
-        if !method_allowed {
-            emit_http_block_decision_audit_event(
-                &app_state,
-                BlockDecisionAuditEventArgs {
-                    source: NetworkDecisionSource::ModeGuard,
-                    reason: REASON_METHOD_NOT_ALLOWED,
-                    protocol: NetworkProtocol::Http,
-                    server_address: "unix-socket",
-                    server_port: 0,
-                    method: Some(req.method().as_str()),
-                    client_addr: client.as_deref(),
-                },
-            );
-            let client = client.as_deref().unwrap_or_default();
-            let method = req.method();
-            warn!(
-                "unix socket blocked by method policy (client={client}, method={method}, mode=limited, allowed_methods=GET, HEAD, OPTIONS)"
-            );
-            return Ok(json_blocked(
-                "unix-socket",
-                REASON_METHOD_NOT_ALLOWED,
-                /*details*/ None,
-            ));
-        }
-
-        if !unix_socket_permissions_supported() {
-            emit_http_block_decision_audit_event(
-                &app_state,
-                BlockDecisionAuditEventArgs {
-                    source: NetworkDecisionSource::ProxyState,
-                    reason: REASON_UNIX_SOCKET_UNSUPPORTED,
-                    protocol: NetworkProtocol::Http,
-                    server_address: "unix-socket",
-                    server_port: 0,
-                    method: Some(req.method().as_str()),
-                    client_addr: client.as_deref(),
-                },
-            );
-            warn!("unix socket proxy unsupported on this platform (path={socket_path})");
-            return Ok(text_response(
-                StatusCode::NOT_IMPLEMENTED,
-                "unix sockets unsupported",
-            ));
-        }
-
-        return match app_state.is_unix_socket_allowed(&socket_path).await {
-            Ok(true) => {
-                emit_http_allow_decision_audit_event(
-                    &app_state,
-                    BlockDecisionAuditEventArgs {
-                        source: NetworkDecisionSource::ProxyState,
-                        reason: "allow",
-                        protocol: NetworkProtocol::Http,
-                        server_address: "unix-socket",
-                        server_port: 0,
-                        method: Some(req.method().as_str()),
-                        client_addr: client.as_deref(),
-                    },
-                );
-                let client = client.as_deref().unwrap_or_default();
-                info!("unix socket allowed (client={client}, path={socket_path})");
-                match proxy_via_unix_socket(req, &socket_path).await {
-                    Ok(resp) => Ok(resp),
-                    Err(err) => {
-                        warn!("unix socket proxy failed: {err}");
-                        Ok(text_response(
-                            StatusCode::BAD_GATEWAY,
-                            "unix socket proxy failed",
-                        ))
-                    }
-                }
-            }
-            Ok(false) => {
-                emit_http_block_decision_audit_event(
-                    &app_state,
-                    BlockDecisionAuditEventArgs {
-                        source: NetworkDecisionSource::ProxyState,
-                        reason: REASON_NOT_ALLOWED,
-                        protocol: NetworkProtocol::Http,
-                        server_address: "unix-socket",
-                        server_port: 0,
-                        method: Some(req.method().as_str()),
-                        client_addr: client.as_deref(),
-                    },
-                );
-                let client = client.as_deref().unwrap_or_default();
-                warn!("unix socket blocked (client={client}, path={socket_path})");
-                Ok(json_blocked(
-                    "unix-socket",
-                    REASON_NOT_ALLOWED,
-                    /*details*/ None,
-                ))
-            }
-            Err(err) => {
-                warn!("unix socket check failed: {err}");
-                Ok(text_response(StatusCode::INTERNAL_SERVER_ERROR, "error"))
-            }
-        };
-    }
-
     let request_ctx = match RequestContext::try_from(&req) {
         Ok(request_ctx) => request_ctx,
         Err(err) => {
@@ -920,34 +780,6 @@ async fn inject_plaintext_credentials_if_enabled(
     Ok(())
 }
 
-async fn proxy_via_unix_socket(req: Request, socket_path: &str) -> Result<Response> {
-    #[cfg(target_os = "macos")]
-    {
-        let client = UpstreamClient::unix_socket(socket_path);
-
-        let (mut parts, body) = req.into_parts();
-        let path = parts
-            .uri
-            .path_and_query()
-            .map(rama_http::uri::PathAndQuery::as_str)
-            .unwrap_or("/");
-        parts.uri = path
-            .parse()
-            .with_context(|| format!("invalid unix socket request path: {path}"))?;
-        parts.headers.remove("x-unix-socket");
-        remove_hop_by_hop_request_headers(&mut parts.headers);
-
-        let req = Request::from_parts(parts, body);
-        client.serve(req).await.map_err(anyhow::Error::from)
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        let _ = req;
-        let _ = socket_path;
-        Err(anyhow::anyhow!("unix sockets not supported"))
-    }
-}
-
 fn client_addr<T: ExtensionsRef>(input: &T) -> Option<String> {
     input
         .extensions()
@@ -1129,13 +961,6 @@ fn emit_http_block_decision_audit_event(
     args: BlockDecisionAuditEventArgs<'_>,
 ) {
     emit_block_decision_audit_event(app_state, args);
-}
-
-fn emit_http_allow_decision_audit_event(
-    app_state: &NetworkProxyState,
-    args: BlockDecisionAuditEventArgs<'_>,
-) {
-    emit_allow_decision_audit_event(app_state, args);
 }
 
 #[derive(Serialize)]
@@ -1564,89 +1389,6 @@ mod tests {
         drop(stream);
         proxy_task.abort();
         let _ = proxy_task.await;
-    }
-
-    #[tokio::test(flavor = "current_thread")]
-    async fn http_plain_proxy_blocks_unix_socket_when_method_not_allowed() {
-        let state = Arc::new(network_proxy_state_for_policy(NetworkProxyConfig::default()));
-        state
-            .set_network_mode(NetworkMode::Limited)
-            .await
-            .expect("network mode should update");
-
-        let mut req = Request::builder()
-            .method(Method::POST)
-            .uri("http://example.com")
-            .header("x-unix-socket", "/tmp/test.sock")
-            .body(Body::empty())
-            .expect("request should build");
-        req.extensions_mut().insert(state);
-
-        let response = http_plain_proxy(
-            /*policy_decider*/ None, /*environment_id*/ None, req,
-        )
-        .await
-        .unwrap();
-
-        assert_eq!(response.status(), StatusCode::FORBIDDEN);
-        assert_eq!(
-            response.headers().get("x-proxy-error").unwrap(),
-            "blocked-by-method-policy"
-        );
-    }
-
-    #[tokio::test(flavor = "current_thread")]
-    async fn http_plain_proxy_rejects_unix_socket_when_not_allowlisted() {
-        let state = Arc::new(network_proxy_state_for_policy(NetworkProxyConfig::default()));
-
-        let mut req = Request::builder()
-            .method(Method::GET)
-            .uri("http://example.com")
-            .header("x-unix-socket", "/tmp/test.sock")
-            .body(Body::empty())
-            .expect("request should build");
-        req.extensions_mut().insert(state);
-
-        let response = http_plain_proxy(
-            /*policy_decider*/ None, /*environment_id*/ None, req,
-        )
-        .await
-        .unwrap();
-
-        if cfg!(target_os = "macos") {
-            assert_eq!(response.status(), StatusCode::FORBIDDEN);
-            assert_eq!(
-                response.headers().get("x-proxy-error").unwrap(),
-                "blocked-by-allowlist"
-            );
-        } else {
-            assert_eq!(response.status(), StatusCode::NOT_IMPLEMENTED);
-        }
-    }
-
-    #[cfg(target_os = "macos")]
-    #[tokio::test(flavor = "current_thread")]
-    async fn http_plain_proxy_attempts_allowed_unix_socket_proxy() {
-        let state = Arc::new(network_proxy_state_for_policy({
-            let mut network = NetworkProxyConfig::default();
-            network.set_allow_unix_sockets(vec!["/tmp/test.sock".to_string()]);
-            network
-        }));
-
-        let mut req = Request::builder()
-            .method(Method::GET)
-            .uri("http://example.com")
-            .header("x-unix-socket", "/tmp/test.sock")
-            .body(Body::empty())
-            .expect("request should build");
-        req.extensions_mut().insert(state);
-
-        let response = http_plain_proxy(
-            /*policy_decider*/ None, /*environment_id*/ None, req,
-        )
-        .await
-        .unwrap();
-        assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
     }
 
     #[tokio::test]

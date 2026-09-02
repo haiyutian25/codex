@@ -1272,7 +1272,6 @@ strip_request_headers = ["authorization"]
                         enable_socks5_udp: None,
                         allow_upstream_proxy: Some(false),
                         dangerously_allow_non_loopback_proxy: None,
-                        dangerously_allow_all_unix_sockets: None,
                         mode: Some(NetworkMode::Full),
                         domains: Some(NetworkDomainPermissionsToml {
                             entries: BTreeMap::from([(
@@ -1280,7 +1279,6 @@ strip_request_headers = ["authorization"]
                                 NetworkDomainPermissionToml::Allow,
                             )]),
                         }),
-                        unix_sockets: None,
                         allow_local_binding: None,
                         mitm: Some(NetworkMitmToml {
                             hooks: Some(IndexMap::from([(
@@ -3542,73 +3540,6 @@ async fn unknown_builtin_permission_profile_name_is_rejected() -> std::io::Resul
     assert_eq!(
         err.to_string(),
         "default_permissions refers to unknown built-in profile `:unknown`"
-    );
-    Ok(())
-}
-
-#[tokio::test]
-async fn permissions_profiles_allow_direct_write_roots_outside_workspace_root()
--> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let cwd = TempDir::new()?;
-    std::fs::write(cwd.path().join(".git"), "gitdir: nowhere")?;
-    let external_write_dir = TempDir::new()?;
-    let external_write_path =
-        AbsolutePathBuf::from_absolute_path(std::fs::canonicalize(external_write_dir.path())?)?;
-
-    let config = Config::load_from_base_config_with_overrides(
-        ConfigToml {
-            default_permissions: Some("dev".to_string()),
-            permissions: Some(PermissionsToml {
-                entries: BTreeMap::from([(
-                    "dev".to_string(),
-                    PermissionProfileToml {
-                        description: Some("Workspace access.".to_string()),
-                        extends: None,
-                        workspace_roots: None,
-                        filesystem: Some(FilesystemPermissionsToml {
-                            glob_scan_max_depth: None,
-                            entries: BTreeMap::from([(
-                                external_write_path.to_string_lossy().into_owned(),
-                                FilesystemPermissionToml::Access(FileSystemAccessMode::Write),
-                            )]),
-                        }),
-                        network: None,
-                    },
-                )]),
-            }),
-            ..Default::default()
-        },
-        ConfigOverrides {
-            cwd: Some(cwd.path().to_path_buf()),
-            ..Default::default()
-        },
-        codex_home.abs(),
-    )
-    .await?;
-
-    assert_eq!(
-        config.custom_permission_profiles,
-        vec![PermissionProfileCatalogEntry {
-            id: "dev".to_string(),
-            description: Some("Workspace access.".to_string()),
-            allowed: true,
-        }]
-    );
-    assert!(
-        config
-            .permissions
-            .file_system_sandbox_policy()
-            .can_write_path_with_cwd(external_write_path.as_path(), cwd.path())
-    );
-    assert_eq!(
-        &config.legacy_sandbox_policy(),
-        &SandboxPolicy::WorkspaceWrite {
-            writable_roots: vec![external_write_path],
-            network_access: false,
-            exclude_tmpdir_env_var: true,
-            exclude_slash_tmp: true,
-        }
     );
     Ok(())
 }

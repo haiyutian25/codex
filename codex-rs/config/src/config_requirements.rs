@@ -372,39 +372,6 @@ impl std::fmt::Display for NetworkDomainPermissionToml {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
-pub struct NetworkUnixSocketPermissionsToml {
-    #[serde(flatten)]
-    pub entries: BTreeMap<String, NetworkUnixSocketPermissionToml>,
-}
-
-impl NetworkUnixSocketPermissionsToml {
-    pub fn allow_unix_sockets(&self) -> Vec<String> {
-        self.entries
-            .iter()
-            .filter(|(_, permission)| matches!(permission, NetworkUnixSocketPermissionToml::Allow))
-            .map(|(path, _)| path.clone())
-            .collect()
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[serde(rename_all = "lowercase")]
-pub enum NetworkUnixSocketPermissionToml {
-    Allow,
-    Deny,
-}
-
-impl std::fmt::Display for NetworkUnixSocketPermissionToml {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let permission = match self {
-            Self::Allow => "allow",
-            Self::Deny => "deny",
-        };
-        f.write_str(permission)
-    }
-}
-
 #[derive(Serialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct NetworkRequirementsToml {
     pub enabled: Option<bool>,
@@ -412,12 +379,10 @@ pub struct NetworkRequirementsToml {
     pub socks_port: Option<u16>,
     pub allow_upstream_proxy: Option<bool>,
     pub dangerously_allow_non_loopback_proxy: Option<bool>,
-    pub dangerously_allow_all_unix_sockets: Option<bool>,
     pub domains: Option<NetworkDomainPermissionsToml>,
     /// When true, only managed `allowed_domains` are respected while managed
     /// network enforcement is active. User allowlist entries are ignored.
     pub managed_allowed_domains_only: Option<bool>,
-    pub unix_sockets: Option<NetworkUnixSocketPermissionsToml>,
     pub allow_local_binding: Option<bool>,
 }
 
@@ -428,7 +393,6 @@ struct RawNetworkRequirementsToml {
     socks_port: Option<u16>,
     allow_upstream_proxy: Option<bool>,
     dangerously_allow_non_loopback_proxy: Option<bool>,
-    dangerously_allow_all_unix_sockets: Option<bool>,
     domains: Option<NetworkDomainPermissionsToml>,
     #[serde(default)]
     allowed_domains: Option<Vec<String>>,
@@ -437,9 +401,6 @@ struct RawNetworkRequirementsToml {
     managed_allowed_domains_only: Option<bool>,
     #[serde(default)]
     denied_domains: Option<Vec<String>>,
-    unix_sockets: Option<NetworkUnixSocketPermissionsToml>,
-    #[serde(default)]
-    allow_unix_sockets: Option<Vec<String>>,
     allow_local_binding: Option<bool>,
 }
 
@@ -455,13 +416,10 @@ impl<'de> Deserialize<'de> for NetworkRequirementsToml {
             socks_port,
             allow_upstream_proxy,
             dangerously_allow_non_loopback_proxy,
-            dangerously_allow_all_unix_sockets,
             domains,
             allowed_domains,
             managed_allowed_domains_only,
             denied_domains,
-            unix_sockets,
-            allow_unix_sockets,
             allow_local_binding,
         } = raw;
 
@@ -471,24 +429,15 @@ impl<'de> Deserialize<'de> for NetworkRequirementsToml {
             ));
         }
 
-        if unix_sockets.is_some() && allow_unix_sockets.is_some() {
-            return Err(D::Error::custom(
-                "`experimental_network.unix_sockets` cannot be combined with legacy `allow_unix_sockets`",
-            ));
-        }
-
         Ok(Self {
             enabled,
             http_port,
             socks_port,
             allow_upstream_proxy,
             dangerously_allow_non_loopback_proxy,
-            dangerously_allow_all_unix_sockets,
             domains: domains
                 .or_else(|| legacy_domain_permissions_from_lists(allowed_domains, denied_domains)),
             managed_allowed_domains_only,
-            unix_sockets: unix_sockets
-                .or_else(|| legacy_unix_socket_permissions_from_list(allow_unix_sockets)),
             allow_local_binding,
         })
     }
@@ -514,18 +463,6 @@ fn legacy_domain_permissions_from_lists(
     (!entries.is_empty()).then_some(NetworkDomainPermissionsToml { entries })
 }
 
-fn legacy_unix_socket_permissions_from_list(
-    allow_unix_sockets: Option<Vec<String>>,
-) -> Option<NetworkUnixSocketPermissionsToml> {
-    let entries = allow_unix_sockets
-        .unwrap_or_default()
-        .into_iter()
-        .map(|path| (path, NetworkUnixSocketPermissionToml::Allow))
-        .collect::<BTreeMap<_, _>>();
-
-    (!entries.is_empty()).then_some(NetworkUnixSocketPermissionsToml { entries })
-}
-
 /// Normalized network constraints derived from requirements TOML.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct NetworkConstraints {
@@ -534,12 +471,10 @@ pub struct NetworkConstraints {
     pub socks_port: Option<u16>,
     pub allow_upstream_proxy: Option<bool>,
     pub dangerously_allow_non_loopback_proxy: Option<bool>,
-    pub dangerously_allow_all_unix_sockets: Option<bool>,
     pub domains: Option<NetworkDomainPermissionsToml>,
     /// When true, only managed `allowed_domains` are respected while managed
     /// network enforcement is active. User allowlist entries are ignored.
     pub managed_allowed_domains_only: Option<bool>,
-    pub unix_sockets: Option<NetworkUnixSocketPermissionsToml>,
     pub allow_local_binding: Option<bool>,
 }
 
@@ -561,10 +496,8 @@ impl From<NetworkRequirementsToml> for NetworkConstraints {
             socks_port,
             allow_upstream_proxy,
             dangerously_allow_non_loopback_proxy,
-            dangerously_allow_all_unix_sockets,
             domains,
             managed_allowed_domains_only,
-            unix_sockets,
             allow_local_binding,
         } = value;
         Self {
@@ -573,10 +506,8 @@ impl From<NetworkRequirementsToml> for NetworkConstraints {
             socks_port,
             allow_upstream_proxy,
             dangerously_allow_non_loopback_proxy,
-            dangerously_allow_all_unix_sockets,
             domains,
             managed_allowed_domains_only,
-            unix_sockets,
             allow_local_binding,
         }
     }
@@ -3910,7 +3841,6 @@ command = "python3 /enterprise/hooks/pre.py"
             [experimental_network]
             enabled = true
             allow_upstream_proxy = false
-            dangerously_allow_all_unix_sockets = true
             managed_allowed_domains_only = true
             allow_local_binding = false
 
@@ -3918,10 +3848,6 @@ command = "python3 /enterprise/hooks/pre.py"
             "api.example.com" = "allow"
             "*.openai.com" = "allow"
             "blocked.example.com" = "deny"
-
-            [experimental_network.unix_sockets]
-            "/tmp/example.sock" = "allow"
-            "/tmp/blocked.sock" = "deny"
         "#;
 
         let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
@@ -3936,10 +3862,6 @@ command = "python3 /enterprise/hooks/pre.py"
         assert_eq!(sourced_network.source, source);
         assert_eq!(sourced_network.value.enabled, Some(true));
         assert_eq!(sourced_network.value.allow_upstream_proxy, Some(false));
-        assert_eq!(
-            sourced_network.value.dangerously_allow_all_unix_sockets,
-            Some(true)
-        );
         assert_eq!(
             sourced_network.value.domains.as_ref(),
             Some(&NetworkDomainPermissionsToml {
@@ -3962,21 +3884,6 @@ command = "python3 /enterprise/hooks/pre.py"
         assert_eq!(
             sourced_network.value.managed_allowed_domains_only,
             Some(true)
-        );
-        assert_eq!(
-            sourced_network.value.unix_sockets.as_ref(),
-            Some(&NetworkUnixSocketPermissionsToml {
-                entries: BTreeMap::from([
-                    (
-                        "/tmp/blocked.sock".to_string(),
-                        NetworkUnixSocketPermissionToml::Deny,
-                    ),
-                    (
-                        "/tmp/example.sock".to_string(),
-                        NetworkUnixSocketPermissionToml::Allow,
-                    ),
-                ]),
-            })
         );
         assert_eq!(sourced_network.value.allow_local_binding, Some(false));
 
@@ -3989,11 +3896,9 @@ command = "python3 /enterprise/hooks/pre.py"
             [experimental_network]
             enabled = true
             allow_upstream_proxy = false
-            dangerously_allow_all_unix_sockets = true
             allowed_domains = ["api.example.com", "*.openai.com"]
             managed_allowed_domains_only = true
             denied_domains = ["blocked.example.com"]
-            allow_unix_sockets = ["/tmp/example.sock"]
             allow_local_binding = false
         "#;
 
@@ -4009,10 +3914,6 @@ command = "python3 /enterprise/hooks/pre.py"
         assert_eq!(sourced_network.source, source);
         assert_eq!(sourced_network.value.enabled, Some(true));
         assert_eq!(sourced_network.value.allow_upstream_proxy, Some(false));
-        assert_eq!(
-            sourced_network.value.dangerously_allow_all_unix_sockets,
-            Some(true)
-        );
         assert_eq!(
             sourced_network.value.domains.as_ref(),
             Some(&NetworkDomainPermissionsToml {
@@ -4035,15 +3936,6 @@ command = "python3 /enterprise/hooks/pre.py"
         assert_eq!(
             sourced_network.value.managed_allowed_domains_only,
             Some(true)
-        );
-        assert_eq!(
-            sourced_network.value.unix_sockets.as_ref(),
-            Some(&NetworkUnixSocketPermissionsToml {
-                entries: BTreeMap::from([(
-                    "/tmp/example.sock".to_string(),
-                    NetworkUnixSocketPermissionToml::Allow,
-                )]),
-            })
         );
         assert_eq!(sourced_network.value.allow_local_binding, Some(false));
 
@@ -4068,23 +3960,6 @@ command = "python3 /enterprise/hooks/pre.py"
                 .contains("`experimental_network.domains` cannot be combined"),
             "unexpected error: {err:#}"
         );
-
-        let err = from_str::<ConfigRequirementsToml>(
-            r#"
-                [experimental_network]
-                allow_unix_sockets = ["/tmp/example.sock"]
-
-                [experimental_network.unix_sockets]
-                "/tmp/another.sock" = "allow"
-            "#,
-        )
-        .expect_err("mixed network unix socket shapes should fail");
-
-        assert!(
-            err.to_string()
-                .contains("`experimental_network.unix_sockets` cannot be combined"),
-            "unexpected error: {err:#}"
-        );
     }
 
     #[test]
@@ -4102,18 +3977,6 @@ command = "python3 /enterprise/hooks/pre.py"
                 (
                     "blocked.example.com".to_string(),
                     NetworkDomainPermissionToml::Deny,
-                ),
-            ]),
-        };
-        let unix_sockets = NetworkUnixSocketPermissionsToml {
-            entries: BTreeMap::from([
-                (
-                    "/tmp/example.sock".to_string(),
-                    NetworkUnixSocketPermissionToml::Allow,
-                ),
-                (
-                    "/tmp/ignored.sock".to_string(),
-                    NetworkUnixSocketPermissionToml::Deny,
                 ),
             ]),
         };
@@ -4138,10 +4001,6 @@ command = "python3 /enterprise/hooks/pre.py"
             }
             .denied_domains(),
             None
-        );
-        assert_eq!(
-            unix_sockets.allow_unix_sockets(),
-            vec!["/tmp/example.sock".to_string()]
         );
     }
 

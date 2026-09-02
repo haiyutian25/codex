@@ -6473,26 +6473,6 @@
             ],
             "title": "ChatgptAccount",
             "type": "object"
-          },
-          {
-            "properties": {
-              "type": {
-                "enum": [
-                  "amazonBedrock"
-                ],
-                "title": "AmazonBedrockAccountType",
-                "type": "string"
-              },
-              "usesCodexManagedCredentials": {
-                "default": false,
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "title": "AmazonBedrockAccount",
-            "type": "object"
           }
         ]
       },
@@ -7650,20 +7630,6 @@
             "description": "Programmatic Codex auth backed by a personal access token.",
             "enum": [
               "personalAccessToken"
-            ],
-            "type": "string"
-          },
-          {
-            "description": "Amazon Bedrock bearer token managed by Codex.",
-            "enum": [
-              "bedrockApiKey"
-            ],
-            "type": "string"
-          },
-          {
-            "description": "Amazon Bedrock AWS access keys managed by Codex.",
-            "enum": [
-              "bedrockAccessKeys"
             ],
             "type": "string"
           }
@@ -13537,66 +13503,6 @@
             ],
             "title": "ChatgptAuthTokensv2::LoginAccountParams",
             "type": "object"
-          },
-          {
-            "description": "[UNSTABLE] Managed Amazon Bedrock login is experimental.",
-            "properties": {
-              "apiKey": {
-                "type": "string"
-              },
-              "region": {
-                "type": "string"
-              },
-              "type": {
-                "enum": [
-                  "amazonBedrock"
-                ],
-                "title": "AmazonBedrockv2::LoginAccountParamsType",
-                "type": "string"
-              }
-            },
-            "required": [
-              "apiKey",
-              "region",
-              "type"
-            ],
-            "title": "AmazonBedrockv2::LoginAccountParams",
-            "type": "object"
-          },
-          {
-            "description": "[UNSTABLE] Managed Amazon Bedrock AWS access key login is experimental.",
-            "properties": {
-              "accessKeyId": {
-                "type": "string"
-              },
-              "region": {
-                "type": "string"
-              },
-              "secretAccessKey": {
-                "type": "string"
-              },
-              "sessionToken": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": {
-                "enum": [
-                  "amazonBedrockAccessKeys"
-                ],
-                "title": "AmazonBedrockAccessKeysv2::LoginAccountParamsType",
-                "type": "string"
-              }
-            },
-            "required": [
-              "accessKeyId",
-              "region",
-              "secretAccessKey",
-              "type"
-            ],
-            "title": "AmazonBedrockAccessKeysv2::LoginAccountParams",
-            "type": "object"
           }
         ],
         "title": "LoginAccountParams"
@@ -13689,22 +13595,6 @@
               "type"
             ],
             "title": "ChatgptAuthTokensv2::LoginAccountResponse",
-            "type": "object"
-          },
-          {
-            "properties": {
-              "type": {
-                "enum": [
-                  "amazonBedrock"
-                ],
-                "title": "AmazonBedrockv2::LoginAccountResponseType",
-                "type": "string"
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "title": "AmazonBedrockv2::LoginAccountResponse",
             "type": "object"
           }
         ],
@@ -15162,16 +15052,6 @@
               "null"
             ]
           },
-          "allowUnixSockets": {
-            "description": "Legacy compatibility view derived from `unix_sockets`.",
-            "items": {
-              "type": "string"
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
           "allowUpstreamProxy": {
             "type": [
               "boolean",
@@ -15185,12 +15065,6 @@
             },
             "type": [
               "array",
-              "null"
-            ]
-          },
-          "dangerouslyAllowAllUnixSockets": {
-            "type": [
-              "boolean",
               "null"
             ]
           },
@@ -15248,26 +15122,9 @@
               "integer",
               "null"
             ]
-          },
-          "unixSockets": {
-            "additionalProperties": {
-              "$ref": "#/definitions/v2/NetworkUnixSocketPermission"
-            },
-            "description": "Canonical unix socket permission map for `experimental_network`.",
-            "type": [
-              "object",
-              "null"
-            ]
           }
         },
         "type": "object"
-      },
-      "NetworkUnixSocketPermission": {
-        "enum": [
-          "allow",
-          "deny"
-        ],
-        "type": "string"
       },
       "NewThreadModelDefaults": {
         "properties": {

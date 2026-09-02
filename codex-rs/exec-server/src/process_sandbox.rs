@@ -48,7 +48,7 @@ pub(crate) async fn prepare_exec_request(
 ) -> Result<PreparedExecRequest, JSONRPCErrorError> {
     let network_proxy = params.network_proxy.as_ref();
 
-    let (env, managed_network, network_proxy_handle, _network_proxy_restricting_sid) =
+    let (env, managed_network, network_proxy_handle) =
         prepare_managed_network(
             params.managed_network.as_ref(),
             network_proxy,
@@ -209,12 +209,11 @@ async fn prepare_managed_network(
         HashMap<String, String>,
         Option<ManagedNetworkSandboxContext>,
         Option<NetworkProxyHandle>,
-        Option<String>,
     ),
     JSONRPCErrorError,
 > {
     let Some(network_proxy) = network_proxy.cloned() else {
-        return Ok((env, managed_network.cloned(), None, None));
+        return Ok((env, managed_network.cloned(), None));
     };
     let mut state = NetworkProxyState::from_remote_launch_config(network_proxy)
         .map_err(|err| invalid_params(format!("invalid network proxy config: {err}")))?;
@@ -233,29 +232,12 @@ async fn prepare_managed_network(
         .run()
         .await
         .map_err(|err| internal_error(format!("failed to start executor network proxy: {err}")))?;
-    #[cfg(target_os = "windows")]
-    let network_proxy_restricting_sid = Some(
-        proxy
-            .network_proxy_restricting_sid(/*environment_id*/ None)
-            .ok_or_else(|| {
-                internal_error(
-                    "managed Windows proxy route is missing its restricting SID".to_string(),
-                )
-            })?,
-    );
-    #[cfg(not(target_os = "windows"))]
-    let network_proxy_restricting_sid = None;
     let prepared = proxy
         .prepare_for_optional_environment(env, /*environment_id*/ None)
         .map_err(|err| {
             internal_error(format!("failed to prepare executor network proxy: {err}"))
         })?;
-    Ok((
-        prepared.env,
-        Some(prepared.sandbox_context),
-        Some(handle),
-        network_proxy_restricting_sid,
-    ))
+    Ok((prepared.env, Some(prepared.sandbox_context), Some(handle)))
 }
 
 fn native_path(path: &PathUri, label: &str) -> Result<AbsolutePathBuf, JSONRPCErrorError> {

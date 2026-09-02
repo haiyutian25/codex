@@ -7,7 +7,6 @@ use crate::NetworkDomainPermissions;
 use crate::NetworkMode;
 use crate::NetworkProxyAuditMetadata;
 use crate::NetworkProxyConfig;
-use crate::NetworkUnixSocketPermissions;
 
 /// Executor-local proxy launch inputs transported with one process start.
 ///
@@ -65,10 +64,8 @@ pub struct RemoteNetworkProxyConfig {
     pub enable_socks5: bool,
     pub enable_socks5_udp: bool,
     pub allow_upstream_proxy: bool,
-    pub dangerously_allow_all_unix_sockets: bool,
     pub mode: NetworkMode,
     pub domains: Option<NetworkDomainPermissions>,
-    pub unix_sockets: Option<NetworkUnixSocketPermissions>,
     pub allow_local_binding: bool,
 }
 
@@ -87,10 +84,8 @@ impl RemoteNetworkProxyConfig {
             enable_socks5: config.enable_socks5,
             enable_socks5_udp: config.enable_socks5_udp,
             allow_upstream_proxy: config.allow_upstream_proxy,
-            dangerously_allow_all_unix_sockets: config.dangerously_allow_all_unix_sockets,
             mode: config.mode,
             domains: config.domains.clone(),
-            unix_sockets: config.unix_sockets.clone(),
             allow_local_binding: config.allow_local_binding,
         })
     }
@@ -101,10 +96,8 @@ impl RemoteNetworkProxyConfig {
             enable_socks5: self.enable_socks5,
             enable_socks5_udp: self.enable_socks5_udp,
             allow_upstream_proxy: self.allow_upstream_proxy,
-            dangerously_allow_all_unix_sockets: self.dangerously_allow_all_unix_sockets,
             mode: self.mode,
             domains: self.domains,
-            unix_sockets: self.unix_sockets,
             allow_local_binding: self.allow_local_binding,
             ..NetworkProxyConfig::default()
         }

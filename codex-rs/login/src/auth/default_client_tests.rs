@@ -281,16 +281,3 @@ fn test_invalid_suffix_is_sanitized2() {
         "codex_cli_rs/0.0.0 (bad_suffix)"
     );
 }
-
-#[test]
-#[cfg(target_os = "macos")]
-fn test_macos() {
-    use regex_lite::Regex;
-    let user_agent = get_codex_user_agent();
-    let originator = regex_lite::escape(originator().value.as_str());
-    let re = Regex::new(&format!(
-        r"^{originator}/\d+\.\d+\.\d+ \(Mac OS \d+\.\d+\.\d+; (x86_64|arm64)\) (\S+)$"
-    ))
-    .unwrap();
-    assert!(re.is_match(&user_agent));
-}

@@ -8,11 +8,7 @@ use semver::Version;
 use serde::Deserialize;
 
 const BIN_DIRNAME: &str = "bin";
-const CODE_MODE_HOST_EXECUTABLE_NAME: &str = if cfg!(windows) {
-    "codex-code-mode-host.exe"
-} else {
-    "codex-code-mode-host"
-};
+const CODE_MODE_HOST_EXECUTABLE_NAME: &str = "codex-code-mode-host";
 const PACKAGE_METADATA_FILENAME: &str = "codex-package.json";
 const PATH_DIRNAME: &str = "codex-path";
 const RELEASES_DIRNAME: &str = "releases";
@@ -20,12 +16,6 @@ const RESOURCES_DIRNAME: &str = "codex-resources";
 const STANDALONE_PACKAGES_DIRNAME: &str = "standalone";
 const ZSH_DIRNAME: &str = "zsh";
 static INSTALL_CONTEXT: OnceLock<InstallContext> = OnceLock::new();
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum StandalonePlatform {
-    Unix,
-    Windows,
-}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CodexPackageLayout {
@@ -62,8 +52,6 @@ pub enum InstallMethod {
         release_dir: AbsolutePathBuf,
         /// The bundled resource directory for managed dependencies.
         resources_dir: Option<AbsolutePathBuf>,
-        /// The platform of the standalone release, either `Unix` or `Windows`.
-        platform: StandalonePlatform,
     },
     /// A Codex binary launched through the npm-managed `codex.js` shim.
     Npm,
@@ -226,11 +214,7 @@ impl InstallContext {
     }
 
     pub fn bundled_zsh_path(&self) -> Option<AbsolutePathBuf> {
-        if cfg!(windows) {
-            None
-        } else {
-            self.bundled_resource(zsh_resource_path())
-        }
+        self.bundled_resource(zsh_resource_path())
     }
 
     pub fn bundled_zsh_bin_dir(&self) -> Option<AbsolutePathBuf> {
@@ -311,7 +295,6 @@ fn standalone_install_method(
     Some(InstallMethod::Standalone {
         release_dir,
         resources_dir: resources_dir.is_dir().then_some(resources_dir),
-        platform: standalone_platform(),
     })
 }
 
@@ -320,24 +303,12 @@ fn canonical_absolute_path(path: &Path) -> Option<AbsolutePathBuf> {
     AbsolutePathBuf::from_absolute_path(canonical_path).ok()
 }
 
-fn standalone_platform() -> StandalonePlatform {
-    if cfg!(windows) {
-        StandalonePlatform::Windows
-    } else {
-        StandalonePlatform::Unix
-    }
-}
-
 fn existing_dir(path: AbsolutePathBuf) -> Option<AbsolutePathBuf> {
     path.is_dir().then_some(path)
 }
 
 fn default_rg_command() -> PathBuf {
-    if cfg!(windows) {
-        PathBuf::from("rg.exe")
-    } else {
-        PathBuf::from("rg")
-    }
+    PathBuf::from("rg")
 }
 
 fn zsh_resource_path() -> PathBuf {
@@ -360,7 +331,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&resources_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join("codex");
         let resource_host = resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "legacy host")?;
@@ -387,7 +358,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&resources_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join("codex");
         let resource_host = resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(&resource_host, "managed host")?;
@@ -414,7 +385,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME))?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join("codex");
         let legacy_host = bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(&legacy_host, "legacy host")?;
@@ -440,7 +411,7 @@ mod tests {
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         let resources_dir = release_dir.join(RESOURCES_DIRNAME);
         fs::create_dir_all(&resources_dir)?;
-        let exe_path = release_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = release_dir.join("codex");
         fs::write(&exe_path, "")?;
         fs::write(release_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "")?;
         fs::write(
@@ -466,7 +437,6 @@ mod tests {
                 method: InstallMethod::Standalone {
                     release_dir: canonical_release_dir.clone(),
                     resources_dir: Some(canonical_resources_dir.clone()),
-                    platform: standalone_platform(),
                 },
                 package_layout: None,
             }
@@ -497,7 +467,7 @@ mod tests {
             .path()
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         fs::create_dir_all(&release_dir)?;
-        let exe_path = release_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = release_dir.join("codex");
         fs::write(&exe_path, "")?;
 
         let context = InstallContext::from_exe_with_codex_home(
@@ -532,16 +502,14 @@ mod tests {
 }
 "#,
         )?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join("codex");
         fs::write(&exe_path, "")?;
         fs::write(bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "")?;
         fs::write(resources_dir.join(TEST_RESOURCE_NAME), "")?;
         fs::write(path_dir.join(default_rg_command()), "")?;
-        if !cfg!(windows) {
-            let zsh_path = resources_dir.join(zsh_resource_path());
-            fs::create_dir_all(zsh_path.parent().expect("zsh path should have parent"))?;
-            fs::write(&zsh_path, "")?;
-        }
+        let zsh_path = resources_dir.join(zsh_resource_path());
+        fs::create_dir_all(zsh_path.parent().expect("zsh path should have parent"))?;
+        fs::write(&zsh_path, "")?;
         let canonical_package_dir =
             AbsolutePathBuf::from_absolute_path(package_dir.path().canonicalize()?)?;
         let canonical_bin_dir = AbsolutePathBuf::from_absolute_path(bin_dir.canonicalize()?)?;
@@ -596,19 +564,14 @@ mod tests {
             context.bundled_resource(TEST_RESOURCE_NAME),
             Some(canonical_resources_dir.join(TEST_RESOURCE_NAME))
         );
-        if cfg!(windows) {
-            assert_eq!(context.bundled_zsh_path(), None);
-            assert_eq!(context.bundled_zsh_bin_dir(), None);
-        } else {
-            assert_eq!(
-                context.bundled_zsh_path(),
-                Some(canonical_resources_dir.join(zsh_resource_path()))
-            );
-            assert_eq!(
-                context.bundled_zsh_bin_dir(),
-                Some(canonical_resources_dir.join(ZSH_DIRNAME).join(BIN_DIRNAME))
-            );
-        }
+        assert_eq!(
+            context.bundled_zsh_path(),
+            Some(canonical_resources_dir.join(zsh_resource_path()))
+        );
+        assert_eq!(
+            context.bundled_zsh_bin_dir(),
+            Some(canonical_resources_dir.join(ZSH_DIRNAME).join(BIN_DIRNAME))
+        );
         Ok(())
     }
 
@@ -655,7 +618,7 @@ mod tests {
         fs::create_dir_all(&resources_dir)?;
         fs::create_dir_all(&path_dir)?;
         fs::write(package_dir.join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join("codex");
         fs::write(&exe_path, "")?;
         fs::write(resources_dir.join(TEST_RESOURCE_NAME), "")?;
         fs::write(path_dir.join(default_rg_command()), "")?;
@@ -678,7 +641,6 @@ mod tests {
                 method: InstallMethod::Standalone {
                     release_dir: canonical_package_dir.clone(),
                     resources_dir: Some(canonical_resources_dir.clone()),
-                    platform: standalone_platform(),
                 },
                 package_layout: Some(CodexPackageLayout {
                     package_dir: canonical_package_dir,
@@ -709,7 +671,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&path_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join("codex");
         fs::write(&exe_path, "")?;
         fs::write(path_dir.join(default_rg_command()), "")?;
         let canonical_path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
@@ -736,7 +698,7 @@ mod tests {
         let bin_dir = package_dir.path().join(BIN_DIRNAME);
         fs::create_dir_all(&bin_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join("codex");
         fs::write(&exe_path, "")?;
 
         let context = InstallContext::from_exe_with_codex_home(
@@ -760,7 +722,7 @@ mod tests {
         fs::create_dir_all(resources_dir.join(TEST_RESOURCE_NAME))?;
         fs::create_dir_all(path_dir.join(default_rg_command()))?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+        let exe_path = bin_dir.join("codex");
         fs::write(&exe_path, "")?;
         let fallback_exe_path = package_dir.path().join("fallback-codex");
         fs::write(&fallback_exe_path, "")?;

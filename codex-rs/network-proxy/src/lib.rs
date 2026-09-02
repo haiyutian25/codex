@@ -22,10 +22,6 @@ mod runtime;
 mod socks5;
 mod state;
 mod upstream;
-#[cfg(target_os = "windows")]
-mod windows_proxy_ingress;
-#[cfg(target_os = "windows")]
-mod windows_tcp_attribution;
 
 pub use attribution::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
 pub use attribution::write_attribution_frame;
@@ -36,8 +32,6 @@ pub use config::NetworkDomainPermissionEntry;
 pub use config::NetworkDomainPermissions;
 pub use config::NetworkMode;
 pub use config::NetworkProxyConfig;
-pub use config::NetworkUnixSocketPermission;
-pub use config::NetworkUnixSocketPermissions;
 pub use config::host_and_port_from_network_addr;
 pub use config::managed_proxy_ports;
 pub use credential_broker::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
@@ -66,8 +60,6 @@ pub use policy::normalize_host;
 pub use proxy::ALL_PROXY_ENV_KEYS;
 pub use proxy::ALLOW_LOCAL_BINDING_ENV_KEY;
 pub use proxy::Args;
-#[cfg(target_os = "macos")]
-pub use proxy::CODEX_PROXY_GIT_SSH_COMMAND_MARKER;
 pub use proxy::DEFAULT_NO_PROXY_VALUE;
 pub use proxy::ManagedNetworkSandboxContext;
 pub use proxy::NO_PROXY_ENV_KEYS;
@@ -76,8 +68,6 @@ pub use proxy::NetworkProxyBuilder;
 pub use proxy::NetworkProxyHandle;
 pub use proxy::PROXY_ACTIVE_ENV_KEY;
 pub use proxy::PROXY_ENV_KEYS;
-#[cfg(target_os = "macos")]
-pub use proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
 pub use proxy::PROXY_URL_ENV_KEYS;
 pub use proxy::PreparedManagedNetwork;
 pub use proxy::has_proxy_url_env_vars;

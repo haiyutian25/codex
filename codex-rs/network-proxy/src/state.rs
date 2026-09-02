@@ -1,7 +1,6 @@
 use crate::config::NetworkDomainPermissions;
 use crate::config::NetworkMode;
 use crate::config::NetworkProxyConfig;
-use crate::config::NetworkUnixSocketPermissions;
 use crate::mitm::MitmState;
 use crate::mitm::MitmUpstreamConfig;
 use crate::mitm_hook::MitmHookConfig;
@@ -29,12 +28,10 @@ pub struct NetworkProxyConstraints {
     pub mode: Option<NetworkMode>,
     pub allow_upstream_proxy: Option<bool>,
     pub dangerously_allow_non_loopback_proxy: Option<bool>,
-    pub dangerously_allow_all_unix_sockets: Option<bool>,
     pub allowed_domains: Option<Vec<String>>,
     pub allowlist_expansion_enabled: Option<bool>,
     pub denied_domains: Option<Vec<String>>,
     pub denylist_expansion_enabled: Option<bool>,
-    pub allow_unix_sockets: Option<Vec<String>>,
     pub allow_local_binding: Option<bool>,
 }
 
@@ -44,11 +41,8 @@ pub struct PartialNetworkProxyConfig {
     pub mode: Option<NetworkMode>,
     pub allow_upstream_proxy: Option<bool>,
     pub dangerously_allow_non_loopback_proxy: Option<bool>,
-    pub dangerously_allow_all_unix_sockets: Option<bool>,
     #[serde(default)]
     pub domains: Option<NetworkDomainPermissions>,
-    #[serde(default)]
-    pub unix_sockets: Option<NetworkUnixSocketPermissions>,
     pub allow_local_binding: Option<bool>,
     pub mitm: Option<bool>,
     pub credential_broker: Option<bool>,
@@ -74,7 +68,6 @@ pub fn build_config_state(
     if brokerage_created_default_allowlist {
         config.set_allowed_domains(vec!["*".to_string()]);
     }
-    crate::config::validate_unix_socket_allowlist_paths(&config)?;
     anyhow::ensure!(
         !config.credential_broker || config.mitm,
         "network.credential_broker requires network.mitm = true"
@@ -136,7 +129,6 @@ pub fn validate_policy_against_constraints(
         .iter()
         .map(|entry| entry.to_ascii_lowercase())
         .collect();
-    let config_allow_unix_sockets = config.allow_unix_sockets();
     validate_mitm_hook_config(config).map_err(invalid_mitm_hook_configuration)?;
     validate_non_global_wildcard_domain_patterns("network.denied_domains", &config_denied_domains)?;
     if let Some(max_enabled) = constraints.enabled {
@@ -201,24 +193,6 @@ pub fn validate_policy_against_constraints(
                 } else {
                     Ok(())
                 }
-            }
-        },
-    )?;
-
-    let allow_all_unix_sockets = constraints
-        .dangerously_allow_all_unix_sockets
-        .unwrap_or(constraints.allow_unix_sockets.is_none());
-    validate(
-        config.dangerously_allow_all_unix_sockets,
-        move |candidate| {
-            if *candidate && !allow_all_unix_sockets {
-                Err(invalid_value(
-                    "network.dangerously_allow_all_unix_sockets",
-                    "true",
-                    "false (disabled by managed config)",
-                ))
-            } else {
-                Ok(())
             }
         },
     )?;
@@ -369,30 +343,6 @@ pub fn validate_policy_against_constraints(
                 })?;
             }
         }
-    }
-
-    if let Some(allow_unix_sockets) = &constraints.allow_unix_sockets {
-        let allowed_set: HashSet<String> = allow_unix_sockets
-            .iter()
-            .map(|s| s.to_ascii_lowercase())
-            .collect();
-        validate(config_allow_unix_sockets, move |candidate| {
-            let mut invalid = Vec::new();
-            for entry in candidate {
-                if !allowed_set.contains(&entry.to_ascii_lowercase()) {
-                    invalid.push(entry.clone());
-                }
-            }
-            if invalid.is_empty() {
-                Ok(())
-            } else {
-                Err(invalid_value(
-                    "network.allow_unix_sockets",
-                    format!("{invalid:?}"),
-                    "subset of managed allow_unix_sockets",
-                ))
-            }
-        })?;
     }
 
     Ok(())

@@ -5,8 +5,6 @@ use crate::sandboxing::ExecOptions;
 use crate::shell::ShellType;
 use crate::tools::sandboxing::SandboxAttempt;
 use crate::tools::sandboxing::managed_network_for_sandbox_permissions;
-#[cfg(target_os = "macos")]
-use codex_network_proxy::CODEX_PROXY_GIT_SSH_COMMAND_MARKER;
 use codex_network_proxy::CUSTOM_CA_ENV_KEYS;
 use codex_network_proxy::ConfigReloader;
 use codex_network_proxy::ConfigReloaderFuture;
@@ -17,8 +15,6 @@ use codex_network_proxy::NetworkProxyConstraints;
 use codex_network_proxy::NetworkProxyState;
 use codex_network_proxy::PROXY_ACTIVE_ENV_KEY;
 use codex_network_proxy::PROXY_ENV_KEYS;
-#[cfg(target_os = "macos")]
-use codex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
 use codex_protocol::models::PermissionProfile;
 use codex_sandboxing::SandboxManager;
 use codex_sandboxing::SandboxType;
@@ -152,8 +148,6 @@ async fn explicit_escalation_prepares_exec_without_managed_network() -> anyhow::
     for key in CUSTOM_CA_ENV_KEYS {
         assert_eq!(exec_request.env.get(key), None, "{key} should be unset");
     }
-    #[cfg(target_os = "macos")]
-    assert_eq!(exec_request.env.get(PROXY_GIT_SSH_COMMAND_ENV_KEY), None);
     assert_eq!(
         exec_request.env.get("CUSTOM_ENV"),
         Some(&"kept".to_string())
@@ -790,135 +784,6 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
         format!("{dummy}\nghp_snapshot_only\ngithub.example.com")
     );
     Ok(())
-}
-
-#[cfg(target_os = "macos")]
-#[test]
-fn maybe_wrap_shell_lc_with_snapshot_refreshes_codex_proxy_git_ssh_command() {
-    let dir = tempdir().expect("create temp dir");
-    let snapshot_path = dir.path().join("snapshot.sh");
-    let stale_command = format!(
-        "{CODEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
-    );
-    let fresh_command = format!(
-        "{CODEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:48081 %h %p'"
-    );
-    std::fs::write(
-        &snapshot_path,
-        format!(
-            "# Snapshot file\nexport {PROXY_GIT_SSH_COMMAND_ENV_KEY}='{}'\n",
-            shell_single_quote(&stale_command)
-        ),
-    )
-    .expect("write snapshot");
-    let (session_shell, shell_snapshot) =
-        shell_with_snapshot(ShellType::Bash, "/bin/bash", snapshot_path.abs());
-    let command = vec![
-        "/bin/bash".to_string(),
-        "-lc".to_string(),
-        format!("printf '%s' \"${PROXY_GIT_SSH_COMMAND_ENV_KEY}\""),
-    ];
-    let rewritten = maybe_wrap_shell_lc_with_snapshot(
-        &command,
-        &session_shell,
-        Some(&shell_snapshot),
-        &HashMap::new(),
-        &HashMap::new(),
-        &RuntimePathPrepends::default(),
-    );
-    let output = Command::new(&rewritten[0])
-        .args(&rewritten[1..])
-        .env(PROXY_GIT_SSH_COMMAND_ENV_KEY, &fresh_command)
-        .output()
-        .expect("run rewritten command");
-
-    assert!(output.status.success(), "command failed: {output:?}");
-    assert_eq!(String::from_utf8_lossy(&output.stdout), fresh_command);
-}
-
-#[cfg(target_os = "macos")]
-#[test]
-fn maybe_wrap_shell_lc_with_snapshot_restores_custom_git_ssh_command() {
-    let dir = tempdir().expect("create temp dir");
-    let snapshot_path = dir.path().join("snapshot.sh");
-    let stale_command = format!(
-        "{CODEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
-    );
-    let custom_command = "ssh -o ProxyCommand='tsh proxy ssh --cluster=dev %r@%h:%p'";
-    std::fs::write(
-        &snapshot_path,
-        format!(
-            "# Snapshot file\nexport {PROXY_GIT_SSH_COMMAND_ENV_KEY}='{}'\n",
-            shell_single_quote(&stale_command)
-        ),
-    )
-    .expect("write snapshot");
-    let (session_shell, shell_snapshot) =
-        shell_with_snapshot(ShellType::Bash, "/bin/bash", snapshot_path.abs());
-    let command = vec![
-        "/bin/bash".to_string(),
-        "-lc".to_string(),
-        format!("printf '%s' \"${PROXY_GIT_SSH_COMMAND_ENV_KEY}\""),
-    ];
-    let rewritten = maybe_wrap_shell_lc_with_snapshot(
-        &command,
-        &session_shell,
-        Some(&shell_snapshot),
-        &HashMap::new(),
-        &HashMap::new(),
-        &RuntimePathPrepends::default(),
-    );
-    let output = Command::new(&rewritten[0])
-        .args(&rewritten[1..])
-        .env(PROXY_GIT_SSH_COMMAND_ENV_KEY, custom_command)
-        .output()
-        .expect("run rewritten command");
-
-    assert!(output.status.success(), "command failed: {output:?}");
-    assert_eq!(String::from_utf8_lossy(&output.stdout), custom_command);
-}
-
-#[cfg(target_os = "macos")]
-#[test]
-fn maybe_wrap_shell_lc_with_snapshot_clears_stale_codex_git_ssh_command_without_live_command() {
-    let dir = tempdir().expect("create temp dir");
-    let snapshot_path = dir.path().join("snapshot.sh");
-    let stale_command = format!(
-        "{CODEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
-    );
-    std::fs::write(
-        &snapshot_path,
-        format!(
-            "# Snapshot file\nexport {PROXY_GIT_SSH_COMMAND_ENV_KEY}='{}'\n",
-            shell_single_quote(&stale_command)
-        ),
-    )
-    .expect("write snapshot");
-    let (session_shell, shell_snapshot) =
-        shell_with_snapshot(ShellType::Bash, "/bin/bash", snapshot_path.abs());
-    let command = vec![
-        "/bin/bash".to_string(),
-        "-lc".to_string(),
-        format!(
-            "if [ \"${{{PROXY_GIT_SSH_COMMAND_ENV_KEY}+x}}\" = x ]; then printf 'set'; else printf 'unset'; fi"
-        ),
-    ];
-    let rewritten = maybe_wrap_shell_lc_with_snapshot(
-        &command,
-        &session_shell,
-        Some(&shell_snapshot),
-        &HashMap::new(),
-        &HashMap::new(),
-        &RuntimePathPrepends::default(),
-    );
-    let output = Command::new(&rewritten[0])
-        .args(&rewritten[1..])
-        .env_remove(PROXY_GIT_SSH_COMMAND_ENV_KEY)
-        .output()
-        .expect("run rewritten command");
-
-    assert!(output.status.success(), "command failed: {output:?}");
-    assert_eq!(String::from_utf8_lossy(&output.stdout), "unset");
 }
 
 #[test]

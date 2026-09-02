@@ -131,10 +131,10 @@ impl PluginMetricsSidecar {
         let temp_dir = environment.info().await.ok()?.temp_dir?;
         // Permission overlays still use host-native AbsolutePathBuf roots, so a
         // foreign executor path cannot be granted its exact sidecar directory.
-        if !cfg!(unix) || temp_dir.infer_path_convention() != Some(PathConvention::Posix) {
+        if temp_dir.infer_path_convention() != Some(PathConvention::Posix) {
             tracing::debug!(
                 executor_temp_dir = %temp_dir,
-                "plugin metrics require POSIX executor paths on a POSIX frontend"
+                "plugin metrics require POSIX executor paths"
             );
             return None;
         }
@@ -245,11 +245,7 @@ impl PluginMetricsSidecar {
 }
 
 pub fn strip_output_env(env: &mut HashMap<String, String>) {
-    if cfg!(windows) {
-        env.retain(|key, _| !key.eq_ignore_ascii_case(PLUGIN_METRICS_OUTPUT_ENV_VAR));
-    } else {
-        env.remove(PLUGIN_METRICS_OUTPUT_ENV_VAR);
-    }
+    env.remove(PLUGIN_METRICS_OUTPUT_ENV_VAR);
 }
 
 fn parse_output(

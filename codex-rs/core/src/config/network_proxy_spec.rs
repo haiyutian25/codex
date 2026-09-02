@@ -191,7 +191,6 @@ impl NetworkProxySpec {
                 NetworkProxyConfig {
                     enabled: true,
                     // Without a controller, the owner supplies the entire permission ceiling.
-                    dangerously_allow_all_unix_sockets: true,
                     allow_local_binding: true,
                     ..NetworkProxyConfig::default()
                 },
@@ -316,13 +315,6 @@ impl NetworkProxySpec {
             constraints.dangerously_allow_non_loopback_proxy =
                 Some(dangerously_allow_non_loopback_proxy);
         }
-        if let Some(dangerously_allow_all_unix_sockets) =
-            requirements.dangerously_allow_all_unix_sockets
-        {
-            config.dangerously_allow_all_unix_sockets = dangerously_allow_all_unix_sockets;
-            constraints.dangerously_allow_all_unix_sockets =
-                Some(dangerously_allow_all_unix_sockets);
-        }
         let managed_allowed_domains = if hard_deny_allowlist_misses {
             Some(
                 requirements
@@ -369,15 +361,6 @@ impl NetworkProxySpec {
             config.set_denied_domains(effective_denied_domains);
             constraints.denied_domains = Some(managed_denied_domains);
             constraints.denylist_expansion_enabled = Some(denylist_expansion_enabled);
-        }
-        if requirements.unix_sockets.is_some() {
-            let allow_unix_sockets = requirements
-                .unix_sockets
-                .as_ref()
-                .map(codex_config::NetworkUnixSocketPermissionsToml::allow_unix_sockets)
-                .unwrap_or_default();
-            config.set_allow_unix_sockets(allow_unix_sockets.clone());
-            constraints.allow_unix_sockets = Some(allow_unix_sockets);
         }
         if let Some(allow_local_binding) = requirements.allow_local_binding {
             config.allow_local_binding = allow_local_binding;

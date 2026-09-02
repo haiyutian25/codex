@@ -49,10 +49,6 @@ mode = "full" # default when unset; use "limited" for read-only mode
 # the operating-system sandbox when local binding is disabled.
 allow_local_binding = false
 
-# DANGEROUS (macOS-only): bypasses unix socket allowlisting and permits any
-# absolute socket path from `x-unix-socket`.
-dangerously_allow_all_unix_sockets = false
-
 # Hosts must match the allowlist (unless denied).
 # Use exact hosts or scoped wildcards like `*.openai.com` or `**.openai.com`.
 # The global `*` wildcard is rejected.
@@ -74,10 +70,6 @@ action = ["strip_auth"]
 # Named actions can be shared across hooks and overridden by higher-precedence config layers.
 [permissions.workspace.network.mitm.actions.strip_auth]
 strip_request_headers = ["authorization"]
-
-# macOS-only: allows proxying to a unix socket when request includes `x-unix-socket: /path`.
-[permissions.workspace.network.unix_sockets]
-"/tmp/example.sock" = "allow"
 ```
 
 ### 2) Run the proxy
@@ -147,10 +139,6 @@ let handle = proxy.run().await?;
 handle.shutdown().await?;
 ```
 
-When unix socket proxying is enabled (`unix_sockets` or
-`dangerously_allow_all_unix_sockets`), proxy bind overrides are still clamped to loopback to
-avoid turning the proxy into a remote bridge to local daemons.
-
 ### Policy hook (exec-policy mapping)
 
 The proxy exposes a policy hook (`NetworkPolicyDecider`) that can override allowlist-only blocks.
@@ -171,7 +159,7 @@ Event name:
 - `codex.network_proxy.policy_decision`
   - emitted for each policy decision (`domain` and `non_domain`).
   - `network.policy.scope = "domain"` for host-policy evaluations (`evaluate_host_policy`).
-  - `network.policy.scope = "non_domain"` for mode-guard/proxy-state checks (including unix-socket guard paths and unix-socket allow decisions).
+  - `network.policy.scope = "non_domain"` for mode-guard/proxy-state checks.
 
 Common fields:
 
@@ -193,17 +181,10 @@ Common fields:
   - `client.address` (defaults to `"unknown"` when absent)
   - `network.policy.override` (`true` only when decider-allow overrides baseline `not_allowed`)
 
-Unix-socket block-path audits use sentinel endpoint values:
-
-- `server.address = "unix-socket"`
-- `server.port = 0`
-
 Audit events intentionally avoid logging full URL/path/query data.
 
 ## Platform notes
 
-- Unix socket proxying via the `x-unix-socket` header is **macOS-only**; other platforms will
-  reject unix socket requests.
 - HTTPS tunneling uses rustls via Rama's `rama-tls-rustls`; this avoids BoringSSL/OpenSSL symbol
   collisions in mixed TLS dependency graphs.
 
@@ -226,10 +207,6 @@ what it can reasonably guarantee.
 - Listener safety defaults:
   - the HTTP proxy listener clamps non-loopback binds unless explicitly enabled via
     `dangerously_allow_non_loopback_proxy`
-- when unix socket proxying is enabled, all proxy listeners are forced to loopback to avoid turning the
-    proxy into a remote bridge into local daemons.
-- `dangerously_allow_all_unix_sockets = true` bypasses the unix socket allowlist entirely (still
-  macOS-only and absolute-path-only). Use only in tightly controlled environments.
 - `enabled` is enforced at runtime; when false the proxy no-ops and does not bind listeners.
 Limitations:
 

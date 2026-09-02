@@ -7,10 +7,6 @@ pub mod unix_fds;
 mod tests;
 #[cfg(unix)]
 mod unix_io;
-#[cfg(windows)]
-mod win;
-#[cfg(windows)]
-mod windows_input;
 
 pub const DEFAULT_OUTPUT_BYTES_CAP: usize = 1024 * 1024;
 
@@ -36,19 +32,8 @@ pub use process::spawn_from_driver;
 pub type ExecCommandSession = ProcessHandle;
 /// Backwards-compatible alias for SpawnedProcess.
 pub type SpawnedPty = SpawnedProcess;
-/// Report whether ConPTY is available on this platform (Windows only).
-#[cfg(windows)]
-pub use win::conpty_supported;
-/// Report whether ConPTY is available on this platform (non-Windows always true).
-#[cfg(not(windows))]
+/// Report whether ConPTY is available on this platform (always true now that
+/// the Windows ConPTY backend has been removed).
 pub fn conpty_supported() -> bool {
     true
 }
-#[cfg(windows)]
-pub use win::JobObject;
-#[cfg(windows)]
-pub use win::PsuedoCon;
-#[cfg(windows)]
-pub use win::conpty::RawConPty;
-#[cfg(windows)]
-pub use windows_input::WindowsTtyInputNormalizer;

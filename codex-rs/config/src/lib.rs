@@ -101,8 +101,6 @@ pub use config_requirements::NetworkConstraints;
 pub use config_requirements::NetworkDomainPermissionToml;
 pub use config_requirements::NetworkDomainPermissionsToml;
 pub use config_requirements::NetworkRequirementsToml;
-pub use config_requirements::NetworkUnixSocketPermissionToml;
-pub use config_requirements::NetworkUnixSocketPermissionsToml;
 pub use config_requirements::NewThreadModelDefaultsToml;
 pub use config_requirements::RemoteSandboxConfigToml;
 pub use config_requirements::RequirementSource;

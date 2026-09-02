@@ -37,8 +37,6 @@ pub use codex_core::McpManager;
 pub use codex_core::NetworkDomainPermission;
 pub use codex_core::NetworkDomainPermissionEntry;
 pub use codex_core::NetworkDomainPermissions;
-pub use codex_core::NetworkUnixSocketPermission;
-pub use codex_core::NetworkUnixSocketPermissions;
 pub use codex_core::NewThread;
 pub use codex_core::NotSubmittedReason;
 pub use codex_core::RecoverTurnRequest;

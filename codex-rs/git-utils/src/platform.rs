@@ -14,24 +14,15 @@ pub fn create_symlink(
     Ok(())
 }
 
-#[cfg(windows)]
+#[cfg(not(unix))]
 pub fn create_symlink(
-    source: &Path,
-    link_target: &Path,
-    destination: &Path,
+    _source: &Path,
+    _link_target: &Path,
+    _destination: &Path,
 ) -> Result<(), GitToolingError> {
-    use std::os::windows::fs::FileTypeExt;
-    use std::os::windows::fs::symlink_dir;
-    use std::os::windows::fs::symlink_file;
-
-    let metadata = std::fs::symlink_metadata(source)?;
-    if metadata.file_type().is_symlink_dir() {
-        symlink_dir(link_target, destination)?;
-    } else {
-        symlink_file(link_target, destination)?;
-    }
-    Ok(())
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "codex-git symlink support is only implemented for Unix",
+    )
+    .into())
 }
-
-#[cfg(not(any(unix, windows)))]
-compile_error!("codex-git symlink support is only implemented for Unix and Windows");

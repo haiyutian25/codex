@@ -2342,9 +2342,6 @@
         "credential_broker": {
           "type": "boolean"
         },
-        "dangerously_allow_all_unix_sockets": {
-          "type": "boolean"
-        },
         "dangerously_allow_non_loopback_proxy": {
           "type": "boolean"
         },
@@ -2371,12 +2368,6 @@
         },
         "socks_url": {
           "type": "string"
-        },
-        "unix_sockets": {
-          "additionalProperties": {
-            "$ref": "#/definitions/NetworkProxyUnixSocketPermissionToml"
-          },
-          "type": "object"
         }
       },
       "type": "object"
@@ -2395,13 +2386,6 @@
       ],
       "type": "string"
     },
-    "NetworkProxyUnixSocketPermissionToml": {
-      "enum": [
-        "allow",
-        "deny"
-      ],
-      "type": "string"
-    },
     "NetworkToml": {
       "additionalProperties": false,
       "properties": {
@@ -2409,9 +2393,6 @@
           "type": "boolean"
         },
         "allow_upstream_proxy": {
-          "type": "boolean"
-        },
-        "dangerously_allow_all_unix_sockets": {
           "type": "boolean"
         },
         "dangerously_allow_non_loopback_proxy": {
@@ -2440,21 +2421,8 @@
         },
         "socks_url": {
           "type": "string"
-        },
-        "unix_sockets": {
-          "$ref": "#/definitions/NetworkUnixSocketPermissionsToml"
         }
       },
-      "type": "object"
-    },
-    "NetworkUnixSocketPermissionToml": {
-      "enum": [
-        "allow",
-        "deny"
-      ],
-      "type": "string"
-    },
-    "NetworkUnixSocketPermissionsToml": {
       "type": "object"
     },
     "NonPrefixedMcpToolNamesConfigToml": {

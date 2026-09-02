@@ -13,13 +13,9 @@ use codex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
 use codex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
 #[cfg(unix)]
 use codex_install_context::InstallContext;
-#[cfg(target_os = "macos")]
-use codex_network_proxy::CODEX_PROXY_GIT_SSH_COMMAND_MARKER;
 use codex_network_proxy::CUSTOM_CA_ENV_KEYS;
 use codex_network_proxy::PROXY_ACTIVE_ENV_KEY;
 use codex_network_proxy::PROXY_ENV_KEYS;
-#[cfg(target_os = "macos")]
-use codex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
 pub(crate) use codex_network_proxy::is_managed_proxy_env_var;
 pub(crate) use codex_network_proxy::strip_managed_proxy_env;
 use codex_protocol::shell_environment::is_non_inheritable_env_var;
@@ -283,30 +279,7 @@ fn build_proxy_env_exports(env: &HashMap<String, String>) -> (String, String) {
             "if [ -n \"$__CODEX_SNAPSHOT_PROXY_ENV_SET\" ] || [ -n \"${{{key}+x}}\" ]; then\n{restores}\nfi"
         ),
     );
-    let git_blocks = build_codex_proxy_git_ssh_command_exports();
-    (
-        join_shell_blocks([proxy_blocks.0, git_blocks.0]),
-        join_shell_blocks([proxy_blocks.1, git_blocks.1]),
-    )
-}
-
-#[cfg(target_os = "macos")]
-fn build_codex_proxy_git_ssh_command_exports() -> (String, String) {
-    let key = PROXY_GIT_SSH_COMMAND_ENV_KEY;
-    let marker_pattern = format!("{}\\ *", CODEX_PROXY_GIT_SSH_COMMAND_MARKER.trim_end());
-    (
-        format!(
-            "__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET=\"${{{key}+x}}\"\n__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND=\"${{{key}-}}\"\ncase \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\" in\n  {marker_pattern}) __CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED=1 ;;\n  *) __CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED= ;;\nesac"
-        ),
-        format!(
-            "case \"${{{key}-}}\" in\n  {marker_pattern}) __CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED=1 ;;\n  *) __CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED= ;;\nesac\nif [ -n \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED\" ]; then\n  if [ -z \"${{{key}+x}}\" ] || [ -n \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED\" ]; then\n    export {key}=\"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\"\n  fi\nelif [ -n \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED\" ]; then\n  if [ -n \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET\" ]; then\n    export {key}=\"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\"\n  else\n    unset {key}\n  fi\nfi"
-        ),
-    )
-}
-
-#[cfg(not(target_os = "macos"))]
-fn build_codex_proxy_git_ssh_command_exports() -> (String, String) {
-    (String::new(), String::new())
+    proxy_blocks
 }
 
 fn build_override_exports_for_keys(variable_prefix: &str, keys: &[&str]) -> (String, String) {

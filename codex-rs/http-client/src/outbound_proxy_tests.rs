@@ -188,15 +188,6 @@ fn reqwest_default_route_preserves_transport_proxy_behavior() {
     assert_eq!(route, OutboundProxyRoute::TransportDefault);
 }
 
-#[cfg(target_os = "macos")]
-#[test]
-fn macos_proxy_configuration_rejects_invalid_destination() {
-    assert_eq!(
-        macos_system_proxy_configuration("not a valid destination"),
-        MacosSystemProxyConfiguration::Unavailable
-    );
-}
-
 impl EnvSource for MapEnv {
     fn var(&self, key: &str) -> Option<String> {
         self.values.get(key).cloned()
@@ -310,29 +301,6 @@ fn unavailable_system_route_preserves_wss_http_proxy_fallback() {
             no_proxy: None,
         }
     );
-}
-
-#[cfg(any(target_os = "windows", target_os = "macos"))]
-#[tokio::test]
-async fn async_resolution_uses_cached_route_before_global_permit() {
-    let request_url = "https://cached-fast-path.test/request";
-    cache_system_proxy_decision(request_url, SystemProxyDecision::Direct);
-    let factory = HttpClientFactory::new(OutboundProxyPolicy::RespectSystemProxy);
-    let permit = ASYNC_SYSTEM_PROXY_RESOLUTION_PERMIT
-        .acquire()
-        .await
-        .expect("global proxy permit should stay open");
-
-    let route = tokio::time::timeout(
-        Duration::from_secs(2),
-        factory.resolve_proxy_route_async(request_url.to_string()),
-    )
-    .await
-    .expect("cached resolution should not wait for the global permit")
-    .expect("cached route should resolve");
-    drop(permit);
-
-    assert_eq!(route, OutboundProxyRoute::Direct);
 }
 
 #[tokio::test]
@@ -481,18 +449,6 @@ async fn route_aware_pool_logs_only_the_final_redirect_outcome() {
 }
 
 #[test]
-fn parses_pac_proxy_tokens() {
-    assert_eq!(
-        parse_proxy_list("PROXY proxy.internal:8080; DIRECT", "https"),
-        ParsedProxyListDecision::Proxy("http://proxy.internal:8080".to_string())
-    );
-    assert_eq!(
-        parse_proxy_list("HTTPS proxy.internal:8443", "https"),
-        ParsedProxyListDecision::Proxy("https://proxy.internal:8443".to_string())
-    );
-}
-
-#[test]
 fn unavailable_system_proxy_decision_is_cached() {
     let request_url = "https://unavailable-cache.test/oauth/token";
     let decision = SystemProxyDecision::Unavailable {
@@ -591,57 +547,6 @@ fn system_proxy_cache_is_bounded() {
     }
 
     assert_eq!(cache.len(), SYSTEM_PROXY_CACHE_MAX_ENTRIES);
-}
-
-#[test]
-fn parses_static_winhttp_proxy_entries_for_target_scheme() {
-    assert_eq!(
-        parse_proxy_list("http=web-proxy:8080;https=secure-proxy:8443", "https"),
-        ParsedProxyListDecision::Proxy("http://secure-proxy:8443".to_string())
-    );
-    assert_eq!(
-        parse_proxy_list("http=web-proxy:8080 https=secure-proxy:8443", "https"),
-        ParsedProxyListDecision::Proxy("http://secure-proxy:8443".to_string())
-    );
-    assert_eq!(
-        parse_proxy_list("http=web-proxy:8080", "https"),
-        ParsedProxyListDecision::Unavailable
-    );
-    assert_eq!(
-        parse_proxy_list("proxy.internal:8080", "https"),
-        ParsedProxyListDecision::Proxy("http://proxy.internal:8080".to_string())
-    );
-}
-
-#[test]
-fn reports_direct_and_unsupported_proxy_tokens() {
-    assert_eq!(
-        parse_proxy_list("DIRECT; PROXY proxy.internal:8080", "https"),
-        ParsedProxyListDecision::Direct
-    );
-    assert_eq!(
-        parse_proxy_list("DIRECT", "https"),
-        ParsedProxyListDecision::Direct
-    );
-    assert_eq!(
-        parse_proxy_list("SOCKS proxy.internal:1080", "https"),
-        ParsedProxyListDecision::UnsupportedScheme
-    );
-}
-
-#[test]
-fn no_proxy_matches_exact_suffix_wildcard_and_port() {
-    let origin = RequestOrigin {
-        scheme: "https".to_string(),
-        host: "auth.openai.com".to_string(),
-        port: 443,
-    };
-    assert!(no_proxy_matches_origin("auth.openai.com", &origin));
-    assert!(!no_proxy_matches_origin("openai.com", &origin));
-    assert!(no_proxy_matches_origin(".openai.com", &origin));
-    assert!(no_proxy_matches_origin("*.openai.com", &origin));
-    assert!(no_proxy_matches_origin("auth.openai.com:443", &origin));
-    assert!(!no_proxy_matches_origin("auth.openai.com:8443", &origin));
 }
 
 #[test]

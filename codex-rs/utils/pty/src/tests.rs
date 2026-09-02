@@ -12,10 +12,6 @@ use crate::spawn_from_driver;
 use crate::spawn_pipe_process;
 use crate::spawn_pipe_process_no_stdin;
 
-#[cfg(windows)]
-#[path = "windows_tests.rs"]
-mod windows_tests;
-
 fn find_python() -> Option<String> {
     for candidate in ["python3", "python"] {
         if let Ok(output) = std::process::Command::new(candidate)
@@ -385,8 +381,6 @@ async fn driver_backed_process_can_expose_split_stdout_and_stderr() -> anyhow::R
         terminator: None,
         writer_handle: None,
         resizer: None,
-        #[cfg(windows)]
-        tty: false,
     });
     let error = spawned
         .session
@@ -446,8 +440,6 @@ async fn driver_backed_interrupt_terminates_once() {
         })),
         writer_handle: None,
         resizer: None,
-        #[cfg(windows)]
-        tty: false,
     });
 
     spawned
@@ -482,8 +474,6 @@ async fn driver_backed_process_can_resize_via_resizer_hook() -> anyhow::Result<(
             }
             Ok(())
         })),
-        #[cfg(windows)]
-        tty: true,
     });
 
     let error = spawned
@@ -528,8 +518,6 @@ async fn driver_backed_process_drains_output_that_arrives_after_exit_signal() ->
         terminator: None,
         writer_handle: None,
         resizer: None,
-        #[cfg(windows)]
-        tty: false,
     });
 
     let SpawnedProcess {

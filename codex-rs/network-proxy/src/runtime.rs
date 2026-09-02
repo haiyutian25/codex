@@ -1,7 +1,6 @@
 use crate::config::NetworkDomainPermission;
 use crate::config::NetworkMode;
 use crate::config::NetworkProxyConfig;
-use crate::config::ValidatedUnixSocketPath;
 use crate::credential_broker::CredentialBroker;
 use crate::mitm::MitmState;
 use crate::mitm_hook::HookEvaluation;
@@ -22,7 +21,6 @@ use crate::state::build_config_state;
 use crate::state::validate_policy_against_constraints;
 use anyhow::Context;
 use anyhow::Result;
-use codex_utils_absolute_path::AbsolutePathBuf;
 use globset::GlobSet;
 use serde::Deserialize;
 use serde::Serialize;
@@ -32,7 +30,6 @@ use std::collections::VecDeque;
 use std::future::Future;
 use std::net::IpAddr;
 use std::net::SocketAddr;
-use std::path::Path;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -669,58 +666,6 @@ impl NetworkProxyState {
         Ok(blocked.into_iter().collect())
     }
 
-    pub async fn is_unix_socket_allowed(&self, path: &str) -> Result<bool> {
-        self.reload_if_needed().await?;
-        if !unix_socket_permissions_supported() {
-            return Ok(false);
-        }
-
-        // We only support absolute unix socket paths (a relative path would be ambiguous with
-        // respect to the proxy process's CWD and can lead to confusing allowlist behavior).
-        let requested_path = Path::new(path);
-        if !requested_path.is_absolute() {
-            return Ok(false);
-        }
-
-        let guard = self.state.read().await;
-        if guard.config.dangerously_allow_all_unix_sockets {
-            return Ok(true);
-        }
-
-        // Normalize the path while keeping the absolute-path requirement explicit.
-        let requested_abs = match AbsolutePathBuf::from_absolute_path(requested_path) {
-            Ok(path) => path,
-            Err(_) => return Ok(false),
-        };
-        let requested_canonical = std::fs::canonicalize(requested_abs.as_path()).ok();
-        for allowed in &guard.config.allow_unix_sockets() {
-            let allowed_path = match ValidatedUnixSocketPath::parse(allowed) {
-                Ok(ValidatedUnixSocketPath::Native(path)) => path,
-                Ok(ValidatedUnixSocketPath::UnixStyleAbsolute(_)) => continue,
-                Err(err) => {
-                    warn!("ignoring invalid network.allow_unix_sockets entry at runtime: {err:#}");
-                    continue;
-                }
-            };
-
-            if allowed_path.as_path() == requested_abs.as_path() {
-                return Ok(true);
-            }
-
-            // Best-effort canonicalization to reduce surprises with symlinks.
-            // If canonicalization fails (e.g., socket not created yet), fall back to raw comparison.
-            let Some(requested_canonical) = &requested_canonical else {
-                continue;
-            };
-            if let Ok(allowed_canonical) = std::fs::canonicalize(allowed_path.as_path())
-                && &allowed_canonical == requested_canonical
-            {
-                return Ok(true);
-            }
-        }
-        Ok(false)
-    }
-
     pub async fn method_allowed(&self, method: &str) -> Result<bool> {
         self.reload_if_needed().await?;
         let guard = self.state.read().await;
@@ -940,10 +885,6 @@ impl DomainListKind {
     }
 }
 
-pub(crate) fn unix_socket_permissions_supported() -> bool {
-    cfg!(target_os = "macos")
-}
-
 async fn host_resolves_to_non_public_ip<F, Fut>(
     host: &str,
     port: u16,
@@ -1152,18 +1093,6 @@ mod tests {
         }
         if !denied_domains.is_empty() {
             network.set_denied_domains(strings(denied_domains));
-        }
-        network
-    }
-
-    fn network_settings_with_unix_sockets(
-        allowed_domains: &[&str],
-        denied_domains: &[&str],
-        unix_sockets: &[String],
-    ) -> NetworkProxyConfig {
-        let mut network = network_settings(allowed_domains, denied_domains);
-        if !unix_sockets.is_empty() {
-            network.set_allow_unix_sockets(unix_sockets.to_vec());
         }
         network
     }
@@ -1925,69 +1854,6 @@ mod tests {
     }
 
     #[test]
-    fn validate_policy_against_constraints_disallows_allow_all_unix_sockets_without_managed_opt_in()
-    {
-        let constraints = NetworkProxyConstraints {
-            dangerously_allow_all_unix_sockets: Some(false),
-            ..NetworkProxyConstraints::default()
-        };
-
-        let config = NetworkProxyConfig {
-            enabled: true,
-            dangerously_allow_all_unix_sockets: true,
-            ..NetworkProxyConfig::default()
-        };
-
-        assert!(validate_policy_against_constraints(&config, &constraints).is_err());
-    }
-
-    #[test]
-    fn validate_policy_against_constraints_disallows_allow_all_unix_sockets_when_allowlist_is_managed()
-     {
-        let constraints = NetworkProxyConstraints {
-            allow_unix_sockets: Some(vec!["/tmp/allowed.sock".to_string()]),
-            ..NetworkProxyConstraints::default()
-        };
-
-        let config = NetworkProxyConfig {
-            enabled: true,
-            dangerously_allow_all_unix_sockets: true,
-            ..NetworkProxyConfig::default()
-        };
-
-        assert!(validate_policy_against_constraints(&config, &constraints).is_err());
-    }
-
-    #[test]
-    fn validate_policy_against_constraints_allows_allow_all_unix_sockets_with_managed_opt_in() {
-        let constraints = NetworkProxyConstraints {
-            dangerously_allow_all_unix_sockets: Some(true),
-            ..NetworkProxyConstraints::default()
-        };
-
-        let config = NetworkProxyConfig {
-            enabled: true,
-            dangerously_allow_all_unix_sockets: true,
-            ..NetworkProxyConfig::default()
-        };
-
-        assert!(validate_policy_against_constraints(&config, &constraints).is_ok());
-    }
-
-    #[test]
-    fn validate_policy_against_constraints_allows_allow_all_unix_sockets_when_unmanaged() {
-        let constraints = NetworkProxyConstraints::default();
-
-        let config = NetworkProxyConfig {
-            enabled: true,
-            dangerously_allow_all_unix_sockets: true,
-            ..NetworkProxyConfig::default()
-        };
-
-        assert!(validate_policy_against_constraints(&config, &constraints).is_ok());
-    }
-
-    #[test]
     fn compile_globset_is_case_insensitive() {
         let patterns = vec!["ExAmPle.CoM".to_string()];
         let set = compile_denylist_globset(&patterns).unwrap();
@@ -2087,81 +1953,4 @@ mod tests {
         assert!(build_config_state(config, NetworkProxyConstraints::default()).is_err());
     }
 
-    #[cfg(target_os = "macos")]
-    #[tokio::test]
-    async fn unix_socket_allowlist_is_respected_on_macos() {
-        let socket_path = "/tmp/example.sock".to_string();
-        let state = network_proxy_state_for_policy(network_settings_with_unix_sockets(
-            &["example.com"],
-            &[],
-            std::slice::from_ref(&socket_path),
-        ));
-
-        assert!(state.is_unix_socket_allowed(&socket_path).await.unwrap());
-        assert!(
-            !state
-                .is_unix_socket_allowed("/tmp/not-allowed.sock")
-                .await
-                .unwrap()
-        );
-    }
-
-    #[cfg(target_os = "macos")]
-    #[tokio::test]
-    async fn unix_socket_allowlist_resolves_symlinks() {
-        use std::os::unix::fs::symlink;
-        use tempfile::tempdir;
-
-        let temp_dir = tempdir().unwrap();
-        let dir = temp_dir.path();
-
-        let real = dir.join("real.sock");
-        let link = dir.join("link.sock");
-
-        // The allowlist mechanism is path-based; for test purposes we don't need an actual unix
-        // domain socket. Any filesystem entry works for canonicalization.
-        std::fs::write(&real, b"not a socket").unwrap();
-        symlink(&real, &link).unwrap();
-
-        let real_s = real.to_str().unwrap().to_string();
-        let link_s = link.to_str().unwrap().to_string();
-
-        let state = network_proxy_state_for_policy(network_settings_with_unix_sockets(
-            &["example.com"],
-            &[],
-            std::slice::from_ref(&real_s),
-        ));
-
-        assert!(state.is_unix_socket_allowed(&link_s).await.unwrap());
-    }
-
-    #[cfg(target_os = "macos")]
-    #[tokio::test]
-    async fn unix_socket_allow_all_flag_bypasses_allowlist() {
-        let state = network_proxy_state_for_policy({
-            let mut network = network_settings(&["example.com"], &[]);
-            network.dangerously_allow_all_unix_sockets = true;
-            network
-        });
-
-        assert!(state.is_unix_socket_allowed("/tmp/any.sock").await.unwrap());
-        assert!(!state.is_unix_socket_allowed("relative.sock").await.unwrap());
-    }
-
-    #[cfg(not(target_os = "macos"))]
-    #[tokio::test]
-    async fn unix_socket_allowlist_is_rejected_on_non_macos() {
-        let socket_path = "/tmp/example.sock".to_string();
-        let state = network_proxy_state_for_policy({
-            let mut network = network_settings_with_unix_sockets(
-                &["example.com"],
-                &[],
-                std::slice::from_ref(&socket_path),
-            );
-            network.dangerously_allow_all_unix_sockets = true;
-            network
-        });
-
-        assert!(!state.is_unix_socket_allowed(&socket_path).await.unwrap());
-    }
 }

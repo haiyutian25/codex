@@ -851,16 +851,6 @@
             "null"
           ]
         },
-        "allowUnixSockets": {
-          "description": "Legacy compatibility view derived from `unix_sockets`.",
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
         "allowUpstreamProxy": {
           "type": [
             "boolean",
@@ -874,12 +864,6 @@
           },
           "type": [
             "array",
-            "null"
-          ]
-        },
-        "dangerouslyAllowAllUnixSockets": {
-          "type": [
-            "boolean",
             "null"
           ]
         },
@@ -937,26 +921,9 @@
             "integer",
             "null"
           ]
-        },
-        "unixSockets": {
-          "additionalProperties": {
-            "$ref": "#/definitions/NetworkUnixSocketPermission"
-          },
-          "description": "Canonical unix socket permission map for `experimental_network`.",
-          "type": [
-            "object",
-            "null"
-          ]
         }
       },
       "type": "object"
-    },
-    "NetworkUnixSocketPermission": {
-      "enum": [
-        "allow",
-        "deny"
-      ],
-      "type": "string"
     },
     "NewThreadModelDefaults": {
       "properties": {

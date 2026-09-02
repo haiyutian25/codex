@@ -191,20 +191,8 @@ fn get_sh_shell() -> Option<DetectedShell> {
     })
 }
 
-// Note the `pwsh` and `powershell` fallback paths are where the respective
-// shells are commonly installed on GitHub Actions Windows runners, but may not
-// be present on all Windows machines:
-// https://docs.github.com/en/actions/tutorials/build-and-test-code/powershell
-
-#[cfg(windows)]
-const PWSH_FALLBACK_PATHS: &[&str] = &[r#"C:\Program Files\PowerShell\7\pwsh.exe"#];
-#[cfg(not(windows))]
 const PWSH_FALLBACK_PATHS: &[&str] = &["/usr/local/bin/pwsh"];
 
-#[cfg(windows)]
-const POWERSHELL_FALLBACK_PATHS: &[&str] =
-    &[r#"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"#];
-#[cfg(not(windows))]
 const POWERSHELL_FALLBACK_PATHS: &[&str] = &[];
 
 fn get_powershell_shell() -> Option<DetectedShell> {
@@ -233,16 +221,9 @@ fn get_cmd_shell() -> Option<DetectedShell> {
 }
 
 pub fn ultimate_fallback_shell() -> DetectedShell {
-    if cfg!(windows) {
-        DetectedShell {
-            shell_type: ShellType::Cmd,
-            shell_path: PathBuf::from("cmd.exe"),
-        }
-    } else {
-        DetectedShell {
-            shell_type: ShellType::Sh,
-            shell_path: PathBuf::from("/bin/sh"),
-        }
+    DetectedShell {
+        shell_type: ShellType::Sh,
+        shell_path: PathBuf::from("/bin/sh"),
     }
 }
 
@@ -268,25 +249,15 @@ pub fn default_user_shell() -> DetectedShell {
 }
 
 pub fn default_user_shell_from_path(user_shell_path: Option<PathBuf>) -> DetectedShell {
-    if cfg!(windows) {
-        get_shell(ShellType::PowerShell).unwrap_or_else(ultimate_fallback_shell)
-    } else {
-        let user_default_shell = user_shell_path
-            .and_then(|shell| detect_shell_type(&shell))
-            .and_then(get_shell);
+    let user_default_shell = user_shell_path
+        .and_then(|shell| detect_shell_type(&shell))
+        .and_then(get_shell);
 
-        let shell_with_fallback = if cfg!(target_os = "macos") {
-            user_default_shell
-                .or_else(|| get_shell(ShellType::Zsh))
-                .or_else(|| get_shell(ShellType::Bash))
-        } else {
-            user_default_shell
-                .or_else(|| get_shell(ShellType::Bash))
-                .or_else(|| get_shell(ShellType::Zsh))
-        };
+    let shell_with_fallback = user_default_shell
+        .or_else(|| get_shell(ShellType::Bash))
+        .or_else(|| get_shell(ShellType::Zsh));
 
-        shell_with_fallback.unwrap_or_else(ultimate_fallback_shell)
-    }
+    shell_with_fallback.unwrap_or_else(ultimate_fallback_shell)
 }
 
 #[cfg(test)]

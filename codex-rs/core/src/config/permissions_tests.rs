@@ -7,8 +7,6 @@ use codex_config::permissions_toml::FilesystemPermissionsToml;
 use codex_config::permissions_toml::NetworkDomainPermissionToml;
 use codex_config::permissions_toml::NetworkDomainPermissionsToml;
 use codex_config::permissions_toml::NetworkToml;
-use codex_config::permissions_toml::NetworkUnixSocketPermissionToml;
-use codex_config::permissions_toml::NetworkUnixSocketPermissionsToml;
 use codex_config::permissions_toml::PermissionProfileToml;
 use codex_config::permissions_toml::PermissionsToml;
 use codex_config::permissions_toml::WorkspaceRootsToml;
@@ -141,18 +139,6 @@ fn network_permission_containers_project_allowed_and_denied_entries() {
             ),
         ]),
     };
-    let unix_sockets = NetworkUnixSocketPermissionsToml {
-        entries: BTreeMap::from([
-            (
-                "/tmp/example.sock".to_string(),
-                NetworkUnixSocketPermissionToml::Allow,
-            ),
-            (
-                "/tmp/ignored.sock".to_string(),
-                NetworkUnixSocketPermissionToml::Deny,
-            ),
-        ]),
-    };
 
     assert_eq!(
         domains.allowed_domains(),
@@ -174,69 +160,6 @@ fn network_permission_containers_project_allowed_and_denied_entries() {
         }
         .denied_domains(),
         None
-    );
-    assert_eq!(
-        unix_sockets.allow_unix_sockets(),
-        vec!["/tmp/example.sock".to_string()]
-    );
-}
-
-#[test]
-fn network_toml_overlays_unix_socket_permissions_by_path() {
-    let mut config = NetworkProxyConfig::default();
-
-    NetworkToml {
-        unix_sockets: Some(NetworkUnixSocketPermissionsToml {
-            entries: BTreeMap::from([
-                (
-                    "/tmp/base.sock".to_string(),
-                    NetworkUnixSocketPermissionToml::Allow,
-                ),
-                (
-                    "/tmp/override.sock".to_string(),
-                    NetworkUnixSocketPermissionToml::Allow,
-                ),
-            ]),
-        }),
-        ..Default::default()
-    }
-    .apply_to_network_proxy_config(&mut config);
-
-    NetworkToml {
-        unix_sockets: Some(NetworkUnixSocketPermissionsToml {
-            entries: BTreeMap::from([
-                (
-                    "/tmp/extra.sock".to_string(),
-                    NetworkUnixSocketPermissionToml::Allow,
-                ),
-                (
-                    "/tmp/override.sock".to_string(),
-                    NetworkUnixSocketPermissionToml::Deny,
-                ),
-            ]),
-        }),
-        ..Default::default()
-    }
-    .apply_to_network_proxy_config(&mut config);
-
-    assert_eq!(
-        config.unix_sockets,
-        Some(codex_network_proxy::NetworkUnixSocketPermissions {
-            entries: BTreeMap::from([
-                (
-                    "/tmp/base.sock".to_string(),
-                    ProxyNetworkUnixSocketPermission::Allow,
-                ),
-                (
-                    "/tmp/extra.sock".to_string(),
-                    ProxyNetworkUnixSocketPermission::Allow,
-                ),
-                (
-                    "/tmp/override.sock".to_string(),
-                    ProxyNetworkUnixSocketPermission::Deny,
-                ),
-            ]),
-        })
     );
 }
 
@@ -263,10 +186,6 @@ enabled = true
 "base.example.com" = "allow"
 "SHARED.EXAMPLE.COM." = "deny"
 
-[base.network.unix_sockets]
-"/tmp/base.sock" = "allow"
-"/tmp/blocked.sock" = "deny"
-
 [child]
 extends = "base"
 
@@ -285,9 +204,6 @@ allow_local_binding = true
 [child.network.domains]
 "child.example.com" = "allow"
 "shared.example.com" = "allow"
-
-[child.network.unix_sockets]
-"/tmp/child.sock" = "allow"
 "#,
     )
     .expect("permissions should deserialize");
@@ -317,11 +233,6 @@ allow_local_binding = true
 "base.example.com" = "allow"
 "child.example.com" = "allow"
 "shared.example.com" = "allow"
-
-[network.unix_sockets]
-"/tmp/base.sock" = "allow"
-"/tmp/blocked.sock" = "deny"
-"/tmp/child.sock" = "allow"
 "#,
     )
     .expect("expected profile should deserialize");

@@ -8,7 +8,7 @@ use codex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 
 use crate::GitToolingError;
 
-const DISABLED_HOOKS_PATH: &str = if cfg!(windows) { "NUL" } else { "/dev/null" };
+const DISABLED_HOOKS_PATH: &str = "/dev/null";
 
 pub(crate) fn ensure_git_repository(path: &Path) -> Result<(), GitToolingError> {
     match run_git_for_stdout(

@@ -35,10 +35,6 @@ impl AbsolutePathBuf {
                 return home;
             } else if let Some(rest) = rest.strip_prefix('/') {
                 return home.join(rest.trim_start_matches('/'));
-            } else if cfg!(windows)
-                && let Some(rest) = rest.strip_prefix('\\')
-            {
-                return home.join(rest.trim_start_matches('\\'));
             }
         }
         path.to_path_buf()
@@ -142,13 +138,6 @@ impl AbsolutePathBuf {
 }
 
 fn normalize_path_for_platform(path: &Path) -> Cow<'_, Path> {
-    if cfg!(windows)
-        && let Some(path) = path.to_str()
-        && let Some(normalized) = normalize_windows_device_path(path)
-    {
-        return Cow::Owned(PathBuf::from(normalized));
-    }
-
     Cow::Borrowed(path)
 }
 

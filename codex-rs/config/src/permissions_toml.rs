@@ -9,7 +9,6 @@ use codex_network_proxy::MitmHookMatchConfig;
 use codex_network_proxy::NetworkDomainPermission as ProxyNetworkDomainPermission;
 use codex_network_proxy::NetworkMode;
 use codex_network_proxy::NetworkProxyConfig;
-use codex_network_proxy::NetworkUnixSocketPermission as ProxyNetworkUnixSocketPermission;
 use codex_network_proxy::normalize_host;
 use codex_protocol::permissions::FileSystemAccessMode;
 use indexmap::IndexMap;
@@ -291,41 +290,6 @@ impl std::fmt::Display for NetworkDomainPermissionToml {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
-pub struct NetworkUnixSocketPermissionsToml {
-    #[serde(flatten)]
-    pub entries: BTreeMap<String, NetworkUnixSocketPermissionToml>,
-}
-
-impl NetworkUnixSocketPermissionsToml {
-    pub fn allow_unix_sockets(&self) -> Vec<String> {
-        self.entries
-            .iter()
-            .filter(|(_, permission)| matches!(permission, NetworkUnixSocketPermissionToml::Allow))
-            .map(|(path, _)| path.clone())
-            .collect()
-    }
-}
-
-#[derive(
-    Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, JsonSchema,
-)]
-#[serde(rename_all = "lowercase")]
-pub enum NetworkUnixSocketPermissionToml {
-    Allow,
-    Deny,
-}
-
-impl std::fmt::Display for NetworkUnixSocketPermissionToml {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let permission = match self {
-            Self::Allow => "allow",
-            Self::Deny => "deny",
-        };
-        f.write_str(permission)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
 #[schemars(deny_unknown_fields)]
 pub struct NetworkToml {
     pub enabled: Option<bool>,
@@ -335,11 +299,9 @@ pub struct NetworkToml {
     pub enable_socks5_udp: Option<bool>,
     pub allow_upstream_proxy: Option<bool>,
     pub dangerously_allow_non_loopback_proxy: Option<bool>,
-    pub dangerously_allow_all_unix_sockets: Option<bool>,
     #[schemars(with = "Option<NetworkModeSchema>")]
     pub mode: Option<NetworkMode>,
     pub domains: Option<NetworkDomainPermissionsToml>,
-    pub unix_sockets: Option<NetworkUnixSocketPermissionsToml>,
     pub allow_local_binding: Option<bool>,
     pub mitm: Option<NetworkMitmToml>,
 }
@@ -492,28 +454,11 @@ impl NetworkToml {
         {
             config.dangerously_allow_non_loopback_proxy = dangerously_allow_non_loopback_proxy;
         }
-        if let Some(dangerously_allow_all_unix_sockets) = self.dangerously_allow_all_unix_sockets {
-            config.dangerously_allow_all_unix_sockets = dangerously_allow_all_unix_sockets;
-        }
         if let Some(mode) = self.mode {
             config.mode = mode;
         }
         if let Some(domains) = self.domains.as_ref() {
             overlay_network_domain_permissions(config, domains);
-        }
-        if let Some(unix_sockets) = self.unix_sockets.as_ref() {
-            let mut proxy_unix_sockets = config.unix_sockets.take().unwrap_or_default();
-            for (path, permission) in &unix_sockets.entries {
-                let permission = match permission {
-                    NetworkUnixSocketPermissionToml::Allow => {
-                        ProxyNetworkUnixSocketPermission::Allow
-                    }
-                    NetworkUnixSocketPermissionToml::Deny => ProxyNetworkUnixSocketPermission::Deny,
-                };
-                proxy_unix_sockets.entries.insert(path.clone(), permission);
-            }
-            config.unix_sockets =
-                (!proxy_unix_sockets.entries.is_empty()).then_some(proxy_unix_sockets);
         }
         if let Some(allow_local_binding) = self.allow_local_binding {
             config.allow_local_binding = allow_local_binding;

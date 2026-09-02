@@ -13,8 +13,6 @@ use std::sync::Mutex;
 use std::sync::OnceLock;
 use std::time::Duration;
 use std::time::Instant;
-#[cfg(any(target_os = "windows", target_os = "macos"))]
-use tokio::sync::Semaphore;
 
 use http::HeaderValue;
 
@@ -28,13 +26,6 @@ use thiserror::Error;
 const SYSTEM_PROXY_SUCCESS_CACHE_TTL: Duration = Duration::from_secs(60);
 const SYSTEM_PROXY_UNAVAILABLE_CACHE_TTL: Duration = Duration::from_secs(5);
 const SYSTEM_PROXY_CACHE_MAX_ENTRIES: usize = 256;
-#[cfg(any(target_os = "windows", target_os = "macos"))]
-static ASYNC_SYSTEM_PROXY_RESOLUTION_PERMIT: Semaphore = Semaphore::const_new(1);
-
-#[cfg(target_os = "macos")]
-mod macos;
-#[cfg(target_os = "windows")]
-mod windows;
 
 /// Coarse semantic bucket for the HTTP or WebSocket client being constructed.
 ///
@@ -101,26 +92,6 @@ pub enum OutboundProxyPolicy {
     ReqwestDefault,
     /// Resolve system/PAC/WPAD settings, then environment settings, then direct routing.
     RespectSystemProxy,
-}
-
-/// Privacy-safe macOS system proxy configuration for one outbound destination.
-#[cfg(target_os = "macos")]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MacosSystemProxyConfiguration {
-    /// A PAC script or automatic proxy-discovery route applies to the destination.
-    Automatic,
-    /// An explicitly configured HTTP or HTTPS proxy applies.
-    Manual,
-    /// macOS selected a direct connection for the destination.
-    Direct,
-    /// The destination or system proxy settings could not be inspected.
-    Unavailable,
-}
-
-/// Inspects macOS proxy configuration without executing PAC scripts or exposing proxy URLs.
-#[cfg(target_os = "macos")]
-pub fn macos_system_proxy_configuration(request_url: &str) -> MacosSystemProxyConfiguration {
-    macos::configuration(request_url)
 }
 
 /// Resolved proxy route for a concrete outbound destination.
@@ -254,25 +225,7 @@ impl HttpClientFactory {
             return Ok(route);
         }
 
-        #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-        return Ok(self.resolve_proxy_route(&request_url));
-
-        #[cfg(any(target_os = "windows", target_os = "macos"))]
-        {
-            let permit = ASYNC_SYSTEM_PROXY_RESOLUTION_PERMIT
-                .acquire()
-                .await
-                .map_err(io::Error::other)?;
-            let factory = self.clone();
-            tokio::task::spawn_blocking(move || {
-                // Keep the permit with the blocking task: cancelling the caller must not allow a
-                // second PAC/WinHTTP lookup to start while this one is still running.
-                let _permit = permit;
-                factory.resolve_proxy_route(&request_url)
-            })
-            .await
-            .map_err(io::Error::other)
-        }
+        Ok(self.resolve_proxy_route(&request_url))
     }
 
     fn cached_proxy_route(&self, request_url: &str) -> Option<OutboundProxyRoute> {
@@ -518,12 +471,9 @@ impl RequestOrigin {
     }
 }
 
-#[cfg_attr(
-    not(any(target_os = "windows", target_os = "macos")),
-    allow(
-        dead_code,
-        reason = "Direct and Proxy are constructed only by platform-specific resolvers"
-    )
+#[allow(
+    dead_code,
+    reason = "Direct and Proxy are constructed by tests and cache priming helpers"
 )]
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum SystemProxyDecision {
@@ -562,17 +512,6 @@ fn resolve_system_proxy_with(
     decision
 }
 
-#[cfg(target_os = "macos")]
-fn resolve_platform_system_proxy(request_url: &str, origin: &RequestOrigin) -> SystemProxyDecision {
-    macos::resolve(request_url, origin)
-}
-
-#[cfg(target_os = "windows")]
-fn resolve_platform_system_proxy(request_url: &str, origin: &RequestOrigin) -> SystemProxyDecision {
-    windows::resolve(request_url, origin)
-}
-
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 fn resolve_platform_system_proxy(
     _request_url: &str,
     _origin: &RequestOrigin,
@@ -665,192 +604,6 @@ fn system_proxy_cache_key(request_url: &str) -> String {
     hasher.update(b"system-proxy-cache-v1\0");
     hasher.update(request_url.as_bytes());
     format!("{:x}", hasher.finalize())
-}
-
-#[cfg(any(test, target_os = "windows"))]
-fn no_proxy_matches_origin(no_proxy: &str, origin: &RequestOrigin) -> bool {
-    no_proxy
-        .split(',')
-        .map(str::trim)
-        .filter(|entry| !entry.is_empty())
-        .any(|entry| no_proxy_entry_matches_origin(entry, origin))
-}
-
-#[cfg(any(test, target_os = "windows"))]
-fn no_proxy_entry_matches_origin(entry: &str, origin: &RequestOrigin) -> bool {
-    if entry == "*" {
-        return true;
-    }
-
-    let mut entry = entry
-        .strip_prefix("http://")
-        .or_else(|| entry.strip_prefix("https://"))
-        .unwrap_or(entry)
-        .trim_matches(['[', ']'])
-        .to_ascii_lowercase();
-    let mut port = None;
-    let parsed_host_port = entry.rsplit_once(':').and_then(|(host, candidate_port)| {
-        if host.contains(':') {
-            return None;
-        }
-        candidate_port
-            .parse::<u16>()
-            .ok()
-            .map(|parsed_port| (host.to_string(), parsed_port))
-    });
-    if let Some((host, parsed_port)) = parsed_host_port {
-        entry = host;
-        port = Some(parsed_port);
-    }
-    if port.is_some_and(|port| port != origin.port) {
-        return false;
-    }
-
-    if let Some(suffix) = entry.strip_prefix('.') {
-        return origin.host == suffix || origin.host.ends_with(&format!(".{suffix}"));
-    }
-
-    if entry.contains('*') {
-        return wildcard_host_match(&entry, &origin.host);
-    }
-
-    origin.host == entry
-}
-
-#[cfg(any(test, target_os = "windows"))]
-fn wildcard_host_match(pattern: &str, host: &str) -> bool {
-    let mut remaining = host;
-    let mut first = true;
-    for part in pattern.split('*') {
-        if part.is_empty() {
-            continue;
-        }
-        if first && !pattern.starts_with('*') {
-            let Some(stripped) = remaining.strip_prefix(part) else {
-                return false;
-            };
-            remaining = stripped;
-        } else {
-            let Some(index) = remaining.find(part) else {
-                return false;
-            };
-            remaining = &remaining[index + part.len()..];
-        }
-        first = false;
-    }
-    pattern.ends_with('*') || remaining.is_empty()
-}
-
-#[cfg(any(test, target_os = "windows"))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum ParsedProxyListDecision {
-    Direct,
-    Proxy(String),
-    UnsupportedScheme,
-    Unavailable,
-}
-
-#[cfg(any(test, target_os = "windows"))]
-fn parse_proxy_list(input: &str, target_scheme: &str) -> ParsedProxyListDecision {
-    let mut saw_unsupported = false;
-
-    {
-        let mut process_token = |token: &str| {
-            let decision = parse_proxy_token(token, target_scheme);
-            match decision {
-                ParsedProxyListDecision::Direct => Some(ParsedProxyListDecision::Direct),
-                ParsedProxyListDecision::Proxy(url) => Some(ParsedProxyListDecision::Proxy(url)),
-                ParsedProxyListDecision::UnsupportedScheme => {
-                    saw_unsupported = true;
-                    None
-                }
-                ParsedProxyListDecision::Unavailable => None,
-            }
-        };
-
-        for segment in input
-            .split(';')
-            .map(str::trim)
-            .filter(|segment| !segment.is_empty())
-        {
-            let mut parts = segment.split_whitespace();
-            let directive = parts.next();
-            let hostport = parts.next();
-            let extra = parts.next();
-            let is_proxy_directive = matches!(
-                directive.map(str::to_ascii_lowercase).as_deref(),
-                Some("proxy" | "http" | "https" | "socks" | "socks4" | "socks5")
-            ) && hostport.is_some()
-                && extra.is_none();
-
-            if is_proxy_directive {
-                if let Some(decision) = process_token(segment) {
-                    return decision;
-                }
-            } else {
-                for token in segment.split_whitespace() {
-                    if let Some(decision) = process_token(token) {
-                        return decision;
-                    }
-                }
-            }
-        }
-    }
-
-    if saw_unsupported {
-        ParsedProxyListDecision::UnsupportedScheme
-    } else {
-        ParsedProxyListDecision::Unavailable
-    }
-}
-
-#[cfg(any(test, target_os = "windows"))]
-fn parse_proxy_token(token: &str, target_scheme: &str) -> ParsedProxyListDecision {
-    if token.eq_ignore_ascii_case("DIRECT") {
-        return ParsedProxyListDecision::Direct;
-    }
-
-    if let Some(decision) = parse_proxy_key_token(token, target_scheme) {
-        return decision;
-    }
-    if token.contains('=') {
-        return ParsedProxyListDecision::Unavailable;
-    }
-
-    let mut parts = token.split_whitespace();
-    let directive = parts.next();
-    let hostport = parts.next();
-    if let (Some(directive), Some(hostport), None) = (directive, hostport, parts.next()) {
-        return match directive.to_ascii_lowercase().as_str() {
-            "proxy" | "http" => proxy_url_from_hostport("http", hostport),
-            "https" => proxy_url_from_hostport("https", hostport),
-            "socks" | "socks4" | "socks5" => ParsedProxyListDecision::UnsupportedScheme,
-            _ => ParsedProxyListDecision::Unavailable,
-        };
-    }
-
-    proxy_url_from_hostport("http", token)
-}
-
-#[cfg(any(test, target_os = "windows"))]
-fn parse_proxy_key_token(token: &str, target_scheme: &str) -> Option<ParsedProxyListDecision> {
-    let (key, value) = token.split_once('=')?;
-    if key.trim().eq_ignore_ascii_case(target_scheme) {
-        Some(proxy_url_from_hostport("http", value.trim()))
-    } else {
-        Some(ParsedProxyListDecision::Unavailable)
-    }
-}
-
-#[cfg(any(test, target_os = "windows"))]
-fn proxy_url_from_hostport(proxy_scheme: &str, hostport: &str) -> ParsedProxyListDecision {
-    if hostport.is_empty() {
-        return ParsedProxyListDecision::Unavailable;
-    }
-    if hostport.contains("://") {
-        return ParsedProxyListDecision::Proxy(hostport.to_string());
-    }
-    ParsedProxyListDecision::Proxy(format!("{proxy_scheme}://{hostport}"))
 }
 
 trait EnvSource {

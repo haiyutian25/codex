@@ -15,14 +15,12 @@ fn round_trip_preserves_supported_effective_settings() {
         enable_socks5: false,
         enable_socks5_udp: false,
         allow_upstream_proxy: false,
-        dangerously_allow_all_unix_sockets: true,
         mode: NetworkMode::Limited,
         allow_local_binding: true,
         ..NetworkProxyConfig::default()
     };
     config.set_allowed_domains(vec!["example.com".into()]);
     config.set_denied_domains(vec!["blocked.example.com".into()]);
-    config.set_allow_unix_sockets(vec!["/var/run/example.sock".into()]);
 
     let remote =
         RemoteNetworkProxyConfig::from_effective_config(&config).expect("supported remote config");

@@ -4,8 +4,6 @@ use codex_config::NetworkDomainPermissionsToml;
 use codex_execpolicy::Decision::Allow;
 use codex_execpolicy::NetworkRuleProtocol::Https;
 use codex_network_proxy::NetworkDomainPermission;
-use codex_network_proxy::NetworkUnixSocketPermission;
-use codex_network_proxy::NetworkUnixSocketPermissions;
 use codex_protocol::models::ManagedFileSystemPermissions;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::permissions::NetworkSandboxPolicy;
@@ -58,19 +56,6 @@ fn environment_policy_replaces_soft_controller_allowlist_and_preserves_denials()
         NetworkProxyConfig {
             enabled: true,
             allow_upstream_proxy: false,
-            unix_sockets: Some(NetworkUnixSocketPermissions {
-                entries: [
-                    (
-                        "/tmp/controller.sock".to_string(),
-                        NetworkUnixSocketPermission::Deny,
-                    ),
-                    (
-                        "/tmp/allowed.sock".to_string(),
-                        NetworkUnixSocketPermission::Allow,
-                    ),
-                ]
-                .into(),
-            }),
             ..NetworkProxyConfig::default()
         },
         Some(requirements),
@@ -80,12 +65,6 @@ fn environment_policy_replaces_soft_controller_allowlist_and_preserves_denials()
     let mut owner = NetworkProxyConfig::default();
     owner.set_allowed_domains(vec!["owner.example".to_string()]);
     owner.set_denied_domains(vec!["owner-blocked.example".to_string()]);
-    owner.set_allow_unix_sockets(vec![
-        "/tmp/controller.sock".to_string(),
-        "/private/tmp/controller.sock".to_string(),
-        "/tmp/allowed.sock".to_string(),
-    ]);
-    owner.dangerously_allow_all_unix_sockets = true;
     owner.allow_local_binding = true;
     let owner_policy =
         EnvironmentNetworkPolicy::from_config(&owner, /*managed_allowed_domains_only*/ false);
@@ -118,9 +97,7 @@ fn environment_policy_replaces_soft_controller_allowlist_and_preserves_denials()
         NetworkDomainPermission::Deny,
         normalize_host,
     );
-    owner.unix_sockets.clone_from(&spec.config.unix_sockets);
     owner.allow_upstream_proxy = false;
-    owner.dangerously_allow_all_unix_sockets = false;
     owner.allow_local_binding = false;
     assert_eq!(
         restricted.environment_policy(),

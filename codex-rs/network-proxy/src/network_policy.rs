@@ -214,13 +214,6 @@ pub(crate) fn emit_block_decision_audit_event(
     emit_non_domain_policy_decision_audit_event(state, args, POLICY_DECISION_DENY);
 }
 
-pub(crate) fn emit_allow_decision_audit_event(
-    state: &NetworkProxyState,
-    args: BlockDecisionAuditEventArgs<'_>,
-) {
-    emit_non_domain_policy_decision_audit_event(state, args, POLICY_DECISION_ALLOW);
-}
-
 fn emit_non_domain_policy_decision_audit_event(
     state: &NetworkProxyState,
     args: BlockDecisionAuditEventArgs<'_>,

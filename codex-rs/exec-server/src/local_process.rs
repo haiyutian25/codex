@@ -1134,20 +1134,14 @@ mod tests {
     use opentelemetry_sdk::metrics::data::AggregatedMetrics;
     use opentelemetry_sdk::metrics::data::MetricData;
     use pretty_assertions::assert_eq;
-    #[cfg(not(target_os = "windows"))]
     use tokio::io::AsyncReadExt;
-    #[cfg(not(target_os = "windows"))]
     use tokio::io::AsyncWriteExt;
     use tokio::sync::oneshot;
     use tokio::time::timeout;
 
-    #[cfg(not(target_os = "windows"))]
     use crate::protocol::ExecServerNetworkPolicyDecision;
-    #[cfg(not(target_os = "windows"))]
     use crate::protocol::NETWORK_POLICY_REQUEST_METHOD;
-    #[cfg(not(target_os = "windows"))]
     use crate::protocol::NetworkPolicyRequestParams;
-    #[cfg(not(target_os = "windows"))]
     use crate::protocol::NetworkPolicyRequestResponse;
 
     fn test_exec_params(env: HashMap<String, String>) -> ExecParams {
@@ -1687,10 +1681,7 @@ mod tests {
         let backend = LocalProcess::default();
         let mut process = spawn_test_process(&backend, "proc-background-child").await;
         let (outgoing_tx, outgoing_rx) = mpsc::channel(NOTIFICATION_CHANNEL_CAPACITY);
-        #[cfg(not(target_os = "windows"))]
         let mut outgoing_rx = outgoing_rx;
-        #[cfg(target_os = "windows")]
-        let _outgoing_rx = outgoing_rx;
         let requests = RpcNotificationSender::new(outgoing_tx).request_sender();
         *backend
             .inner
@@ -1751,12 +1742,6 @@ mod tests {
         let stream = tokio::net::TcpStream::connect(proxy_addr)
             .await
             .expect("proxy should remain available to a child holding inherited output streams");
-        #[cfg(target_os = "windows")]
-        {
-            assert!(proxy.network_proxy_restricting_sid(None).is_some());
-            drop(stream);
-        }
-        #[cfg(not(target_os = "windows"))]
         {
             let mut stream = stream;
             stream
@@ -1803,9 +1788,6 @@ mod tests {
         .expect("process should close");
         assert!(closed_response.closed);
         assert!(network_policy_shutdown.is_cancelled());
-        #[cfg(target_os = "windows")]
-        assert_eq!(proxy.network_proxy_restricting_sid(None), None);
-        #[cfg(not(target_os = "windows"))]
         assert!(tokio::net::TcpStream::connect(proxy_addr).await.is_err());
         backend.shutdown().await;
     }
@@ -1944,8 +1926,6 @@ mod tests {
             terminator: None,
             writer_handle: None,
             resizer: None,
-            #[cfg(windows)]
-            tty: false,
         })
         .session
     }

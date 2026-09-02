@@ -38,11 +38,7 @@ struct CredentialAlias {
 }
 
 fn env_key_matches(candidate: &str, expected: &str) -> bool {
-    if cfg!(windows) {
-        candidate.eq_ignore_ascii_case(expected)
-    } else {
-        candidate == expected
-    }
+    candidate == expected
 }
 
 fn env_entry<'a>(env: &'a HashMap<String, String>, key: &str) -> Option<(&'a str, &'a str)> {
@@ -56,18 +52,11 @@ pub(super) fn env_value<'a>(env: &'a HashMap<String, String>, key: &str) -> Opti
 }
 
 fn set_env_value(env: &mut HashMap<String, String>, key: &str, value: String) {
-    if cfg!(windows) {
-        env.retain(|candidate, _| !env_key_matches(candidate, key));
-    }
     env.insert(key.to_string(), value);
 }
 
 fn remove_env_value(env: &mut HashMap<String, String>, key: &str) {
-    if cfg!(windows) {
-        env.retain(|candidate, _| !env_key_matches(candidate, key));
-    } else {
-        env.remove(key);
-    }
+    env.remove(key);
 }
 
 impl CredentialBroker {

@@ -2880,8 +2880,7 @@ fn guardian_stdin_review_action_round_trips_native_and_foreign_paths() {
 fn network_requirements_deserializes_legacy_fields() {
     let requirements: NetworkRequirements = serde_json::from_value(json!({
         "allowedDomains": ["api.openai.com"],
-        "deniedDomains": ["blocked.example.com"],
-        "allowUnixSockets": ["/tmp/proxy.sock"]
+        "deniedDomains": ["blocked.example.com"]
     }))
     .expect("legacy network requirements should deserialize");
 
@@ -2893,13 +2892,10 @@ fn network_requirements_deserializes_legacy_fields() {
             socks_port: None,
             allow_upstream_proxy: None,
             dangerously_allow_non_loopback_proxy: None,
-            dangerously_allow_all_unix_sockets: None,
             domains: None,
             managed_allowed_domains_only: None,
             allowed_domains: Some(vec!["api.openai.com".to_string()]),
             denied_domains: Some(vec!["blocked.example.com".to_string()]),
-            unix_sockets: None,
-            allow_unix_sockets: Some(vec!["/tmp/proxy.sock".to_string()]),
             allow_local_binding: None,
         }
     );
@@ -2913,7 +2909,6 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
         socks_port: Some(1080),
         allow_upstream_proxy: Some(false),
         dangerously_allow_non_loopback_proxy: Some(false),
-        dangerously_allow_all_unix_sockets: Some(true),
         domains: Some(BTreeMap::from([
             ("api.openai.com".to_string(), NetworkDomainPermission::Allow),
             (
@@ -2924,17 +2919,6 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
         managed_allowed_domains_only: Some(true),
         allowed_domains: Some(vec!["api.openai.com".to_string()]),
         denied_domains: Some(vec!["blocked.example.com".to_string()]),
-        unix_sockets: Some(BTreeMap::from([
-            (
-                "/tmp/proxy.sock".to_string(),
-                NetworkUnixSocketPermission::Allow,
-            ),
-            (
-                "/tmp/ignored.sock".to_string(),
-                NetworkUnixSocketPermission::Deny,
-            ),
-        ])),
-        allow_unix_sockets: Some(vec!["/tmp/proxy.sock".to_string()]),
         allow_local_binding: Some(true),
     };
 
@@ -2946,7 +2930,6 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
             "socksPort": 1080,
             "allowUpstreamProxy": false,
             "dangerouslyAllowNonLoopbackProxy": false,
-            "dangerouslyAllowAllUnixSockets": true,
             "domains": {
                 "api.openai.com": "allow",
                 "blocked.example.com": "deny"
@@ -2954,11 +2937,6 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
             "managedAllowedDomainsOnly": true,
             "allowedDomains": ["api.openai.com"],
             "deniedDomains": ["blocked.example.com"],
-            "unixSockets": {
-                "/tmp/ignored.sock": "deny",
-                "/tmp/proxy.sock": "allow"
-            },
-            "allowUnixSockets": ["/tmp/proxy.sock"],
             "allowLocalBinding": true
         })
     );

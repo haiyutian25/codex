@@ -29,7 +29,6 @@ pub use feature_configs::MultiAgentV2ConfigToml;
 pub use feature_configs::NetworkProxyConfigToml;
 pub use feature_configs::NetworkProxyDomainPermissionToml;
 pub use feature_configs::NetworkProxyModeToml;
-pub use feature_configs::NetworkProxyUnixSocketPermissionToml;
 pub use feature_configs::NonPrefixedMcpToolNamesConfigToml;
 use feature_configs::RemovedAppsMcpPathOverrideConfigToml;
 pub use feature_configs::RolloutBudgetConfigToml;
