@@ -12,16 +12,11 @@ pub const DOCKER_CONTAINER_ENV_VAR: &str = "CODEX_TEST_REMOTE_ENV_CONTAINER_NAME
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TestTargetOs {
     Linux,
-    MacOs,
 }
 
 impl TestTargetOs {
     const fn host() -> Self {
-        if cfg!(target_os = "macos") {
-            Self::MacOs
-        } else {
-            Self::Linux
-        }
+        Self::Linux
     }
 
     const fn path_convention(self) -> PathConvention {

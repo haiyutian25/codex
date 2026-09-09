@@ -142,16 +142,6 @@ fn restrictive_workspace_write_profile() -> PermissionProfile {
 
 fn workspace_write_with_read_only_root(read_only_root: AbsolutePathBuf) -> PermissionProfile {
     let file_system_sandbox_policy = FileSystemSandboxPolicy::restricted(vec![
-        // TODO(anp): Rationalize these write-confinement tests so sandboxed project-instruction
-        // discovery works on macOS without unrestricted reads.
-        #[cfg(target_os = "macos")]
-        FileSystemSandboxEntry {
-            path: FileSystemPath::Special {
-                value: FileSystemSpecialPath::Root,
-            },
-            access: FileSystemAccessMode::Read,
-            missing_path_behavior: None,
-        },
         FileSystemSandboxEntry {
             path: FileSystemPath::Path {
                 path: read_only_root.into(),
