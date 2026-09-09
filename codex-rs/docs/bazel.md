@@ -166,8 +166,8 @@ When you add a new crate or binary:
    for integration tests, env vars, etc) you may need to adjust the parameters to
    `codex_rust_crate` to configure it.
    One common customization is setting `test_tags = ["no-sandbox]` to run the test
-   unsandboxed. Prefer to avoid it, but it is necessary in some cases such as when the
-   test itself uses Seatbelt (the sandbox does as well, and it cannot be nested).
+   unsandboxed. Prefer to avoid it, but it is necessary in some cases, such as when
+   the test itself needs to nest a sandbox and the outer sandbox forbids it.
    To limit the blast radius, consider isolating such tests to a separate crate.
 
 If you see build issue and are not sure how to apply the proper customizations, feel free to ping zbarsky or mbolin.

@@ -20,20 +20,6 @@ Windows. Choose the skip macro by what the test depends on:
 
 Note that `codex-core` makes some assumptions about certain helper utilities being available in the environment. Currently, this support matrix is:
 
-### macOS
-
-Expects `/usr/bin/sandbox-exec` to be present.
-
-When using the workspace-write sandbox policy, the Seatbelt profile allows
-writes under the configured writable roots while keeping `.git` (directory or
-pointer file), the resolved `gitdir:` target, and `.codex` read-only.
-
-Network access and filesystem read/write roots are controlled by
-`SandboxPolicy`. Seatbelt consumes the resolved policy and enforces it.
-
-Seatbelt also keeps the legacy default preferences read access
-(`user-preference-read`) needed for cfprefs-backed macOS behavior.
-
 ### Linux
 
 Expects the binary containing `codex-core` to run the equivalent of `codex sandbox` when `arg0` is `codex-linux-sandbox`. See the `codex-arg0` crate for details.
@@ -61,35 +47,6 @@ namespaces. WSL2 uses the normal Linux bubblewrap path. WSL1 is not supported
 for bubblewrap sandboxing because it cannot create the required user
 namespaces, so Codex rejects sandboxed shell commands that would enter the
 bubblewrap path before invoking `bwrap`.
-
-### Windows
-
-Legacy `SandboxPolicy` / `sandbox_mode` configs are still supported on
-Windows. Legacy `read-only` and `workspace-write` policies imply full
-filesystem read access; exact readable roots are represented by split
-filesystem policies instead.
-
-The elevated Windows sandbox also supports:
-
-- legacy `ReadOnly` and `WorkspaceWrite` behavior
-- split filesystem policies that need exact readable roots, exact writable
-  roots, or extra read-only carveouts under writable roots
-- backend-managed system read roots required for basic execution, such as
-  `C:\Windows`, `C:\Program Files`, `C:\Program Files (x86)`, and
-  `C:\ProgramData`, when a split filesystem policy requests platform defaults
-
-The unelevated restricted-token backend still supports the legacy full-read
-Windows model for legacy `ReadOnly` and `WorkspaceWrite` behavior. It also
-supports a narrow split-filesystem subset: full-read split policies whose
-writable roots still match the legacy `WorkspaceWrite` root set, but add extra
-read-only carveouts under those writable roots.
-
-New `[permissions]` / split filesystem policies remain supported on Windows
-only when they can be enforced directly by the selected Windows backend or
-round-trip through the legacy `SandboxPolicy` model without changing semantics.
-Policies that would require direct explicit unreadable carveouts (`none`) or
-reopened writable descendants under read-only carveouts still fail closed
-instead of running with weaker enforcement.
 
 ### All Platforms
 

@@ -1,6 +1,6 @@
 //! Bubblewrap-based filesystem sandboxing for Linux.
 //!
-//! This module mirrors the semantics used by the macOS Seatbelt sandbox:
+//! The sandbox semantics are:
 //! - the filesystem is read-only by default,
 //! - explicit writable roots are layered on top, and
 //! - sensitive subpaths such as `.git`, `.agents`, and `.codex` remain

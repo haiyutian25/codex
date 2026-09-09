@@ -190,7 +190,7 @@ fn extract_shell_script_supports_wrapped_command_prefixes() {
 
     assert_eq!(
         extract_shell_script(&[
-            "sandbox-exec".into(),
+            "sandbox-helper".into(),
             "-p".into(),
             "sandbox_policy".into(),
             "/bin/zsh".into(),
@@ -209,7 +209,7 @@ fn extract_shell_script_supports_wrapped_command_prefixes() {
 #[test]
 fn extract_shell_script_rejects_unsupported_shell_invocation() {
     let err = extract_shell_script(&[
-        "sandbox-exec".into(),
+        "sandbox-helper".into(),
         "-fc".into(),
         "echo not supported".into(),
     ])

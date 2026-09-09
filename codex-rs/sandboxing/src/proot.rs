@@ -1,7 +1,7 @@
 //! PRoot backend: wraps commands so they execute inside a PRoot guest rootfs.
 //!
-//! Mirrors the Seatbelt backend shape (`seatbelt.rs`): pure argv construction,
-//! no helper binary, no platform `cfg` gates. PRoot is a user-space chroot +
+//! Pure argv construction, no helper binary, no platform `cfg` gates.
+//! PRoot is a user-space chroot +
 //! bind implementation built on ptrace, which makes it the sandbox backend for
 //! Android apps that ship a Linux rootfs. See `proot-sandbox-integration-plan.md`
 //! for the full design rationale.
@@ -120,8 +120,8 @@ impl ProotConfig {
     }
 
     /// Runtime validation performed before first use: the executable must be a
-    /// file and the rootfs must be a directory. Mirrors the security posture of
-    /// `MACOS_PATH_TO_SEATBELT_EXECUTABLE` (absolute, caller-controlled path).
+    /// file and the rootfs must be a directory. The executable path is absolute
+    /// and caller-controlled.
     pub fn validate_runtime(&self) -> Result<(), ProotPreparationError> {
         let executable = self.executable.as_path();
         if !executable.is_file() {
@@ -199,9 +199,8 @@ impl ProotPathMapper {
     }
 }
 
-/// Readiness of the PRoot backend, mirroring the Windows sandbox readiness
-/// surface (`WindowsSandboxReadiness`). Host apps probe this before the first
-/// turn to decide whether sandboxed guest execution is available.
+/// Readiness of the PRoot backend. Host apps probe this before the first turn
+/// to decide whether sandboxed guest execution is available.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ProotReadiness {
     /// `[proot]` is configured and both the executable and the rootfs exist.
@@ -292,8 +291,7 @@ pub struct CreateProotCommandArgsParams<'a> {
     pub config: &'a ProotConfig,
 }
 
-/// Converts the permission profile into the PRoot CLI invocation, mirroring
-/// `create_seatbelt_command_args_with_profile`.
+/// Converts the permission profile into the PRoot CLI invocation.
 ///
 /// The returned args are meant to follow the proot executable:
 /// `[proot] -0? -r <rootfs> -k? <ver> -w <guest cwd> -b ... [extra] command...`.

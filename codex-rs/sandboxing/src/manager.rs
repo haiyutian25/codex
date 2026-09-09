@@ -246,9 +246,8 @@ impl SandboxManager {
         Self::default()
     }
 
-    /// Creates a manager for filesystem helpers. Historically this selected a
-    /// narrower macOS seatbelt profile; with seatbelt removed it is identical
-    /// to [`SandboxManager::new`].
+    /// Creates a manager for filesystem helpers. Identical to
+    /// [`SandboxManager::new`].
     pub fn for_file_system_helpers() -> Self {
         Self::new()
     }

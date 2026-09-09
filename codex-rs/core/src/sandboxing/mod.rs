@@ -155,8 +155,7 @@ impl ExecRequest {
 /// whether sandboxed guest execution is available (executable + rootfs).
 ///
 /// Each probe is recorded to telemetry as `codex.proot.readiness` with a
-/// `status` tag (ready / not_configured / missing_executable / missing_rootfs),
-/// mirroring the `codex.windows_sandbox.*` setup metrics convention.
+/// `status` tag (ready / not_configured / missing_executable / missing_rootfs).
 pub fn proot_readiness(config: &crate::config::Config) -> codex_sandboxing::ProotReadiness {
     let readiness = codex_sandboxing::check_proot_readiness(config.proot.as_ref());
     emit_proot_readiness_metrics(readiness);
