@@ -711,8 +711,8 @@ fn command_execution_request_approval_localization_rejects_relative_additional_p
 
 #[test]
 fn permissions_request_approval_uses_request_permission_profile() {
-    let read_only_path = "/tmp/read-only";
-    let read_write_path = "/tmp/read-write";
+    let read_only_path = absolute_path_string("tmp/read-only");
+    let read_write_path = absolute_path_string("tmp/read-write");
     let params = serde_json::from_value::<PermissionsRequestApprovalParams>(json!({
         "threadId": "thr_123",
         "turnId": "turn_123",
@@ -962,8 +962,8 @@ fn legacy_current_working_directory_special_path_deserializes_as_project_roots()
 
 #[test]
 fn permissions_request_approval_response_uses_granted_permission_profile_without_macos() {
-    let read_only_path = "/tmp/read-only";
-    let read_write_path = "/tmp/read-write";
+    let read_only_path = absolute_path_string("tmp/read-only");
+    let read_write_path = absolute_path_string("tmp/read-write");
     let response = serde_json::from_value::<PermissionsRequestApprovalResponse>(json!({
         "permissions": {
             "network": {
