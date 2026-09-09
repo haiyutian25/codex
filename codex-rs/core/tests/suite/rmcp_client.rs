@@ -832,7 +832,6 @@ async fn environment_mcp_policy_filters_runtime_config_and_model_tools(
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 #[serial(mcp_test_value)]
 async fn stdio_server_round_trip() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -1468,7 +1467,6 @@ async fn interrupt_during_mcp_startup_preserves_user_input_in_history(
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 #[serial(mcp_cwd)]
 async fn stdio_server_uses_configured_cwd_before_runtime_fallback() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -1618,7 +1616,6 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
     browser_policy: Option<&str>,
     computer_policy: Option<&str>,
 ) -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -1899,7 +1896,6 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn stdio_mcp_parallel_tool_calls_default_false_runs_serially() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2015,7 +2011,6 @@ async fn stdio_mcp_parallel_tool_calls_default_false_runs_serially() -> anyhow::
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn stdio_mcp_read_only_tool_calls_run_concurrently_without_server_opt_in()
 -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2113,7 +2108,6 @@ async fn stdio_mcp_read_only_tool_calls_run_concurrently_without_server_opt_in()
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn stdio_mcp_parallel_tool_calls_opt_in_runs_concurrently() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2289,7 +2283,6 @@ async fn stdio_encrypted_content_responses_round_trip() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 #[serial(mcp_test_value)]
 async fn stdio_image_responses_round_trip() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2433,7 +2426,6 @@ async fn stdio_image_responses_round_trip() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 #[serial(mcp_test_value)]
 async fn stdio_image_responses_resize_large_image() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2531,7 +2523,6 @@ async fn stdio_image_responses_resize_large_image() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 #[serial(mcp_test_value)]
 async fn stdio_image_responses_preserve_original_detail_metadata() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2618,7 +2609,6 @@ async fn stdio_image_responses_preserve_original_detail_metadata() -> anyhow::Re
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 #[serial(mcp_test_value)]
 async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2779,7 +2769,6 @@ async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Re
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 #[serial(mcp_test_value)]
 async fn stdio_server_propagates_whitelisted_env_vars() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2897,7 +2886,6 @@ async fn stdio_server_propagates_whitelisted_env_vars() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 #[serial(mcp_env_source)]
 async fn stdio_server_propagates_explicit_local_env_var_source() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2989,7 +2977,6 @@ async fn stdio_server_propagates_explicit_local_env_var_source() -> anyhow::Resu
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 #[serial(mcp_env_source)]
 async fn remote_stdio_env_var_source_does_not_copy_local_env() -> anyhow::Result<()> {
-    // TODO(anp): Remove after packaging a Windows stdio test server for Wine exec.
     skip_if_no_network!(Ok(()));
     skip_if_no_remote_env!(Ok(()));
 

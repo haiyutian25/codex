@@ -454,8 +454,8 @@ impl TestCodexBuilder {
     /// Builds a test runtime using the execution environment selected by the test process.
     ///
     /// With no remote test configuration, or with `CODEX_TEST_ENVIRONMENT=local`, this uses a
-    /// temporary local environment just like [`Self::build`]. `CODEX_TEST_ENVIRONMENT=docker` or
-    /// `CODEX_TEST_ENVIRONMENT=wine-exec` selects the remote exec server configured by
+    /// temporary local environment just like [`Self::build`]. `CODEX_TEST_ENVIRONMENT=docker`
+    /// selects the remote exec server configured by
     /// `CODEX_TEST_REMOTE_EXEC_SERVER_URL`; the legacy `CODEX_TEST_REMOTE_ENV` Docker-container
     /// configuration does the same. Only the automatically selected environment is registered.
     /// Use [`Self::build_with_remote_and_local_env`] when a remote test also needs the local

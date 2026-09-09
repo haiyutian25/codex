@@ -620,13 +620,3 @@ macro_rules! codex_linux_sandbox_exe_or_skip {
         }
     }};
 }
-
-#[macro_export]
-macro_rules! skip_if_host_windows {
-    ($return_value:expr $(,)?) => {{
-        if cfg!(target_os = "windows") {
-            println!("Skipping test because it cannot execute on Windows.");
-            return $return_value;
-        }
-    }};
-}

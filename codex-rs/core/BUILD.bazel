@@ -20,7 +20,6 @@ codex_rust_crate(
     ],
     integration_compile_data_extra = ["src/guardian/node_repl_policy.md"],
     integration_test_timeout = "long",
-    run_tests_with_wine_exec = True,
     rustc_env = {
         # Keep manifest-root path lookups inside the Bazel execroot for code
         # that relies on env!("CARGO_MANIFEST_DIR").

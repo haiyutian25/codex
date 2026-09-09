@@ -46,7 +46,6 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::skip_if_host_windows;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::TestCodexHarness;
@@ -436,7 +435,6 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_intercepts_apply_patch_exec_command() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_host_windows!(Ok(()));
 
     let builder = test_codex();
     let harness = TestCodexHarness::with_builder(builder).await?;
@@ -749,7 +747,6 @@ async fn unified_exec_resolves_relative_workdir() -> Result<()> {
 async fn unified_exec_respects_workdir_override() -> Result<()> {
     // TODO(anp): Remove after workdir helpers use target-native paths and commands.
     skip_if_no_network!(Ok(()));
-    skip_if_host_windows!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -1568,7 +1565,6 @@ async fn unified_exec_terminal_interaction_captures_delayed_output() -> Result<(
 async fn unified_exec_emits_one_begin_and_one_end_event() -> Result<()> {
     // TODO(anp): Remove after unified-exec fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_host_windows!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -2541,7 +2537,6 @@ async fn unified_exec_emits_end_event_when_session_dies_via_stdin() -> Result<()
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_host_windows!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -2641,7 +2636,6 @@ async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_host_windows!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -3103,7 +3097,6 @@ PY
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_runs_under_sandbox() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_host_windows!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -3316,7 +3309,6 @@ async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_runs_on_all_platforms() -> Result<()> {
-    // TODO(anp): Remove after PowerShell execution passes through Wine exec.
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;

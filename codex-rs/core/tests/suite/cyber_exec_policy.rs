@@ -20,7 +20,6 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::sse_completed;
 use core_test_support::responses::start_mock_server;
-use core_test_support::skip_if_host_windows;
 use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
 use core_test_support::test_codex::TestCodex;
@@ -120,7 +119,6 @@ async fn saved_prefix_only_bypasses_guardian_for_general_models(
     let builder = match shell_backend {
         ShellBackend::Standard => test_codex(),
         ShellBackend::ZshFork => {
-            skip_if_host_windows!(Ok(()));
             let Some(runtime) = zsh_fork_runtime("cyber model zsh-fork saved prefix")? else {
                 return Ok(());
             };

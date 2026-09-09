@@ -1873,7 +1873,6 @@ text(result.output);
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_nested_limit_preserves_result_variable_before_default_history_truncation()
 -> Result<()> {
-    // TODO(anp): Remove after Wine exec returns complete nested-tool output to code mode.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -1906,7 +1905,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
 #[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_nested_limit_truncates_result_variable_when_exceeded() -> Result<()> {
-    // TODO(anp): Remove after Wine exec returns complete nested-tool output to code mode.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -1949,7 +1947,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_nested_limit_preserves_result_variable_before_configured_history_truncation()
 -> Result<()> {
-    // TODO(anp): Remove after Wine exec returns complete nested-tool output to code mode.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -1992,7 +1989,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_without_nested_limit_preserves_result_variable_before_default_history_truncation()
 -> Result<()> {
-    // TODO(anp): Remove after Wine exec returns complete nested-tool output to code mode.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2025,7 +2021,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_without_nested_limit_preserves_result_variable_before_configured_history_truncation()
 -> Result<()> {
-    // TODO(anp): Remove after Wine exec returns complete nested-tool output to code mode.
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
