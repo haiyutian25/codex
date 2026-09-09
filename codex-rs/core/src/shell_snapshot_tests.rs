@@ -1,4 +1,5 @@
 use super::*;
+#[cfg(unix)]
 use core_test_support::PathBufExt;
 use core_test_support::PathExt;
 use pretty_assertions::assert_eq;
@@ -78,6 +79,7 @@ fn assert_posix_snapshot_sections(snapshot: &str) {
     assert!(snapshot.contains("setopts "));
 }
 
+#[cfg(target_os = "linux")]
 async fn get_snapshot(shell_type: ShellType) -> Result<String> {
     let dir = tempdir()?;
     let path = dir.path().join("snapshot.sh");
@@ -302,14 +304,6 @@ async fn timed_out_snapshot_shell_is_terminated() -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_os = "macos")]
-#[tokio::test]
-async fn macos_zsh_snapshot_includes_sections() -> Result<()> {
-    let snapshot = get_snapshot(ShellType::Zsh).await?;
-    assert_posix_snapshot_sections(&snapshot);
-    Ok(())
-}
-
 #[cfg(target_os = "linux")]
 #[tokio::test]
 async fn linux_bash_snapshot_includes_sections() -> Result<()> {
@@ -323,17 +317,6 @@ async fn linux_bash_snapshot_includes_sections() -> Result<()> {
 async fn linux_sh_snapshot_includes_sections() -> Result<()> {
     let snapshot = get_snapshot(ShellType::Sh).await?;
     assert_posix_snapshot_sections(&snapshot);
-    Ok(())
-}
-
-#[cfg(target_os = "windows")]
-#[ignore]
-#[tokio::test]
-async fn windows_powershell_snapshot_includes_sections() -> Result<()> {
-    let snapshot = get_snapshot(ShellType::PowerShell).await?;
-    assert!(snapshot.contains("# Snapshot file"));
-    assert!(snapshot.contains("aliases "));
-    assert!(snapshot.contains("exports "));
     Ok(())
 }
 

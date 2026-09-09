@@ -7,9 +7,7 @@ use serde::Serialize;
 pub enum ShellType {
     Zsh,
     Bash,
-    PowerShell,
     Sh,
-    Cmd,
 }
 
 impl ShellType {
@@ -17,9 +15,7 @@ impl ShellType {
         match self {
             Self::Zsh => "zsh",
             Self::Bash => "bash",
-            Self::PowerShell => "powershell",
             Self::Sh => "sh",
-            Self::Cmd => "cmd",
         }
     }
 }
@@ -41,10 +37,7 @@ pub fn detect_shell_type(shell_path: impl AsRef<std::path::Path>) -> Option<Shel
     match shell_path.as_os_str().to_str() {
         Some("zsh") => Some(ShellType::Zsh),
         Some("sh") => Some(ShellType::Sh),
-        Some("cmd") => Some(ShellType::Cmd),
         Some("bash") => Some(ShellType::Bash),
-        Some("pwsh") => Some(ShellType::PowerShell),
-        Some("powershell") => Some(ShellType::PowerShell),
         _ => {
             let shell_name = shell_path.file_stem();
             if let Some(shell_name) = shell_name {
@@ -191,35 +184,6 @@ fn get_sh_shell() -> Option<DetectedShell> {
     })
 }
 
-const PWSH_FALLBACK_PATHS: &[&str] = &["/usr/local/bin/pwsh"];
-
-const POWERSHELL_FALLBACK_PATHS: &[&str] = &[];
-
-fn get_powershell_shell() -> Option<DetectedShell> {
-    let shell_path =
-        get_shell_path(ShellType::PowerShell, "pwsh", PWSH_FALLBACK_PATHS).or_else(|| {
-            get_shell_path(
-                ShellType::PowerShell,
-                "powershell",
-                POWERSHELL_FALLBACK_PATHS,
-            )
-        });
-
-    shell_path.map(|shell_path| DetectedShell {
-        shell_type: ShellType::PowerShell,
-        shell_path,
-    })
-}
-
-fn get_cmd_shell() -> Option<DetectedShell> {
-    let shell_path = get_shell_path(ShellType::Cmd, "cmd", &[]);
-
-    shell_path.map(|shell_path| DetectedShell {
-        shell_type: ShellType::Cmd,
-        shell_path,
-    })
-}
-
 pub fn ultimate_fallback_shell() -> DetectedShell {
     DetectedShell {
         shell_type: ShellType::Sh,
@@ -238,9 +202,7 @@ pub fn get_shell(shell_type: ShellType) -> Option<DetectedShell> {
     match shell_type {
         ShellType::Zsh => get_zsh_shell(),
         ShellType::Bash => get_bash_shell(),
-        ShellType::PowerShell => get_powershell_shell(),
         ShellType::Sh => get_sh_shell(),
-        ShellType::Cmd => get_cmd_shell(),
     }
 }
 
@@ -275,14 +237,6 @@ mod tests {
             detect_shell_type(PathBuf::from("bash")),
             Some(ShellType::Bash)
         );
-        assert_eq!(
-            detect_shell_type(PathBuf::from("pwsh")),
-            Some(ShellType::PowerShell)
-        );
-        assert_eq!(
-            detect_shell_type(PathBuf::from("powershell")),
-            Some(ShellType::PowerShell)
-        );
         assert_eq!(detect_shell_type(PathBuf::from("fish")), None);
         assert_eq!(detect_shell_type(PathBuf::from("other")), None);
         assert_eq!(
@@ -298,37 +252,9 @@ mod tests {
             Some(ShellType::Bash)
         );
         assert_eq!(
-            detect_shell_type(PathBuf::from("powershell.exe")),
-            Some(ShellType::PowerShell)
-        );
-        assert_eq!(
-            detect_shell_type(PathBuf::from(if cfg!(windows) {
-                "C:\\windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
-            } else {
-                "/usr/local/bin/pwsh"
-            })),
-            Some(ShellType::PowerShell)
-        );
-        assert_eq!(
-            detect_shell_type(PathBuf::from("pwsh.exe")),
-            Some(ShellType::PowerShell)
-        );
-        assert_eq!(
-            detect_shell_type(PathBuf::from("/usr/local/bin/pwsh")),
-            Some(ShellType::PowerShell)
-        );
-        assert_eq!(
             detect_shell_type(PathBuf::from("/bin/sh")),
             Some(ShellType::Sh)
         );
         assert_eq!(detect_shell_type(PathBuf::from("sh")), Some(ShellType::Sh));
-        assert_eq!(
-            detect_shell_type(PathBuf::from("cmd")),
-            Some(ShellType::Cmd)
-        );
-        assert_eq!(
-            detect_shell_type(PathBuf::from("cmd.exe")),
-            Some(ShellType::Cmd)
-        );
     }
 }
