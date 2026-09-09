@@ -169,10 +169,6 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
     env: &HashMap<String, String>,
     runtime_path_prepends: &RuntimePathPrepends,
 ) -> Vec<String> {
-    if cfg!(windows) {
-        return command.to_vec();
-    }
-
     let Some(snapshot) = shell_snapshot else {
         return command.to_vec();
     };
