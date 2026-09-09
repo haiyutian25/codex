@@ -1855,11 +1855,7 @@ async fn executor_skill_invocation_is_environment_scoped_and_deduplicated() -> R
         ],
         warnings: Vec::new(),
     };
-    let read_command = if cfg!(windows) {
-        format!("Get-Content -LiteralPath \"{}\"", skill_path.display())
-    } else {
-        format!("cat {}", skill_path.display())
-    };
+    let read_command = format!("cat {}", skill_path.display());
     let command = json!({
         "cmd": read_command,
         "login": false,

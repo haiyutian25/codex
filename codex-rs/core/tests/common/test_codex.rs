@@ -22,7 +22,6 @@ pub use codex_core::TurnInputRequest;
 use codex_core::config::Config;
 use codex_core::resolve_installation_id;
 use codex_core::shell::Shell;
-use codex_core::shell::get_shell_by_model_provided_path;
 use codex_core::thread_store_from_config;
 use codex_exec_server::CreateDirectoryOptions;
 use codex_exec_server::ExecutorFileSystem;

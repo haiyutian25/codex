@@ -44,23 +44,14 @@ fn config_stack_for_dot_codex_folder(dot_codex_folder: &Path) -> ConfigLayerStac
 }
 
 fn host_absolute_path(segments: &[&str]) -> String {
-    let mut path = if cfg!(windows) {
-        PathBuf::from(r"C:\")
-    } else {
-        PathBuf::from("/")
-    };
-    for segment in segments {
-        path.push(segment);
-    }
-    path.to_string_lossy().into_owned()
+    let posix = format!("/{}", segments.join("/"));
+    codex_utils_absolute_path::test_support::test_path_buf(&posix)
+        .to_string_lossy()
+        .into_owned()
 }
 
 fn host_program_path(name: &str) -> String {
-    let executable_name = if cfg!(windows) {
-        format!("{name}.exe")
-    } else {
-        name.to_string()
-    };
+    let executable_name = name.to_string();
     host_absolute_path(&["usr", "bin", &executable_name])
 }
 
@@ -1076,7 +1067,7 @@ async fn absolute_path_exec_approval_requirement_ignores_disallowed_host_executa
         "opt",
         "homebrew",
         "bin",
-        if cfg!(windows) { "git.exe" } else { "git" },
+        "git",
     ]);
     let allowed_git_path_literal = starlark_string(&allowed_git_path);
     let policy_src = format!(
@@ -2111,25 +2102,13 @@ async fn verify_approval_requirement_for_unsafe_powershell_command() {
         "-Command",
         "echo hi @(calc)",
     ])));
-    let (pwsh_approval_reason, expected_req) = if cfg!(windows) {
-        (
-            r#"On Windows, SandboxPolicy::ReadOnly should be assumed to mean
-                that no sandbox is present, so anything that is not "provably
-                safe" should require approval."#,
-            ExecApprovalRequirement::NeedsApproval {
-                reason: None,
-                proposed_execpolicy_amendment: expected_amendment.clone(),
-            },
-        )
-    } else {
-        (
-            "On non-Windows, rely on the read-only sandbox to prevent harm.",
-            ExecApprovalRequirement::Skip {
-                bypass_sandbox: false,
-                proposed_execpolicy_amendment: expected_amendment.clone(),
-            },
-        )
-    };
+    let (pwsh_approval_reason, expected_req) = (
+        "On non-Windows, rely on the read-only sandbox to prevent harm.",
+        ExecApprovalRequirement::Skip {
+            bypass_sandbox: false,
+            proposed_execpolicy_amendment: expected_amendment.clone(),
+        },
+    );
     assert_eq!(
         expected_req,
         policy

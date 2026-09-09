@@ -1735,11 +1735,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
             .into_iter()
             .find(|selection| selection.environment_id == remote_aware_environment_id())
             .context("thread should select the MCP server's executor environment")?;
-        let workspace_roots = vec![PathUri::parse(if cfg!(windows) {
-            "file:///foreign/workspace"
-        } else {
-            "file:///C:/workspace"
-        })?];
+        let workspace_roots = vec![PathUri::parse("file:///C:/workspace")?];
         submit_thread_settings(
             &fixture.codex,
             ThreadSettingsOverrides {
@@ -3221,11 +3217,7 @@ async fn streamable_http_tool_call_round_trip(with_headers_helper: bool) -> anyh
     };
     let server_url = http_server.url().to_string();
     let http_headers_helper = with_headers_helper.then(|| {
-        if cfg!(windows) {
-            r#"echo {"Proxy-Authorization":"Bearer gateway-token"}"#.to_string()
-        } else {
-            r#"printf '{"Proxy-Authorization":"Bearer gateway-token"}'"#.to_string()
-        }
+        r#"printf '{"Proxy-Authorization":"Bearer gateway-token"}'"#.to_string()
     });
 
     // Phase 3: configure Codex with the Streamable HTTP MCP server and build a
