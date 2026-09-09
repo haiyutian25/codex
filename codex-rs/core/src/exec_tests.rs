@@ -249,15 +249,6 @@ fn full_buffer_capture_policy_disables_caps_and_exec_expiration() {
 
 #[tokio::test]
 async fn exec_full_buffer_capture_ignores_expiration() -> Result<()> {
-    #[cfg(windows)]
-    let command = vec![
-        "powershell.exe".to_string(),
-        "-NonInteractive".to_string(),
-        "-NoLogo".to_string(),
-        "-Command".to_string(),
-        "Start-Sleep -Milliseconds 50; [Console]::Out.Write('hello')".to_string(),
-    ];
-    #[cfg(not(windows))]
     let command = vec![
         "/bin/sh".to_string(),
         "-c".to_string(),
@@ -329,15 +320,6 @@ async fn exec_full_buffer_capture_keeps_io_drain_timeout_when_descendant_holds_p
 #[tokio::test]
 async fn process_exec_tool_call_preserves_full_buffer_capture_policy() -> Result<()> {
     let byte_count = EXEC_OUTPUT_MAX_BYTES.saturating_add(128 * 1024);
-    #[cfg(windows)]
-    let command = vec![
-        "powershell.exe".to_string(),
-        "-NonInteractive".to_string(),
-        "-NoLogo".to_string(),
-        "-Command".to_string(),
-        format!("Start-Sleep -Milliseconds 50; [Console]::Out.Write('a' * {byte_count})"),
-    ];
-    #[cfg(not(windows))]
     let command = vec![
         "/bin/sh".to_string(),
         "-c".to_string(),
@@ -675,22 +657,10 @@ while :; do sleep 1; done"#
     Ok(())
 }
 
-#[cfg(unix)]
 fn long_running_command() -> Vec<String> {
     vec![
         "/bin/sh".to_string(),
         "-c".to_string(),
         "sleep 30".to_string(),
-    ]
-}
-
-#[cfg(windows)]
-fn long_running_command() -> Vec<String> {
-    vec![
-        "powershell.exe".to_string(),
-        "-NonInteractive".to_string(),
-        "-NoLogo".to_string(),
-        "-Command".to_string(),
-        "Start-Sleep -Seconds 30".to_string(),
     ]
 }

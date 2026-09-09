@@ -141,10 +141,6 @@ fn restrictive_workspace_write_profile() -> PermissionProfile {
 }
 
 fn workspace_write_with_read_only_root(read_only_root: AbsolutePathBuf) -> PermissionProfile {
-    if cfg!(windows) {
-        return restrictive_workspace_write_profile();
-    }
-
     let file_system_sandbox_policy = FileSystemSandboxPolicy::restricted(vec![
         // TODO(anp): Rationalize these write-confinement tests so sandboxed project-instruction
         // discovery works on macOS without unrestricted reads.
@@ -206,12 +202,7 @@ fn create_file_symlink(source: &std::path::Path, link: &std::path::Path) -> std:
     std::os::unix::fs::symlink(source, link)
 }
 
-#[cfg(windows)]
-fn create_file_symlink(source: &std::path::Path, link: &std::path::Path) -> std::io::Result<()> {
-    std::os::windows::fs::symlink_file(source, link)
-}
-
-#[cfg(not(any(unix, windows)))]
+#[cfg(not(unix))]
 fn create_file_symlink(_source: &std::path::Path, _link: &std::path::Path) -> std::io::Result<()> {
     Err(std::io::Error::new(
         std::io::ErrorKind::Unsupported,
@@ -1050,10 +1041,6 @@ async fn apply_patch_cli_does_not_write_through_symlink_escape_outside_workspace
     let link_path = harness.path(link_rel);
     match create_file_symlink(&outside_file, &link_path) {
         Ok(()) => {}
-        Err(error) if cfg!(windows) => {
-            eprintln!("Skipping Windows symlink apply_patch sandbox test: {error}");
-            return Ok(());
-        }
         Err(error) => return Err(error.into()),
     }
 
@@ -1203,32 +1190,6 @@ async fn apply_patch_cli_preserves_existing_hard_link_outside_workspace() -> Res
         .await?;
 
     let out = harness.apply_patch_output(call_id).await;
-    if cfg!(windows) {
-        assert!(
-            out.contains("patch rejected: writing outside of the project"),
-            "Windows sandboxing intentionally rejects writes through existing hard links to files outside the workspace; tool output: {out}"
-        );
-        assert_eq!(
-            std::fs::read_to_string(&outside_file)?,
-            "original outside content\n",
-            "Windows rejection must leave the outside hard-link target unchanged"
-        );
-        assert_eq!(
-            std::fs::read_to_string(&link_path)?,
-            "original outside content\n",
-            "Windows rejection must leave the workspace hard-link path unchanged"
-        );
-
-        std::fs::write(&outside_file, "post-reject outside write\n")?;
-        assert_eq!(
-            std::fs::read_to_string(&link_path)?,
-            "post-reject outside write\n",
-            "Windows rejection must not unlink or replace an existing hard link"
-        );
-
-        return Ok(());
-    }
-
     assert!(
         out.contains("Success. Updated the following files:"),
         "apply_patch should intentionally allow updates through existing hard links; tool output: {out}"
