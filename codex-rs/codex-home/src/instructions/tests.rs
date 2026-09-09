@@ -1,4 +1,5 @@
 use std::fs;
+#[cfg(unix)]
 use std::path::Path;
 
 use codex_extension_api::Instructions;
@@ -37,15 +38,6 @@ fn expected(
 #[cfg(unix)]
 fn create_symlink_loop(path: &Path) {
     std::os::unix::fs::symlink(
-        path.file_name().expect("override path should have a name"),
-        path,
-    )
-    .expect("create symlink loop");
-}
-
-#[cfg(windows)]
-fn create_symlink_loop(path: &Path) {
-    std::os::windows::fs::symlink_file(
         path.file_name().expect("override path should have a name"),
         path,
     )
@@ -107,6 +99,7 @@ async fn directory_override_falls_back_to_default() {
     );
 }
 
+#[cfg(unix)]
 #[tokio::test]
 async fn recoverable_override_read_error_warns_and_falls_back_to_default() {
     let home = TempDir::new().expect("temp dir");
