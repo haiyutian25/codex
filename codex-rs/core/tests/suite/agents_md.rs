@@ -35,7 +35,6 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_no_remote_env;
-use core_test_support::skip_if_sandbox;
 use core_test_support::test_codex::RecordingUserInstructionsProvider;
 use core_test_support::test_codex::TestCodexBuilder;
 use core_test_support::test_codex::executor_path_uri;
@@ -587,7 +586,6 @@ async fn runtime_trust_reload_refreshes_project_instructions() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn restricted_project_without_instructions_starts_successfully() -> Result<()> {
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let response_mock = mount_sse_once(
@@ -625,7 +623,6 @@ async fn restricted_project_without_instructions_starts_successfully() -> Result
 /// Thread creation fails when sandboxing prevents project instructions from loading.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn denied_project_instructions_fail_thread_creation() -> Result<()> {
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let home = Arc::new(TempDir::new()?);
@@ -676,7 +673,6 @@ async fn denied_project_instructions_fail_thread_creation() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn tightening_environment_read_permissions_invalidates_cached_project_instructions()
 -> Result<()> {
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let response_mock = mount_sse_once(

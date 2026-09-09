@@ -58,7 +58,6 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_host_windows;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_no_remote_env;
-use core_test_support::skip_if_sandbox;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::local;
 use core_test_support::test_codex::test_codex;
@@ -90,7 +89,6 @@ const NETWORK_TEST_TARGET: &str = "http://codex-network-test.invalid:80";
 async fn guardian_network_approval_preserves_action_and_outcome_routing() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -230,7 +228,6 @@ async fn strict_auto_review_routes_network_approval_to_guardian_when_user_review
 -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test_with_features(
@@ -344,7 +341,6 @@ async fn cancelled_guardian_network_review_fails_closed_without_rewriting_turn_s
 {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -442,7 +438,6 @@ async fn disconnected_network_request_explains_failure_to_model(
 ) -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     // This tests the controller-local proxy; remote disconnect forwarding is not supported yet.
@@ -553,7 +548,6 @@ async fn timed_out_guardian_network_review_uses_timeout_outcome_without_user_fal
 {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -661,7 +655,6 @@ async fn background_network_approval_uses_active_turn_after_original_turn_comple
 {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test_with_features(
@@ -847,7 +840,6 @@ async fn background_network_approval_uses_active_turn_after_original_turn_comple
 async fn user_network_approval_once_session_and_denial_semantics() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -1033,7 +1025,6 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
 async fn latest_network_rejection_wins_for_multiple_reviews_of_one_execution() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -1119,7 +1110,6 @@ async fn latest_network_rejection_wins_for_multiple_reviews_of_one_execution() -
 async fn allowing_network_policy_amendment_persists_context_and_bypasses_prompt() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -1205,7 +1195,6 @@ async fn allowing_network_policy_amendment_persists_context_and_bypasses_prompt(
 async fn denying_network_policy_amendment_persists_and_blocks_request() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -1260,7 +1249,6 @@ async fn denying_network_policy_amendment_persists_and_blocks_request() -> Resul
 async fn failed_network_policy_amendment_denies_request_and_does_not_approve_host() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -1337,7 +1325,6 @@ async fn failed_network_policy_amendment_denies_request_and_does_not_approve_hos
 async fn unattributed_network_request_uses_active_turn_environment_fallback() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -1402,7 +1389,6 @@ async fn unattributed_network_request_uses_active_turn_environment_fallback() ->
 async fn ambiguous_unattributed_network_request_is_not_assigned_to_active_calls() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -1498,7 +1484,6 @@ async fn ambiguous_unattributed_network_request_is_not_assigned_to_active_calls(
 async fn guardian_receives_exact_triggers_for_concurrent_network_requests() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -1651,7 +1636,6 @@ async fn guardian_receives_exact_triggers_for_concurrent_network_requests() -> R
 async fn guardian_receives_exact_trigger_for_single_network_request() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let test = managed_network_unified_exec_test(&server).await?;
@@ -1705,7 +1689,6 @@ async fn remote_guardian_network_decisions_are_scoped_to_each_request_and_enviro
 {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     skip_if_no_remote_env!(Ok(()));
 
     let server = start_mock_server().await;
@@ -1928,7 +1911,6 @@ async fn remote_guardian_network_decisions_are_scoped_to_each_request_and_enviro
 async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     skip_if_no_remote_env!(Ok(()));
 
     let server = start_mock_server().await;
@@ -2122,7 +2104,6 @@ async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()
 async fn approved_network_host_for_one_environment_still_prompts_in_another() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     skip_if_no_remote_env!(Ok(()));
 
     let server = start_mock_server().await;

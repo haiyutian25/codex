@@ -20,7 +20,7 @@ use pretty_assertions::assert_eq;
 use std::sync::Arc;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn resume_restores_windows_sandbox_override() -> Result<()> {
+async fn resume_restores_thread_settings_override() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;

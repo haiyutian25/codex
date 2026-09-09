@@ -259,12 +259,6 @@ pub fn create_client_for_route(
     ) {
         return Ok(create_client());
     }
-    if is_sandboxed() {
-        // Preserve the sandbox's existing no-proxy policy; sandboxed command egress is routed
-        // separately through network-proxy.
-        return Ok(create_client());
-    }
-
     default_http_client_builder().build_respecting_outbound_proxy_policy(
         http_client_factory,
         request_url,
@@ -313,11 +307,7 @@ fn default_http_client_builder() -> HttpClientBuilder {
 // New endpoint-aware call sites use `create_client_for_route` and propagate construction errors.
 #[allow(deprecated)]
 fn build_default_client(builder: HttpClientBuilder) -> HttpClient {
-    if is_sandboxed() {
-        builder.build_direct_with_custom_ca_fallback()
-    } else {
-        builder.build_with_transport_default_proxy_and_custom_ca_fallback()
-    }
+    builder.build_with_transport_default_proxy_and_custom_ca_fallback()
 }
 
 pub fn default_headers() -> HeaderMap {
@@ -336,10 +326,6 @@ pub fn default_headers() -> HeaderMap {
         headers.insert(RESIDENCY_HEADER_NAME, value);
     }
     headers
-}
-
-fn is_sandboxed() -> bool {
-    std::env::var("CODEX_SANDBOX").as_deref() == Ok("seatbelt")
 }
 
 #[cfg(test)]

@@ -48,7 +48,6 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_host_windows;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_sandbox;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::TestCodexHarness;
 use core_test_support::test_codex::test_codex;
@@ -437,7 +436,6 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_intercepts_apply_patch_exec_command() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     skip_if_host_windows!(Ok(()));
 
     let builder = test_codex();
@@ -638,7 +636,6 @@ async fn unified_exec_rejects_justification_without_sandbox_permissions() -> Res
 async fn unified_exec_emits_exec_command_begin_event() -> Result<()> {
     // TODO(anp): Remove after unified-exec fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -691,7 +688,6 @@ async fn unified_exec_emits_exec_command_begin_event() -> Result<()> {
 async fn unified_exec_resolves_relative_workdir() -> Result<()> {
     // TODO(anp): Remove after workdir helpers use target-native paths.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -753,7 +749,6 @@ async fn unified_exec_resolves_relative_workdir() -> Result<()> {
 async fn unified_exec_respects_workdir_override() -> Result<()> {
     // TODO(anp): Remove after workdir helpers use target-native paths and commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     skip_if_host_windows!(Ok(()));
 
     let server = start_mock_server().await;
@@ -813,7 +808,6 @@ async fn unified_exec_respects_workdir_override() -> Result<()> {
 async fn unified_exec_emits_exec_command_end_event() -> Result<()> {
     // TODO(anp): Remove after unified-exec fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -880,7 +874,6 @@ async fn unified_exec_emits_exec_command_end_event() -> Result<()> {
 async fn unified_exec_emits_output_delta_for_exec_command() -> Result<()> {
     // TODO(anp): Remove after unified-exec fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -991,7 +984,6 @@ async fn unified_exec_emits_output_delta_for_exec_command() -> Result<()> {
 async fn unified_exec_full_lifecycle_with_background_end_event() -> Result<()> {
     // TODO(anp): Remove after unified-exec fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -1080,7 +1072,6 @@ async fn unified_exec_full_lifecycle_with_background_end_event() -> Result<()> {
 async fn unified_exec_network_denial_emits_failed_background_end_event() -> Result<()> {
     // TODO(anp): Remove after network-denial fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let (test, sandbox_policy) = unified_exec_network_denial_test(&server).await?;
@@ -1123,7 +1114,6 @@ async fn unified_exec_network_denial_emits_failed_background_end_event() -> Resu
 async fn unified_exec_short_lived_network_denial_emits_failed_end_event() -> Result<()> {
     // TODO(anp): Remove after network-denial fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let (test, sandbox_policy) = unified_exec_network_denial_test(&server).await?;
@@ -1275,7 +1265,6 @@ async fn unified_exec_emits_terminal_interaction_for_write_stdin(
 ) -> Result<()> {
     // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -1407,7 +1396,6 @@ async fn unified_exec_emits_terminal_interaction_for_write_stdin(
 async fn unified_exec_terminal_interaction_captures_delayed_output() -> Result<()> {
     // TODO(anp): Remove after timing fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -1580,7 +1568,6 @@ async fn unified_exec_terminal_interaction_captures_delayed_output() -> Result<(
 async fn unified_exec_emits_one_begin_and_one_end_event() -> Result<()> {
     // TODO(anp): Remove after unified-exec fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     skip_if_host_windows!(Ok(()));
 
     let server = start_mock_server().await;
@@ -1698,7 +1685,6 @@ async fn unified_exec_emits_one_begin_and_one_end_event() -> Result<()> {
 async fn exec_command_reports_chunk_and_exit_metadata() -> Result<()> {
     // TODO(anp): Remove after unified-exec fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -1786,7 +1772,6 @@ async fn exec_command_reports_chunk_and_exit_metadata() -> Result<()> {
 async fn exec_command_clamps_model_requested_max_output_tokens_to_policy() -> Result<()> {
     // TODO(anp): Remove after unified-exec fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -1844,7 +1829,6 @@ async fn exec_command_clamps_model_requested_max_output_tokens_to_policy() -> Re
 async fn write_stdin_clamps_model_requested_max_output_tokens_to_policy() -> Result<()> {
     // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -1929,7 +1913,6 @@ async fn write_stdin_clamps_model_requested_max_output_tokens_to_policy() -> Res
 async fn unified_exec_defaults_to_pipe() -> Result<()> {
     // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -1993,7 +1976,6 @@ async fn unified_exec_defaults_to_pipe() -> Result<()> {
 async fn unified_exec_can_enable_tty() -> Result<()> {
     // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -2054,7 +2036,6 @@ async fn unified_exec_can_enable_tty() -> Result<()> {
 async fn unified_exec_respects_early_exit_notifications() -> Result<()> {
     // TODO(anp): Remove after unified-exec fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -2132,7 +2113,6 @@ async fn unified_exec_respects_early_exit_notifications() -> Result<()> {
 async fn write_stdin_returns_exit_metadata_and_clears_session() -> Result<()> {
     // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -2333,7 +2313,6 @@ async fn assert_write_stdin_ctrl_c_interrupts_non_tty_session(
     expected_interrupt_output: Option<&str>,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -2478,7 +2457,6 @@ async fn assert_write_stdin_ctrl_c_interrupts_non_tty_session(
 async fn unified_exec_emits_end_event_when_session_dies_via_stdin() -> Result<()> {
     // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -2563,7 +2541,6 @@ async fn unified_exec_emits_end_event_when_session_dies_via_stdin() -> Result<()
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     skip_if_host_windows!(Ok(()));
 
     let server = start_mock_server().await;
@@ -2664,7 +2641,6 @@ async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     skip_if_host_windows!(Ok(()));
 
     let server = start_mock_server().await;
@@ -2754,7 +2730,6 @@ async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
 async fn unified_exec_reuses_session_via_stdin() -> Result<()> {
     // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -2847,7 +2822,6 @@ async fn unified_exec_reuses_session_via_stdin() -> Result<()> {
 async fn unified_exec_streams_after_lagged_output() -> Result<()> {
     // TODO(anp): Remove after output fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -2957,7 +2931,6 @@ PY
 async fn unified_exec_timeout_and_followup_poll() -> Result<()> {
     // TODO(anp): Remove after unified-exec fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -3041,7 +3014,6 @@ async fn unified_exec_timeout_and_followup_poll() -> Result<()> {
 async fn unified_exec_formats_large_output_summary() -> Result<()> {
     // TODO(anp): Remove after output fixtures use target-native commands.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 
@@ -3131,7 +3103,6 @@ PY
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_runs_under_sandbox() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     skip_if_host_windows!(Ok(()));
 
     let server = start_mock_server().await;
@@ -3220,7 +3191,6 @@ async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
     use codex_protocol::permissions::NetworkSandboxPolicy;
 
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let mut builder = test_codex().with_config(move |config| {
@@ -3348,7 +3318,6 @@ async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
 async fn unified_exec_runs_on_all_platforms() -> Result<()> {
     // TODO(anp): Remove after PowerShell execution passes through Wine exec.
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
 

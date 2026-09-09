@@ -44,7 +44,6 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_sandbox;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::local_selections;
 use core_test_support::test_codex::test_codex;
@@ -411,7 +410,6 @@ async fn required_model_bypasses_extension_approval_when_guardian_v2_is_disabled
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_model_override_uses_catalog_model_for_strict_auto_review() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let model = "remote-auto-review-parent";

@@ -61,7 +61,6 @@ use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::responses::start_websocket_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_sandbox;
 use core_test_support::test_codex::local_selections;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
@@ -547,7 +546,6 @@ async fn guardian_node_repl_policy_follows_production_approval_path(
     repl_server: &'static str,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let mcp_server_bin = remote_aware_stdio_server_bin()?;
@@ -679,7 +677,6 @@ async fn guardian_node_repl_policy_follows_production_approval_path(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn guardian_session_is_reused_for_consecutive_tool_reviews_without_prewarm() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     const SECRET: &str = "guardian-parent-policy-test-secret";
     let server = start_mock_server().await;
@@ -898,7 +895,6 @@ async fn guardian_session_is_reused_for_consecutive_tool_reviews_without_prewarm
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn interrupted_guardian_tool_review_aborts_without_executing_the_command() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;
@@ -1050,7 +1046,6 @@ async fn guardian_denial_rejects_tool_call_with_rationale(
     rejection_instructions: Option<&'static str>,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;
@@ -1199,7 +1194,6 @@ async fn guardian_timeout_rejects_tool_call_with_acting_model_instructions(
     timeout_instructions: Option<&'static str>,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     struct TimedOutReviewContributor;
 
@@ -1300,7 +1294,6 @@ async fn guardian_timeout_rejects_tool_call_with_acting_model_instructions(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn cyber_model_guardian_denial_interrupts_turn_immediately() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;
@@ -1414,7 +1407,6 @@ async fn cyber_model_guardian_denial_interrupts_turn_immediately() -> Result<()>
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn guardian_review_session_does_not_inherit_legacy_notify() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;

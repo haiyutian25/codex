@@ -341,10 +341,6 @@ where
     }
 }
 
-pub fn sandbox_env_var() -> &'static str {
-    codex_core::spawn::CODEX_SANDBOX_ENV_VAR
-}
-
 pub fn sandbox_network_env_var() -> &'static str {
     codex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR
 }
@@ -514,32 +510,6 @@ pub mod fs_wait {
             }
         }
     }
-}
-
-#[macro_export]
-macro_rules! skip_if_sandbox {
-    () => {{
-        if ::std::env::var($crate::sandbox_env_var())
-            == ::core::result::Result::Ok("seatbelt".to_string())
-        {
-            eprintln!(
-                "{} is set to 'seatbelt', skipping test.",
-                $crate::sandbox_env_var()
-            );
-            return;
-        }
-    }};
-    ($return_value:expr $(,)?) => {{
-        if ::std::env::var($crate::sandbox_env_var())
-            == ::core::result::Result::Ok("seatbelt".to_string())
-        {
-            eprintln!(
-                "{} is set to 'seatbelt', skipping test.",
-                $crate::sandbox_env_var()
-            );
-            return $return_value;
-        }
-    }};
 }
 
 #[macro_export]

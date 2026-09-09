@@ -643,7 +643,6 @@ impl CoreShellCommandExecutor {
                 sandbox_policy_cwd: self.sandbox_policy_cwd.clone().into(),
                 sandbox_workspace_roots: self.sandbox_workspace_roots.clone(),
                 permission_profile: self.permission_profile.clone(),
-                windows_sandbox_filesystem_overrides: None,
                 arg0: self.arg0.clone(),
                 exec_server_sandbox: None,
                 exec_server_enforce_managed_network: false,

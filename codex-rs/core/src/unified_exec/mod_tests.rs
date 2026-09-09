@@ -23,7 +23,6 @@ use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_output_truncation::TruncationPolicy;
 use codex_utils_output_truncation::approx_tokens_from_byte_count;
 use core_test_support::skip_if_no_remote_env;
-use core_test_support::skip_if_sandbox;
 use core_test_support::test_codex::test_env as remote_test_env;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
@@ -331,7 +330,6 @@ async fn write_stdin(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_persists_across_requests() -> anyhow::Result<()> {
-    skip_if_sandbox!(Ok(()));
 
     let (session, turn) = test_session_and_turn().await;
     #[allow(deprecated)]
@@ -385,7 +383,6 @@ async fn unified_exec_persists_across_requests() -> anyhow::Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn multi_unified_exec_sessions() -> anyhow::Result<()> {
-    skip_if_sandbox!(Ok(()));
 
     let (session, turn) = test_session_and_turn().await;
 
@@ -444,7 +441,6 @@ async fn multi_unified_exec_sessions() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn unified_exec_timeouts() -> anyhow::Result<()> {
-    skip_if_sandbox!(Ok(()));
 
     const TEST_VAR_VALUE: &str = "unified_exec_var_123";
 
@@ -496,7 +492,6 @@ async fn unified_exec_timeouts() -> anyhow::Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_pause_blocks_yield_timeout() -> anyhow::Result<()> {
-    skip_if_sandbox!(Ok(()));
 
     let (session, turn) = test_session_and_turn().await;
     let elicitation = session.services.elicitations.register();
@@ -536,7 +531,6 @@ async fn unified_exec_pause_blocks_yield_timeout() -> anyhow::Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn reusing_completed_process_returns_unknown_process() -> anyhow::Result<()> {
-    skip_if_sandbox!(Ok(()));
 
     let (session, turn) = test_session_and_turn().await;
 
@@ -771,7 +765,6 @@ async fn completed_pipe_commands_preserve_exit_code() -> anyhow::Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_uses_remote_exec_server_when_configured() -> anyhow::Result<()> {
-    skip_if_sandbox!(Ok(()));
     skip_if_no_remote_env!(Ok(()));
 
     let remote_test_env = remote_test_env().await?;
@@ -812,7 +805,6 @@ async fn unified_exec_uses_remote_exec_server_when_configured() -> anyhow::Resul
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_exec_server_rejects_inherited_fd_launches() -> anyhow::Result<()> {
-    skip_if_sandbox!(Ok(()));
     skip_if_no_remote_env!(Ok(()));
 
     let remote_test_env = remote_test_env().await?;
@@ -868,7 +860,6 @@ async fn stdin_approval_preserves_the_reviewed_terminal() -> anyhow::Result<()> 
     use codex_protocol::protocol::EventMsg;
     use codex_protocol::protocol::ReviewDecision;
 
-    skip_if_sandbox!(Ok(()));
     let (session, mut turn, events) = make_session_and_context_with_auth_and_config_and_rx(
         codex_login::CodexAuth::from_api_key("Test API Key"),
         Vec::new(),

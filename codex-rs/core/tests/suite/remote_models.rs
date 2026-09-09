@@ -38,7 +38,6 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_sandbox;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::local_selections;
 use core_test_support::test_codex::test_codex;
@@ -97,7 +96,6 @@ async fn unknown_model_sends_builtin_instructions() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let generic = test_remote_model_with_policy(
@@ -194,7 +192,6 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_config_context_window_override_clamps_to_max_context_window() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let requested_model = "gpt-5.4-test";
@@ -255,7 +252,6 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_config_override_above_max_uses_max_context_window() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let requested_model = "gpt-5.4-test";
@@ -316,7 +312,6 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_use_context_window_when_config_override_is_absent() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let requested_model = "gpt-5.4-test";
@@ -381,7 +376,6 @@ async fn remote_models_long_model_slug_is_sent_with_supported_reasoning(
     catalog_instructions: Option<&str>,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let requested_model = "gpt-5.3-codex-test";
@@ -499,7 +493,6 @@ async fn remote_models_long_model_slug_is_sent_with_supported_reasoning(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn namespaced_model_slug_uses_catalog_metadata_without_fallback_warning() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let requested_model = "custom/gpt-5.2-codex";
@@ -545,7 +538,6 @@ async fn namespaced_model_slug_uses_catalog_metadata_without_fallback_warning() 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::builder()
         .body_print_limit(BodyPrintLimit::Limited(80_000))
@@ -717,7 +709,6 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_truncation_policy_without_override_preserves_remote() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::builder()
         .body_print_limit(BodyPrintLimit::Limited(80_000))
@@ -763,7 +754,6 @@ async fn remote_models_truncation_policy_without_override_preserves_remote() -> 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_truncation_policy_with_tool_output_override() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::builder()
         .body_print_limit(BodyPrintLimit::Limited(80_000))
@@ -810,7 +800,6 @@ async fn remote_models_truncation_policy_with_tool_output_override() -> Result<(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_apply_legacy_instructions() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::builder()
         .body_print_limit(BodyPrintLimit::Limited(80_000))
@@ -1002,7 +991,6 @@ async fn remote_models_apply_legacy_instructions() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_do_not_append_removed_builtin_presets() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let remote_model =
@@ -1065,7 +1053,6 @@ async fn remote_models_do_not_append_removed_builtin_presets() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_merge_adds_new_high_priority_first() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let remote_model = test_remote_model(
@@ -1118,7 +1105,6 @@ async fn remote_models_merge_adds_new_high_priority_first() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_merge_replaces_overlapping_model() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let slug = bundled_model_slug();
@@ -1177,7 +1163,6 @@ async fn remote_models_merge_replaces_overlapping_model() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_merge_preserves_bundled_models_on_empty_response() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let _models_mock = mount_models_once(&server, ModelsResponse { models: Vec::new() }).await;
@@ -1215,7 +1200,6 @@ async fn remote_models_merge_preserves_bundled_models_on_empty_response() -> Res
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_request_times_out_after_5s() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let remote_model =
@@ -1288,7 +1272,6 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_models_hide_picker_only_models() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
     let remote_model = test_remote_model(

@@ -255,7 +255,6 @@ pub async fn process_exec_tool_call(
     params: ExecParams,
     permission_profile: &PermissionProfile,
     sandbox_cwd: &AbsolutePathBuf,
-    windows_sandbox_workspace_roots: &[AbsolutePathBuf],
     codex_linux_sandbox_exe: &Option<PathBuf>,
     proot: Option<&codex_sandboxing::ProotConfig>,
     use_legacy_landlock: bool,
@@ -265,7 +264,6 @@ pub async fn process_exec_tool_call(
         params,
         permission_profile,
         sandbox_cwd,
-        windows_sandbox_workspace_roots,
         codex_linux_sandbox_exe,
         proot,
         use_legacy_landlock,
@@ -281,7 +279,6 @@ pub fn build_exec_request(
     params: ExecParams,
     permission_profile: &PermissionProfile,
     sandbox_cwd: &AbsolutePathBuf,
-    windows_sandbox_workspace_roots: &[AbsolutePathBuf],
     codex_linux_sandbox_exe: &Option<PathBuf>,
     proot: Option<&codex_sandboxing::ProotConfig>,
     use_legacy_landlock: bool,
@@ -353,12 +350,7 @@ pub fn build_exec_request(
             use_legacy_landlock,
         })
         .map_err(CodexErr::from)?;
-    let sandbox_workspace_roots = if windows_sandbox_workspace_roots.is_empty() {
-        vec![sandbox_cwd.clone()]
-    } else {
-        windows_sandbox_workspace_roots.to_vec()
-    };
-    ExecRequest::from_sandbox_exec_request(request, options, sandbox_workspace_roots)
+    ExecRequest::from_sandbox_exec_request(request, options, vec![sandbox_cwd.clone()])
 }
 
 pub(crate) async fn execute_exec_request(

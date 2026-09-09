@@ -42,7 +42,6 @@ use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_sandbox;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::TestCodexHarness;
 use core_test_support::test_codex::local_selections;
@@ -298,7 +297,6 @@ fn normalized_directory_write_permissions(path: &Path) -> Result<RequestPermissi
 #[tokio::test(flavor = "current_thread")]
 async fn with_additional_permissions_requires_approval_under_on_request() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;
@@ -391,7 +389,6 @@ async fn with_additional_permissions_requires_approval_under_on_request() -> Res
 async fn request_permissions_tool_is_auto_denied_when_granular_request_permissions_is_disabled()
 -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::Granular(GranularApprovalConfig {
@@ -485,7 +482,6 @@ async fn request_permissions_tool_is_auto_denied_when_granular_request_permissio
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn request_permissions_auto_review_applies_guardian_decision(outcome: &str) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;
@@ -599,7 +595,6 @@ async fn request_permissions_auto_review_applies_guardian_decision(outcome: &str
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn interrupted_request_permissions_auto_review_aborts_guardian_review() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;
@@ -729,7 +724,6 @@ async fn interrupted_request_permissions_auto_review_aborts_guardian_review() ->
 #[tokio::test(flavor = "current_thread")]
 async fn relative_additional_permissions_resolve_against_tool_workdir() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;
@@ -863,7 +857,6 @@ async fn denied_child_permissions_require_fresh_approval(
     mode: ApprovalMode,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     let harness =
         TestCodexHarness::with_auto_env_builder(test_codex().with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);

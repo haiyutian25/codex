@@ -27,7 +27,6 @@ use codex_utils_path::normalize_for_path_comparison;
 use codex_utils_path_uri::PathUri;
 use core_test_support::PathBufExt;
 use core_test_support::PathExt;
-use core_test_support::skip_if_sandbox;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::io;
@@ -239,7 +238,6 @@ async fn test_recent_commits_non_git_directory_returns_empty() {
 
 #[tokio::test]
 async fn test_recent_commits_orders_and_limits() {
-    skip_if_sandbox!();
     use tokio::time::Duration;
     use tokio::time::sleep;
 

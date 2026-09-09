@@ -74,7 +74,6 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::namespace_child_tool;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_sandbox;
 use core_test_support::stdio_server_bin;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::TestCodexBuilder;
@@ -4374,7 +4373,6 @@ async fn code_mode_node_repl_image_flag_without_enhanced_stays_disabled(
     repl_server: &'static str,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = responses::start_mock_server().await;
     let mcp_server_bin = remote_aware_stdio_server_bin()?;
@@ -4487,7 +4485,6 @@ async fn code_mode_node_repl_text_evidence_is_visible_only_to_guardian(
     reviewer_constraint: Option<&'static str>,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
     const NODE_REPL_DOM_MIDDLE: &str = "guardian-visible-dom-middle";
     const DIRECT_NODE_REPL_MIDDLE: &str = "direct-node-repl-visible-middle";
     const DIRECT_UNRELATED_MIDDLE: &str = "direct-unrelated-hidden-middle";

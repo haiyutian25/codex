@@ -2,7 +2,6 @@ use super::*;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::permissions::FileSystemSandboxPolicy;
 use codex_sandboxing::SandboxType;
-use core_test_support::PathBufExt;
 use core_test_support::PathExt;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
@@ -343,7 +342,6 @@ async fn process_exec_tool_call_preserves_full_buffer_capture_policy() -> Result
         },
         &permission_profile,
         &cwd,
-        std::slice::from_ref(&cwd),
         &None,
         /*proot*/ None,
         /*use_legacy_landlock*/ false,
@@ -394,11 +392,9 @@ fn process_exec_tool_call_uses_platform_sandbox_for_network_only_restrictions() 
 }
 
 #[test]
-fn build_exec_request_preserves_sandbox_workspace_roots() -> Result<()> {
+fn build_exec_request_defaults_sandbox_workspace_roots_to_cwd() -> Result<()> {
     let temp_dir = tempfile::TempDir::new()?;
     let cwd = temp_dir.path().abs();
-    let additional_root = temp_dir.path().join("additional").abs();
-    let workspace_roots = vec![cwd.clone(), additional_root];
 
     let exec_request = build_exec_request(
         ExecParams {
@@ -415,16 +411,12 @@ fn build_exec_request_preserves_sandbox_workspace_roots() -> Result<()> {
         },
         &PermissionProfile::Disabled,
         &cwd,
-        workspace_roots.as_slice(),
         &None,
         /*proot*/ None,
         /*use_legacy_landlock*/ false,
     )?;
 
-    assert_eq!(
-        exec_request.sandbox_workspace_roots,
-        workspace_roots
-    );
+    assert_eq!(exec_request.sandbox_workspace_roots, vec![cwd]);
     Ok(())
 }
 
@@ -531,7 +523,6 @@ async fn process_exec_tool_call_respects_cancellation_token() -> Result<()> {
             params,
             &PermissionProfile::Disabled,
             &cwd,
-            std::slice::from_ref(&cwd),
             &None,
             /*proot*/ None,
             /*use_legacy_landlock*/ false,
@@ -611,7 +602,6 @@ while :; do sleep 1; done"#
             params,
             &PermissionProfile::Disabled,
             &cwd,
-            std::slice::from_ref(&cwd),
             &None,
             /*proot*/ None,
             /*use_legacy_landlock*/ false,

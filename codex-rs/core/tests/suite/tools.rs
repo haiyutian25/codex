@@ -39,7 +39,6 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::responses::strip_response_item_ids_from_json;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_sandbox;
 use core_test_support::submit_thread_settings;
 use core_test_support::test_codex::local;
 use core_test_support::test_codex::test_codex;
@@ -737,7 +736,6 @@ async fn sandbox_denied_exec_command_returns_original_output() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exec_command_enforces_glob_deny_read_policy() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
     let mut builder = test_codex()
