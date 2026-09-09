@@ -318,8 +318,8 @@ async fn ensure_owner_only_permissions(file: &File) -> Result<()> {
     Ok(())
 }
 
-#[cfg(windows)]
-// On Windows, simply succeed.
+#[cfg(not(unix))]
+// POSIX-only permissions are unavailable; nothing to enforce.
 async fn ensure_owner_only_permissions(_file: &File) -> Result<()> {
     Ok(())
 }
@@ -428,13 +428,7 @@ fn log_identity(metadata: &std::fs::Metadata) -> Option<u64> {
     Some(metadata.ino())
 }
 
-#[cfg(windows)]
-fn log_identity(metadata: &std::fs::Metadata) -> Option<u64> {
-    use std::os::windows::fs::MetadataExt;
-    Some(metadata.creation_time())
-}
-
-#[cfg(not(any(unix, windows)))]
+#[cfg(not(unix))]
 fn log_identity(_metadata: &std::fs::Metadata) -> Option<u64> {
     None
 }

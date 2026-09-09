@@ -868,7 +868,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::SecretAuthStorage,
         key: "secret_auth_storage",
         stage: Stage::Stable,
-        default_enabled: cfg!(windows),
+        default_enabled: false,
     },
     FeatureSpec {
         id: Feature::UnifiedExec,
@@ -1549,11 +1549,7 @@ pub const FEATURES: &[FeatureSpec] = &[
     FeatureSpec {
         id: Feature::PreventIdleSleep,
         key: "prevent_idle_sleep",
-        stage: if cfg!(any(
-            target_os = "macos",
-            target_os = "linux",
-            target_os = "windows"
-        )) {
+        stage: if cfg!(target_os = "linux") {
             Stage::Experimental {
                 name: "Prevent sleep while running",
                 menu_description: "Keep your computer awake while Codex is running a thread.",

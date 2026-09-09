@@ -25,6 +25,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::thread;
 use std::time::Duration;
+#[cfg(unix)]
 use tokio::process::Command;
 
 #[cfg(test)]
@@ -250,16 +251,6 @@ pub async fn run_main<T: Reporter>(
                 .stderr(std::process::Stdio::inherit())
                 .status()
                 .await?;
-            #[cfg(windows)]
-            {
-                Command::new("cmd")
-                    .arg("/c")
-                    .arg(search_directory)
-                    .stdout(std::process::Stdio::inherit())
-                    .stderr(std::process::Stdio::inherit())
-                    .status()
-                    .await?;
-            }
             return Ok(());
         }
     };
