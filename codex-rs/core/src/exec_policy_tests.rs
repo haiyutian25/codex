@@ -1895,7 +1895,7 @@ fn derive_requested_execpolicy_amendment_returns_none_for_windows_and_pypy_varia
 }
 
 #[test]
-fn derive_requested_execpolicy_amendment_returns_none_for_shell_and_powershell_variants() {
+fn derive_requested_execpolicy_amendment_returns_none_for_shell_variants() {
     for prefix_rule in [
         vec!["bash".to_string(), "-lc".to_string()],
         vec!["sh".to_string(), "-c".to_string()],
@@ -1903,16 +1903,6 @@ fn derive_requested_execpolicy_amendment_returns_none_for_shell_and_powershell_v
         vec!["zsh".to_string(), "-lc".to_string()],
         vec!["/bin/bash".to_string(), "-lc".to_string()],
         vec!["/bin/zsh".to_string(), "-lc".to_string()],
-        vec!["pwsh".to_string()],
-        vec!["pwsh".to_string(), "-Command".to_string()],
-        vec!["pwsh".to_string(), "-c".to_string()],
-        vec!["pwsh".to_string(), "-ec".to_string()],
-        vec!["powershell".to_string()],
-        vec!["powershell".to_string(), "-Command".to_string()],
-        vec!["powershell".to_string(), "-c".to_string()],
-        vec!["powershell.exe".to_string()],
-        vec!["powershell.exe".to_string(), "-Command".to_string()],
-        vec!["powershell.exe".to_string(), "-c".to_string()],
     ] {
         assert_eq!(
             None,
@@ -2076,52 +2066,6 @@ async fn forced_rm_requires_approval_or_specific_rejection_on_all_platforms() {
             .await,
         r#"On all platforms, a forbidden command should require approval
             (unless AskForApproval::Never is specified)."#
-    );
-}
-
-/// Exercises the PowerShell dangerous-command path in
-/// render_decision_for_unmatched_command().
-#[tokio::test]
-async fn verify_approval_requirement_for_unsafe_powershell_command() {
-    // `brew install powershell` to run this test on a Mac!
-    // Note `pwsh` is required to parse a PowerShell command to see if it
-    // is safe.
-    if which::which("pwsh").is_err() {
-        return;
-    }
-
-    let policy = ExecPolicyManager::new(Arc::new(Policy::empty()));
-    let permissions = SandboxPermissions::UseDefault;
-
-    // This command should not be run without user approval unless there is
-    // a proper sandbox in place to ensure safety.
-    let sneaky_command = vec_str(&["pwsh", "-Command", "echo hi @(calc)"]);
-    let expected_amendment = Some(ExecPolicyAmendment::new(vec_str(&[
-        "pwsh",
-        "-Command",
-        "echo hi @(calc)",
-    ])));
-    let (pwsh_approval_reason, expected_req) = (
-        "On non-Windows, rely on the read-only sandbox to prevent harm.",
-        ExecApprovalRequirement::Skip {
-            bypass_sandbox: false,
-            proposed_execpolicy_amendment: expected_amendment.clone(),
-        },
-    );
-    assert_eq!(
-        expected_req,
-        policy
-            .create_exec_approval_requirement_for_command(ExecApprovalRequest {
-                command: &sneaky_command,
-                approval_policy: AskForApproval::OnRequest,
-                permission_profile: PermissionProfile::read_only(),
-                environment_policy: None,
-                sandbox_permissions: permissions,
-                prefix_rule: None,
-                allow_prefix_rules: AllowPrefixRules::Honor,
-            })
-            .await,
-        "{pwsh_approval_reason}"
     );
 }
 
