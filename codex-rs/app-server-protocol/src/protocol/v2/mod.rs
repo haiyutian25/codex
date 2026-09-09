@@ -31,7 +31,6 @@ mod thread;
 mod thread_data;
 mod thread_usage;
 mod turn;
-mod windows_sandbox;
 
 pub use account::*;
 pub use apps::*;
@@ -65,7 +64,6 @@ pub use thread::*;
 pub use thread_data::*;
 pub use thread_usage::*;
 pub use turn::*;
-pub use windows_sandbox::*;
 
 #[cfg(test)]
 mod tests;

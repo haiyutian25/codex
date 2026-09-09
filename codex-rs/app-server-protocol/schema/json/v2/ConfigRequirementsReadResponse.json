@@ -401,15 +401,6 @@
             "null"
           ]
         },
-        "allowedWindowsSandboxImplementations": {
-          "items": {
-            "$ref": "#/definitions/WindowsSandboxSetupMode"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
         "autoReview": {
           "anyOf": [
             {
@@ -532,12 +523,6 @@
         "sqliteHome": {
           "type": [
             "string",
-            "null"
-          ]
-        },
-        "windowsSandboxPrivateDesktop": {
-          "type": [
-            "boolean",
             "null"
           ]
         }
@@ -977,13 +962,6 @@
         "cached",
         "indexed",
         "live"
-      ],
-      "type": "string"
-    },
-    "WindowsSandboxSetupMode": {
-      "enum": [
-        "elevated",
-        "unelevated"
       ],
       "type": "string"
     }
