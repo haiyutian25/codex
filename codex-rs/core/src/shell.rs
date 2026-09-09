@@ -75,11 +75,6 @@ pub fn default_user_shell() -> Shell {
     codex_shell_command::shell_detect::default_user_shell().into()
 }
 
-#[cfg(all(test, target_os = "macos"))]
-fn default_user_shell_from_path(user_shell_path: Option<PathBuf>) -> Shell {
-    codex_shell_command::shell_detect::default_user_shell_from_path(user_shell_path).into()
-}
-
 #[cfg(test)]
 #[cfg(unix)]
 #[path = "shell_tests.rs"]
