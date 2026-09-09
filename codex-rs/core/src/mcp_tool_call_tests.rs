@@ -216,7 +216,7 @@ print({hook_output:?})
     let hooks = session.hooks().reconfigured(HooksConfig {
         feature_enabled: true,
         config_layer_stack: Some(trusted_config_layer_stack),
-        shell_program: (!cfg!(windows)).then_some("/bin/sh".to_string()),
+        shell_program: Some("/bin/sh".to_string()),
         shell_args: vec!["-c".to_string()],
         ..HooksConfig::default()
     });

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 #[test]
-#[cfg(target_os = "macos")]
+#[cfg(unix)]
 fn detects_zsh() {
     let zsh_shell = get_shell(ShellType::Zsh).unwrap();
 
@@ -13,7 +13,7 @@ fn detects_zsh() {
 }
 
 #[test]
-#[cfg(target_os = "macos")]
+#[cfg(unix)]
 fn fish_fallback_to_zsh() {
     let zsh_shell = default_user_shell_from_path(Some(PathBuf::from("/bin/fish")));
 

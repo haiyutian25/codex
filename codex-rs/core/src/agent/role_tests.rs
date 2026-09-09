@@ -350,7 +350,6 @@ async fn apply_role_preserves_existing_service_tier_without_override() {
 }
 
 #[tokio::test]
-#[cfg(not(windows))]
 async fn apply_role_preserves_parent_sandbox_permissions() {
     let (home, mut config) = test_config_with_cli_overrides(vec![
         (

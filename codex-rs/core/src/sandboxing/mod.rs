@@ -11,8 +11,6 @@ use crate::exec::ExecCapturePolicy;
 use crate::exec::ExecExpiration;
 use crate::exec::StdoutStream;
 use crate::exec::execute_exec_request;
-#[cfg(target_os = "macos")]
-use crate::spawn::CODEX_SANDBOX_ENV_VAR;
 use crate::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
 use codex_file_system::FileSystemSandboxContext;
 use codex_network_proxy::ManagedNetworkSandboxContext;

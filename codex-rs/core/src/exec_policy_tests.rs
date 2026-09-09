@@ -844,7 +844,6 @@ async fn heredoc_prompt_replaces_inner_requested_prefix_with_full_command() {
 }
 
 #[tokio::test]
-#[cfg(not(windows))]
 async fn heredoc_with_variable_assignment_is_not_reduced_to_allowed_prefix() {
     assert_exec_approval_requirement_for_command(
         ExecApprovalRequirementScenario {
