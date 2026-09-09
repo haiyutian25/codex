@@ -8,8 +8,6 @@ use codex_protocol::models::PermissionProfileSnapshot;
 use codex_protocol::permissions::NetworkSandboxPolicy;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_path_uri::PathUri;
-#[cfg(windows)]
-use core_test_support::PathExt;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ev_apply_patch_custom_tool_call;
 use core_test_support::responses::ev_assistant_message;
@@ -39,12 +37,6 @@ fn workspace_roots_profile() -> PermissionProfile {
 
 async fn workspace_roots_test(server: &MockServer) -> Result<TestCodex> {
     let mut builder = test_codex().with_config(|config| {
-        #[cfg(windows)]
-        {
-            config.cwd = dunce::canonicalize(config.cwd.as_path())
-                .expect("test workspace should be canonicalizable")
-                .abs();
-        }
         config.workspace_roots = vec![config.cwd.clone()];
     });
     builder.build_with_auto_env(server).await
@@ -197,12 +189,6 @@ async fn workspace_roots_allow_file_and_command_writes_in_secondary_root(
     let server = start_mock_server().await;
     let mut builder = test_codex()
         .with_config(move |config| {
-            #[cfg(windows)]
-            {
-                config.cwd = dunce::canonicalize(config.cwd.as_path())
-                    .expect("primary workspace root should be canonicalizable")
-                    .abs();
-            }
             let secondary_root = config
                 .cwd
                 .parent()
