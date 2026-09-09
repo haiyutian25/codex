@@ -24,7 +24,6 @@ fn packaged_runtime_uses_manifest_version() {
     .expect("create runtime package manifest");
 
     let context = InstallContext::from_exe(
-        cfg!(target_os = "macos"),
         Some(&executable),
         /*method_override*/ None,
     );
@@ -42,7 +41,6 @@ fn packaged_runtime_uses_manifest_version() {
 #[test]
 fn unpackaged_runtime_uses_build_commit() {
     let context = InstallContext::from_exe(
-        cfg!(target_os = "macos"),
         /*current_exe*/ None,
         /*method_override*/ None,
     );
@@ -68,7 +66,6 @@ fn legacy_package_without_version_uses_build_commit() {
         .expect("create legacy runtime package manifest");
 
     let context = InstallContext::from_exe(
-        cfg!(target_os = "macos"),
         Some(&executable),
         /*method_override*/ None,
     );
@@ -97,7 +94,6 @@ fn invalid_package_version_uses_build_commit() {
     .expect("create runtime package manifest");
 
     let context = InstallContext::from_exe(
-        cfg!(target_os = "macos"),
         Some(&executable),
         /*method_override*/ None,
     );

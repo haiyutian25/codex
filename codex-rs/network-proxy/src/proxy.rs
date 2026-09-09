@@ -1159,8 +1159,6 @@ mod tests {
     use std::net::Ipv4Addr;
     use std::path::Path;
 
-    #[cfg(target_os = "windows")]
-    static WINDOWS_INGRESS_TEST_LOCK: tokio::sync::Semaphore = tokio::sync::Semaphore::const_new(1);
 
     fn https_request(host: &str) -> crate::NetworkPolicyRequest {
         crate::NetworkPolicyRequest::new(crate::NetworkPolicyRequestArgs {
@@ -1315,8 +1313,6 @@ mod tests {
 
     #[tokio::test]
     async fn managed_proxy_builder_uses_loopback_ports() {
-        #[cfg(target_os = "windows")]
-        let _permit = WINDOWS_INGRESS_TEST_LOCK.acquire().await.unwrap();
         let http_listener = StdTcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
         let http_addr = http_listener.local_addr().unwrap();
         let socks_listener = StdTcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
@@ -1436,8 +1432,6 @@ mod tests {
 
     #[tokio::test]
     async fn remote_launch_config_carries_execution_scope() -> Result<()> {
-        #[cfg(target_os = "windows")]
-        let _permit = WINDOWS_INGRESS_TEST_LOCK.acquire().await.unwrap();
         let mut config = NetworkProxyConfig {
             dangerously_allow_plaintext_credential_injection: true,
             ..NetworkProxyConfig::default()

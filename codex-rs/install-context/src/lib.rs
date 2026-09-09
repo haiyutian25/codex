@@ -59,8 +59,6 @@ pub enum InstallMethod {
     Bun,
     /// A Codex binary launched through the pnpm-managed `codex.js` shim.
     Pnpm,
-    /// A Codex binary that appears to come from a Homebrew install prefix.
-    Brew,
     /// Any other execution environment.
     ///
     /// This commonly covers `cargo run`, app-bundled Codex binaries, custom
@@ -70,13 +68,11 @@ pub enum InstallMethod {
 
 impl InstallContext {
     pub fn from_exe(
-        is_macos: bool,
         current_exe: Option<&Path>,
         method_override: Option<InstallMethod>,
     ) -> Self {
         let codex_home = codex_utils_home_dir::find_codex_home().ok();
         Self::from_exe_with_codex_home(
-            is_macos,
             current_exe,
             method_override,
             codex_home.as_deref(),
@@ -84,7 +80,6 @@ impl InstallContext {
     }
 
     fn from_exe_with_codex_home(
-        is_macos: bool,
         current_exe: Option<&Path>,
         method_override: Option<InstallMethod>,
         codex_home: Option<&Path>,
@@ -93,7 +88,7 @@ impl InstallContext {
         let method = if let Some(method) = method_override {
             method
         } else if let Some(exe_path) = current_exe {
-            install_method_from_exe(exe_path, codex_home, package_layout.as_ref(), is_macos)
+            install_method_from_exe(exe_path, codex_home, package_layout.as_ref())
         } else {
             InstallMethod::Other
         };
@@ -116,11 +111,7 @@ impl InstallContext {
             } else {
                 None
             };
-            Self::from_exe(
-                cfg!(target_os = "macos"),
-                current_exe.as_deref(),
-                method_override,
-            )
+            Self::from_exe(current_exe.as_deref(), method_override)
         })
     }
 
@@ -258,18 +249,13 @@ fn install_method_from_exe(
     exe_path: &Path,
     codex_home: Option<&Path>,
     package_layout: Option<&CodexPackageLayout>,
-    is_macos: bool,
 ) -> InstallMethod {
     if let Some(standalone_method) = standalone_install_method(exe_path, codex_home, package_layout)
     {
         return standalone_method;
     }
 
-    if is_macos && (exe_path.starts_with("/opt/homebrew") || exe_path.starts_with("/usr/local")) {
-        InstallMethod::Brew
-    } else {
-        InstallMethod::Other
-    }
+    InstallMethod::Other
 }
 
 fn standalone_install_method(
@@ -338,7 +324,6 @@ mod tests {
         fs::write(&resource_host, "managed host")?;
 
         let context = InstallContext::from_exe(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
         );
@@ -364,7 +349,6 @@ mod tests {
         fs::write(&resource_host, "managed host")?;
 
         let context = InstallContext::from_exe(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
         );
@@ -391,7 +375,6 @@ mod tests {
         fs::write(&legacy_host, "legacy host")?;
 
         let context = InstallContext::from_exe(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
         );
@@ -426,7 +409,6 @@ mod tests {
             AbsolutePathBuf::from_absolute_path(resources_dir.canonicalize()?)?;
 
         let context = InstallContext::from_exe_with_codex_home(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
             /*codex_home*/ Some(codex_home.path()),
@@ -471,7 +453,6 @@ mod tests {
         fs::write(&exe_path, "")?;
 
         let context = InstallContext::from_exe_with_codex_home(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
             /*codex_home*/ Some(codex_home.path()),
@@ -524,7 +505,6 @@ mod tests {
         };
 
         let context = InstallContext::from_exe_with_codex_home(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
             /*codex_home*/ None,
@@ -591,7 +571,6 @@ mod tests {
         let canonical_bin_dir = AbsolutePathBuf::from_absolute_path(bin_dir.canonicalize()?)?;
 
         let context = InstallContext::from_exe(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
         );
@@ -630,7 +609,6 @@ mod tests {
         let canonical_path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
 
         let context = InstallContext::from_exe_with_codex_home(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
             /*codex_home*/ Some(codex_home.path()),
@@ -677,7 +655,6 @@ mod tests {
         let canonical_path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
 
         let context = InstallContext::from_exe(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ Some(InstallMethod::Npm),
         );
@@ -702,7 +679,6 @@ mod tests {
         fs::write(&exe_path, "")?;
 
         let context = InstallContext::from_exe_with_codex_home(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
             /*codex_home*/ None,
@@ -728,7 +704,6 @@ mod tests {
         fs::write(&fallback_exe_path, "")?;
 
         let context = InstallContext::from_exe_with_codex_home(
-            /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
             /*codex_home*/ None,
@@ -771,7 +746,6 @@ mod tests {
     #[test]
     fn package_manager_method_overrides_take_precedence() {
         let pnpm_context = InstallContext::from_exe(
-            /*is_macos*/ false,
             /*current_exe*/ Some(Path::new("/tmp/codex")),
             /*method_override*/ Some(InstallMethod::Pnpm),
         );
@@ -784,7 +758,6 @@ mod tests {
         );
 
         let npm_context = InstallContext::from_exe(
-            /*is_macos*/ false,
             /*current_exe*/ Some(Path::new("/tmp/codex")),
             /*method_override*/ Some(InstallMethod::Npm),
         );
@@ -797,7 +770,6 @@ mod tests {
         );
 
         let bun_context = InstallContext::from_exe(
-            /*is_macos*/ false,
             /*current_exe*/ Some(Path::new("/tmp/codex")),
             /*method_override*/ Some(InstallMethod::Bun),
         );
@@ -810,20 +782,4 @@ mod tests {
         );
     }
 
-    #[test]
-    fn brew_is_detected_on_macos_prefixes() {
-        let context = InstallContext::from_exe_with_codex_home(
-            /*is_macos*/ true,
-            /*current_exe*/ Some(Path::new("/opt/homebrew/bin/codex")),
-            /*method_override*/ None,
-            /*codex_home*/ None,
-        );
-        assert_eq!(
-            context,
-            InstallContext {
-                method: InstallMethod::Brew,
-                package_layout: None,
-            }
-        );
-    }
 }
