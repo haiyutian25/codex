@@ -761,7 +761,7 @@ mv tokens.next tokens.txt
             ("./print-token.sh".to_string(), Vec::new())
         };
 
-        #[cfg(windows)]
+        #[cfg(not(unix))]
         let (command, args) = {
             let script_path = tempdir.path().join("print-token.cmd");
             std::fs::write(

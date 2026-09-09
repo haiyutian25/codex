@@ -111,10 +111,10 @@ pub fn create_directory_symlink(source: &Path, link: &Path) {
     std::os::unix::fs::symlink(source, link).expect("create directory symlink");
 }
 
-#[cfg(windows)]
+#[cfg(not(unix))]
 #[allow(clippy::expect_used)]
 pub fn create_directory_symlink(source: &Path, link: &Path) {
-    // Running this test locally may require Windows Developer Mode or an elevated process.
+    // Creating directory symlinks may require elevated privileges on this platform.
     std::os::windows::fs::symlink_dir(source, link)
         .expect("create directory symlink; enable Developer Mode or run the test elevated");
 }
