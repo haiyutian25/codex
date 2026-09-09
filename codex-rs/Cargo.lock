@@ -1540,7 +1540,6 @@ dependencies = [
  "codex-utils-path",
  "codex-utils-path-uri",
  "codex-utils-redacted-string",
- "core-foundation 0.9.4",
  "dns-lookup",
  "futures",
  "gethostname",
@@ -1567,8 +1566,6 @@ dependencies = [
  "tonic-prost-build",
  "tracing",
  "wildmatch",
- "winapi-util",
- "windows-sys 0.52.0",
 ]
 
 [[package]]
