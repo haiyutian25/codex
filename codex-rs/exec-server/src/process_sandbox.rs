@@ -11,7 +11,6 @@ use codex_network_proxy::NetworkProxyHandle;
 use codex_network_proxy::NetworkProxyState;
 use codex_network_proxy::RemoteNetworkProxyLaunchConfig;
 use codex_network_proxy::is_managed_mitm_ca_trust_bundle_path;
-#[cfg(target_os = "windows")]
 use codex_protocol::models::PermissionProfile;
 use codex_sandboxing::SandboxCommand;
 use codex_sandboxing::SandboxDirectSpawnTransformRequest;

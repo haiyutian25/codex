@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-#[cfg(target_os = "macos")]
-use codex_network_proxy::ManagedNetworkSandboxContext;
 #[cfg(target_os = "linux")]
 use codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
 use codex_utils_absolute_path::AbsolutePathBuf;
@@ -81,11 +79,6 @@ async fn sandbox_request_wraps_native_argv_on_executor() {
                 .materialize_project_roots_with_workspace_roots(std::slice::from_ref(&cwd))
         );
     }
-    #[cfg(target_os = "macos")]
-    assert_eq!(
-        prepared.command.first().map(String::as_str),
-        Some("/usr/bin/sandbox-exec")
-    );
 }
 
 #[cfg(unix)]
@@ -146,60 +139,6 @@ async fn sandbox_request_routes_custom_arg0_to_inner_helper() {
     );
     #[cfg(target_os = "linux")]
     assert_eq!(prepared.arg0, Some(CODEX_LINUX_SANDBOX_ARG0.to_string()));
-    #[cfg(target_os = "macos")]
-    assert_eq!(prepared.arg0, None);
-}
-
-#[cfg(target_os = "macos")]
-#[tokio::test]
-async fn sandbox_request_allows_prepared_managed_proxy_port() {
-    let cwd: AbsolutePathBuf = std::env::current_dir()
-        .expect("current directory")
-        .try_into()
-        .expect("absolute cwd");
-    let cwd_uri = PathUri::from_abs_path(&cwd);
-    let self_exe = std::env::current_exe().expect("current executable");
-    let runtime_paths =
-        ExecServerRuntimePaths::new(self_exe.clone(), Some(self_exe)).expect("runtime paths");
-    let sandbox = FileSystemSandboxContext::from_permission_profile_with_cwd(
-        PermissionProfile::workspace_write(),
-        cwd_uri.clone(),
-    );
-    let params = ExecParams {
-        process_id: ProcessId::from("process-managed-network"),
-        argv: vec!["/usr/bin/true".to_string()],
-        cwd: cwd_uri,
-        shell_snapshot: None,
-        env_policy: None,
-        env: HashMap::new(),
-        tty: false,
-        pipe_stdin: false,
-        arg0: None,
-        sandbox: Some(sandbox),
-        enforce_managed_network: true,
-        managed_network: Some(ManagedNetworkSandboxContext {
-            loopback_ports: vec![43123],
-            allow_local_binding: false,
-        }),
-        network_proxy: None,
-    };
-
-    let prepared = prepare_exec_request(
-        &params,
-        HashMap::new(),
-        Some(&runtime_paths),
-        /*network_policy_decider*/ None,
-        /*network_policy_audit_observer*/ None,
-    )
-    .await
-    .expect("prepare managed-network sandbox request");
-    let policy = prepared
-        .command
-        .windows(2)
-        .find_map(|args| (args[0] == "-p").then_some(args[1].as_str()))
-        .expect("Seatbelt policy argument");
-
-    assert!(policy.contains("(allow network-outbound (remote ip \"localhost:43123\"))"));
 }
 
 #[tokio::test]

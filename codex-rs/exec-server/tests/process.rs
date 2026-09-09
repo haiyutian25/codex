@@ -1,7 +1,5 @@
 mod common;
 
-use std::collections::HashMap;
-
 use codex_exec_server::EnvironmentInfo;
 use codex_exec_server::EnvironmentStatus;
 use codex_exec_server::EnvironmentStatusKind;
@@ -24,11 +22,7 @@ use pretty_assertions::assert_eq;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exec_server_starts_process_over_websocket() -> anyhow::Result<()> {
     let mut server = exec_server().await?;
-    let process_argv = if cfg!(windows) {
-        vec!["cmd.exe", "/D", "/C", "exit 0"]
-    } else {
-        vec!["true"]
-    };
+    let process_argv = vec!["true"];
     let initialize_id = server
         .send_request(
             "initialize",
@@ -94,11 +88,7 @@ async fn exec_server_starts_process_over_websocket() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exec_server_runs_ordinary_requests_serially_by_default() -> anyhow::Result<()> {
     let temporary_directory = tempfile::tempdir()?;
-    let temporary_directory_env_vars: &[&str] = if cfg!(windows) {
-        &["TEMP", "TMP"]
-    } else {
-        &["TMPDIR"]
-    };
+    let temporary_directory_env_vars: &[&str] = &["TMPDIR"];
     let mut server = exec_server_with_env(
         temporary_directory_env_vars
             .iter()
@@ -106,20 +96,12 @@ async fn exec_server_runs_ordinary_requests_serially_by_default() -> anyhow::Res
         &[],
     )
     .await?;
-    let process_argv = if cfg!(windows) {
-        vec!["cmd.exe", "/D", "/C", "ping -n 601 127.0.0.1 >NUL"]
-    } else {
-        vec![
-            "/bin/sh",
-            "-c",
-            "parent=$PPID; while kill -0 \"$parent\" 2>/dev/null; do sleep 1; done",
-        ]
-    };
-    let process_env = if cfg!(windows) {
-        serde_json::json!({ "PATH": std::env::var("PATH")? })
-    } else {
-        serde_json::json!({})
-    };
+    let process_argv = vec![
+        "/bin/sh",
+        "-c",
+        "parent=$PPID; while kill -0 \"$parent\" 2>/dev/null; do sleep 1; done",
+    ];
+    let process_env = serde_json::json!({});
     let initialize_id = server
         .send_request(
             "initialize",
@@ -262,20 +244,12 @@ async fn exec_server_keeps_control_requests_live_during_long_reads_and_queued_re
         &["--concurrent-requests", "32"],
     )
     .await?;
-    let process_argv = if cfg!(windows) {
-        vec!["cmd.exe", "/D", "/C", "ping -n 601 127.0.0.1 >NUL"]
-    } else {
-        vec![
-            "/bin/sh",
-            "-c",
-            "parent=$PPID; while kill -0 \"$parent\" 2>/dev/null; do sleep 1; done",
-        ]
-    };
-    let process_env = if cfg!(windows) {
-        serde_json::json!({ "PATH": std::env::var("PATH")? })
-    } else {
-        serde_json::json!({})
-    };
+    let process_argv = vec![
+        "/bin/sh",
+        "-c",
+        "parent=$PPID; while kill -0 \"$parent\" 2>/dev/null; do sleep 1; done",
+    ];
+    let process_env = serde_json::json!({});
     let initialize_id = server
         .send_request(
             "initialize",
@@ -436,20 +410,12 @@ async fn exec_server_keeps_control_requests_live_during_long_reads_and_queued_re
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exec_server_defaults_omitted_pipe_stdin_to_closed_stdin() -> anyhow::Result<()> {
     let mut server = exec_server().await?;
-    let process_argv = if cfg!(windows) {
-        vec!["cmd.exe", "/D", "/C", "ping -n 2 127.0.0.1 >NUL"]
-    } else {
-        vec![
-            "/bin/sh",
-            "-c",
-            "sleep 0.3; if IFS= read -r line; then printf 'read:%s\\n' \"$line\"; else printf 'eof\\n'; fi",
-        ]
-    };
-    let process_env = if cfg!(windows) {
-        serde_json::json!({ "PATH": std::env::var("PATH")? })
-    } else {
-        serde_json::json!({})
-    };
+    let process_argv = vec![
+        "/bin/sh",
+        "-c",
+        "sleep 0.3; if IFS= read -r line; then printf 'read:%s\\n' \"$line\"; else printf 'eof\\n'; fi",
+    ];
+    let process_env = serde_json::json!({});
     let initialize_id = server
         .send_request(
             "initialize",
@@ -541,26 +507,12 @@ async fn exec_server_defaults_omitted_pipe_stdin_to_closed_stdin() -> anyhow::Re
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exec_server_dedupes_retried_process_write_ids() -> anyhow::Result<()> {
     let mut server = exec_server().await?;
-    let process_argv = if cfg!(windows) {
-        vec![
-            "powershell.exe",
-            "-NoProfile",
-            "-NonInteractive",
-            "-Command",
-            "[Console]::Out.WriteLine('line:' + [Console]::In.ReadLine()); [Console]::Out.WriteLine('line:' + [Console]::In.ReadLine())",
-        ]
-    } else {
-        vec![
-            "/bin/sh",
-            "-c",
-            "IFS= read -r first; printf 'line:%s\\n' \"$first\"; IFS= read -r second; printf 'line:%s\\n' \"$second\"",
-        ]
-    };
-    let process_env = if cfg!(windows) {
-        serde_json::to_value(std::env::vars().collect::<HashMap<_, _>>())?
-    } else {
-        serde_json::json!({})
-    };
+    let process_argv = vec![
+        "/bin/sh",
+        "-c",
+        "IFS= read -r first; printf 'line:%s\\n' \"$first\"; IFS= read -r second; printf 'line:%s\\n' \"$second\"",
+    ];
+    let process_env = serde_json::json!({});
     let initialize_id = server
         .send_request(
             "initialize",
@@ -694,16 +646,8 @@ async fn exec_server_dedupes_retried_process_write_ids() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exec_server_resumes_detached_session_without_killing_processes() -> anyhow::Result<()> {
     let mut server = exec_server().await?;
-    let process_argv = if cfg!(windows) {
-        vec!["cmd.exe", "/D", "/C", "ping -n 6 127.0.0.1 >NUL"]
-    } else {
-        vec!["/bin/sh", "-c", "sleep 5"]
-    };
-    let process_env = if cfg!(windows) {
-        serde_json::json!({ "PATH": std::env::var("PATH")? })
-    } else {
-        serde_json::json!({})
-    };
+    let process_argv = vec!["/bin/sh", "-c", "sleep 5"];
+    let process_env = serde_json::json!({});
     let initialize_id = server
         .send_request(
             "initialize",

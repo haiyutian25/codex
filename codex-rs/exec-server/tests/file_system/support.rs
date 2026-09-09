@@ -15,8 +15,6 @@ use codex_protocol::permissions::FileSystemSandboxPolicy;
 use codex_protocol::permissions::FileSystemSpecialPath;
 use codex_protocol::permissions::NetworkSandboxPolicy;
 use codex_utils_absolute_path::AbsolutePathBuf;
-#[cfg(windows)]
-use codex_utils_path_uri::PathUri;
 
 use crate::common::exec_server::ExecServerHarness;
 use crate::common::exec_server::TestCodexHelperPaths;
@@ -71,14 +69,6 @@ pub(crate) async fn create_file_system_context(
             })
         }
     }
-}
-
-#[cfg(windows)]
-pub(crate) fn is_unsupported_restricted_token_host<T>(result: &std::io::Result<T>) -> bool {
-    result.as_ref().err().is_some_and(|err| {
-        err.to_string()
-            .contains("windows sandbox failed: CreateRestrictedToken failed: 87")
-    })
 }
 
 pub(crate) fn absolute_path(path: std::path::PathBuf) -> AbsolutePathBuf {

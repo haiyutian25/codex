@@ -595,12 +595,7 @@ async fn record_metadata_params(
 }
 
 fn non_native_cwd() -> PathUri {
-    #[cfg(unix)]
-    let uri = "file://server/share/checkout";
-    #[cfg(windows)]
-    let uri = "file:///usr/local/checkout";
-
-    PathUri::parse(uri).expect("non-native cwd URI")
+    PathUri::parse("file://server/share/checkout").expect("non-native cwd URI")
 }
 
 async fn complete_websocket_initialize(websocket: &mut WebSocketStream<TcpStream>) {

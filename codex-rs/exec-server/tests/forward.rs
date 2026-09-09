@@ -45,20 +45,11 @@ async fn forwarder_runs_commands_and_transfers_files() -> Result<()> {
         ("forward-failure", "nonzero output", 7),
     ] {
         let process_id = ProcessId::from(process_id);
-        let argv = if cfg!(windows) {
-            vec![
-                "cmd.exe".to_string(),
-                "/D".to_string(),
-                "/C".to_string(),
-                format!("echo {expected_output}& exit /B {expected_exit}"),
-            ]
-        } else {
-            vec![
-                "/bin/sh".to_string(),
-                "-c".to_string(),
-                format!("printf '%s\\n' '{expected_output}'; exit {expected_exit}"),
-            ]
-        };
+        let argv = vec![
+            "/bin/sh".to_string(),
+            "-c".to_string(),
+            format!("printf '%s\\n' '{expected_output}'; exit {expected_exit}"),
+        ];
         timeout(
             TEST_TIMEOUT,
             client.exec(ExecParams {

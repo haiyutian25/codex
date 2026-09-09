@@ -293,11 +293,7 @@ fn helper_env_from_vars(
 }
 
 fn helper_env_key_is_allowed(key: &str) -> bool {
-    FS_HELPER_ENV_ALLOWLIST.contains(&key)
-        // CoreFoundation consults this before falling back to user lookup during helper startup.
-        || (cfg!(target_os = "macos") && key == "__CF_USER_TEXT_ENCODING")
-        || bazel_bwrap_env_key_is_allowed(key)
-        || (cfg!(windows) && key.eq_ignore_ascii_case("PATH"))
+    FS_HELPER_ENV_ALLOWLIST.contains(&key) || bazel_bwrap_env_key_is_allowed(key)
 }
 
 #[cfg(debug_assertions)]
@@ -468,15 +464,6 @@ pub(crate) fn spawn_command(
     command.stdout(std::process::Stdio::piped());
     command.stderr(std::process::Stdio::piped());
     command.kill_on_drop(true);
-    // macOS cannot receive passed fds with close-on-exec set atomically.
-    #[cfg(target_os = "macos")]
-    // SAFETY: Descriptor cleanup only uses fork-safe system calls.
-    unsafe {
-        command.pre_exec(|| {
-            codex_utils_pty::unix_fds::close_inherited_fds_except(&[]);
-            Ok(())
-        });
-    }
     command.spawn().map_err(io_error)
 }
 
@@ -608,43 +595,6 @@ mod tests {
         );
     }
 
-    #[cfg(target_os = "macos")]
-    #[test]
-    fn helper_env_preserves_corefoundation_text_encoding() {
-        let env = helper_env_from_vars(
-            [
-                ("__CF_USER_TEXT_ENCODING", "0x1F6:0x0:0x0"),
-                ("HOME", "/Users/test"),
-            ]
-            .map(|(key, value)| (OsString::from(key), OsString::from(value))),
-        );
-
-        assert_eq!(
-            env,
-            HashMap::from([(
-                "__CF_USER_TEXT_ENCODING".to_string(),
-                "0x1F6:0x0:0x0".to_string(),
-            )])
-        );
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn helper_env_preserves_windows_path_key_for_system_bwrap_discovery() {
-        let env = helper_env_from_vars(
-            [
-                ("Path", r"C:\Windows\System32"),
-                ("PATH_INJECTION", "bad"),
-                ("OPENAI_API_KEY", "secret"),
-            ]
-            .map(|(key, value)| (OsString::from(key), OsString::from(value))),
-        );
-
-        assert_eq!(
-            env,
-            HashMap::from([("Path".to_string(), r"C:\Windows\System32".to_string())])
-        );
-    }
 
     // Requires a working platform sandbox backend; after the Windows/macOS
     // backend removal only Linux provides one.
@@ -827,12 +777,7 @@ mod tests {
     }
 
     fn non_native_cwd() -> PathUri {
-        #[cfg(unix)]
-        let uri = "file://server/share/checkout";
-        #[cfg(windows)]
-        let uri = "file:///usr/local/checkout";
-
-        PathUri::parse(uri).expect("non-native cwd URI")
+        PathUri::parse("file://server/share/checkout").expect("non-native cwd URI")
     }
 
     fn path_entry(path: AbsolutePathBuf, access: FileSystemAccessMode) -> FileSystemSandboxEntry {

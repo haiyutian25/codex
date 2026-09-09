@@ -35,8 +35,6 @@ use test_case::test_case;
 use super::support::FileSystemImplementation;
 use super::support::absolute_path;
 use super::support::create_file_system_context;
-#[cfg(windows)]
-use super::support::is_unsupported_restricted_token_host;
 use super::support::read_only_sandbox;
 use super::support::workspace_write_sandbox;
 
@@ -130,8 +128,8 @@ async fn file_system_get_metadata_reports_files_and_directories(
 #[test_case(FileSystemImplementation::Local, false, false ; "local_no_follow")]
 #[test_case(FileSystemImplementation::Remote, true, false ; "remote_follow")]
 #[test_case(FileSystemImplementation::Remote, false, false ; "remote_no_follow")]
-#[cfg_attr(any(target_os = "linux", windows), test_case(FileSystemImplementation::Local, false, true ; "local_sandboxed_no_follow"))]
-#[cfg_attr(any(target_os = "linux", windows), test_case(FileSystemImplementation::Remote, false, true ; "remote_sandboxed_no_follow"))]
+#[cfg_attr(target_os = "linux", test_case(FileSystemImplementation::Local, false, true ; "local_sandboxed_no_follow"))]
+#[cfg_attr(target_os = "linux", test_case(FileSystemImplementation::Remote, false, true ; "remote_sandboxed_no_follow"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_create_directory_creates_nested_directories(
     implementation: FileSystemImplementation,
@@ -156,10 +154,6 @@ async fn file_system_create_directory_creates_nested_directories(
             sandbox.as_ref(),
         )
         .await;
-    #[cfg(windows)]
-    if is_unsupported_restricted_token_host(&result) {
-        return Ok(());
-    }
     result.with_context(|| format!("mode={implementation}, sandboxed={sandboxed}"))?;
     assert!(nested_dir.is_dir());
 
@@ -170,8 +164,8 @@ async fn file_system_create_directory_creates_nested_directories(
 #[test_case(FileSystemImplementation::Local, false, false ; "local_no_follow")]
 #[test_case(FileSystemImplementation::Remote, true, false ; "remote_follow")]
 #[test_case(FileSystemImplementation::Remote, false, false ; "remote_no_follow")]
-#[cfg_attr(any(target_os = "linux", windows), test_case(FileSystemImplementation::Local, false, true ; "local_sandboxed_no_follow"))]
-#[cfg_attr(any(target_os = "linux", windows), test_case(FileSystemImplementation::Remote, false, true ; "remote_sandboxed_no_follow"))]
+#[cfg_attr(target_os = "linux", test_case(FileSystemImplementation::Local, false, true ; "local_sandboxed_no_follow"))]
+#[cfg_attr(target_os = "linux", test_case(FileSystemImplementation::Remote, false, true ; "remote_sandboxed_no_follow"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_write_file_writes_bytes(
     implementation: FileSystemImplementation,
@@ -193,10 +187,6 @@ async fn file_system_write_file_writes_bytes(
             sandbox.as_ref(),
         )
         .await;
-    #[cfg(windows)]
-    if is_unsupported_restricted_token_host(&result) {
-        return Ok(());
-    }
     result.with_context(|| format!("mode={implementation}, sandboxed={sandboxed}"))?;
     assert_eq!(std::fs::read(file_path)?, b"hello from trait");
 
@@ -733,8 +723,8 @@ async fn file_system_remove_removes_directory(
 
 #[test_case(FileSystemImplementation::Local, false ; "local")]
 #[test_case(FileSystemImplementation::Remote, false ; "remote")]
-#[cfg_attr(any(target_os = "linux", windows), test_case(FileSystemImplementation::Local, true ; "local_sandboxed"))]
-#[cfg_attr(any(target_os = "linux", windows), test_case(FileSystemImplementation::Remote, true ; "remote_sandboxed"))]
+#[cfg_attr(target_os = "linux", test_case(FileSystemImplementation::Local, true ; "local_sandboxed"))]
+#[cfg_attr(target_os = "linux", test_case(FileSystemImplementation::Remote, true ; "remote_sandboxed"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_remove_no_follow_removes_file_and_empty_directory(
     implementation: FileSystemImplementation,
@@ -760,10 +750,6 @@ async fn file_system_remove_no_follow_removes_file_and_empty_directory(
             sandbox.as_ref(),
         )
         .await;
-    #[cfg(windows)]
-    if is_unsupported_restricted_token_host(&result) {
-        return Ok(());
-    }
     result.with_context(|| format!("mode={implementation}, sandboxed={sandboxed}"))?;
     assert!(!file_path.exists());
 
@@ -943,18 +929,6 @@ async fn sandboxed_file_operations_cannot_read_helper_siblings() -> Result<()> {
         )
         .await?;
     assert_eq!(allowed_contents, b"allowed");
-
-    #[cfg(target_os = "macos")]
-    assert!(
-        file_system
-            .read_directory(
-                &PathUri::from_host_native_path("/Applications")?,
-                Some(&sandbox)
-            )
-            .await
-            .is_err(),
-        "filesystem helpers should not inherit the normal process sandbox's /Applications access"
-    );
 
     let sibling_uri = PathUri::from_host_native_path(&sibling)?;
     let destination = PathUri::from_host_native_path(workspace.join("copied.json"))?;
