@@ -2079,8 +2079,8 @@ async fn forced_rm_requires_approval_or_specific_rejection_on_all_platforms() {
     );
 }
 
-/// Note this test behaves differently on Windows because it exercises an
-/// `if cfg!(windows)` code path in render_decision_for_unmatched_command().
+/// Exercises the PowerShell dangerous-command path in
+/// render_decision_for_unmatched_command().
 #[tokio::test]
 async fn verify_approval_requirement_for_unsafe_powershell_command() {
     // `brew install powershell` to run this test on a Mac!
