@@ -1545,10 +1545,6 @@
             "command": {
               "type": "string"
             },
-            "commandWindows": {
-              "default": null,
-              "type": "string"
-            },
             "statusMessage": {
               "default": null,
               "type": "string"

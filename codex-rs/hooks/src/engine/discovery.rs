@@ -495,7 +495,6 @@ fn append_matcher_groups(
             let normalized = match handler {
                 HookHandlerConfig::Command {
                     command,
-                    command_windows: _,
                     timeout_sec,
                     r#async,
                     status_message,
@@ -544,7 +543,6 @@ fn append_matcher_groups(
                         .filter(|limit| *limit != DEFAULT_HOOK_OUTPUT_TOKEN_LIMIT);
                     let config = HookHandlerConfig::Command {
                         command: command.clone(),
-                        command_windows: None,
                         timeout_sec: Some(timeout_sec),
                         r#async,
                         status_message: status_message.clone(),
@@ -942,7 +940,6 @@ mod tests {
             matcher: matcher.map(str::to_string),
             hooks: vec![HookHandlerConfig::Command {
                 command: "echo hello".to_string(),
-                command_windows: None,
                 timeout_sec: None,
                 r#async: false,
                 status_message: None,
@@ -958,7 +955,6 @@ mod tests {
             matcher: None,
             hooks: vec![HookHandlerConfig::Command {
                 command: "echo hello".to_string(),
-                command_windows: None,
                 timeout_sec: None,
                 r#async: false,
                 status_message: None,
@@ -1302,7 +1298,6 @@ mod tests {
                 hooks: vec![
                     HookHandlerConfig::Command {
                         command: "echo default".to_string(),
-                        command_windows: None,
                         timeout_sec: None,
                         r#async: false,
                         status_message: None,
@@ -1310,7 +1305,6 @@ mod tests {
                     },
                     HookHandlerConfig::Command {
                         command: "echo clamped".to_string(),
-                        command_windows: None,
                         timeout_sec: Some(600),
                         r#async: true,
                         status_message: None,
@@ -1392,7 +1386,6 @@ mod tests {
                 matcher: Some("ignored".to_string()),
                 hooks: vec![HookHandlerConfig::Command {
                     command: "echo interrupt".to_string(),
-                    command_windows: None,
                     timeout_sec: Some(600),
                     r#async: true,
                     status_message: None,
@@ -1576,7 +1569,6 @@ mod tests {
                     matcher: None,
                     hooks: vec![HookHandlerConfig::Command {
                         command: "echo hello".to_string(),
-                        command_windows: None,
                         timeout_sec: None,
                         r#async: false,
                         status_message: None,
@@ -1607,7 +1599,6 @@ mod tests {
                 matcher: Some("^Bash$".to_string()),
                 hooks: vec![HookHandlerConfig::Command {
                     command: "echo unix".to_string(),
-                    command_windows: Some("echo windows".to_string()),
                     timeout_sec: None,
                     r#async: false,
                     status_message: None,

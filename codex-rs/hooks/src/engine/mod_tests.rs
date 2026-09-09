@@ -142,7 +142,6 @@ fn pre_tool_use_hook_events(command: impl Into<String>) -> HookEventsToml {
             matcher: Some("^Bash$".to_string()),
             hooks: vec![HookHandlerConfig::Command {
                 command: command.into(),
-                command_windows: None,
                 timeout_sec: Some(10),
                 r#async: false,
                 status_message: Some("checking".to_string()),
@@ -560,7 +559,6 @@ with Path(r"{log_path}").open("a", encoding="utf-8") as handle:
                 matcher: Some("^Bash$".to_string()),
                 hooks: vec![HookHandlerConfig::Command {
                     command: format!("python3 {}", script_path.display()),
-                    command_windows: None,
                     timeout_sec: Some(10),
                     r#async: false,
                     status_message: Some("checking".to_string()),
@@ -668,7 +666,6 @@ async fn requirements_managed_hooks_ignore_windows_command_override() {
                 matcher: Some("^Bash$".to_string()),
                 hooks: vec![HookHandlerConfig::Command {
                     command: "exit 17".to_string(),
-                    command_windows: Some("exit /B 19".to_string()),
                     timeout_sec: Some(10),
                     r#async: false,
                     status_message: Some("checking".to_string()),
@@ -749,7 +746,6 @@ fn unknown_requirement_source_hooks_stay_managed() {
                 matcher: Some("^Bash$".to_string()),
                 hooks: vec![HookHandlerConfig::Command {
                     command: "python3 /tmp/managed.py".to_string(),
-                    command_windows: None,
                     timeout_sec: Some(10),
                     r#async: false,
                     status_message: Some("checking".to_string()),
@@ -819,7 +815,6 @@ fn user_disablement_filters_non_managed_hooks_but_not_managed_hooks() {
                 matcher: Some("^Bash$".to_string()),
                 hooks: vec![HookHandlerConfig::Command {
                     command: "python3 /tmp/managed.py".to_string(),
-                    command_windows: None,
                     timeout_sec: Some(10),
                     r#async: false,
                     status_message: Some("checking".to_string()),
@@ -1063,7 +1058,6 @@ fn requirements_managed_hooks_load_when_managed_dir_is_missing() {
                 matcher: Some("^Bash$".to_string()),
                 hooks: vec![HookHandlerConfig::Command {
                     command: "echo hi".to_string(),
-                    command_windows: None,
                     timeout_sec: Some(10),
                     r#async: false,
                     status_message: Some("checking".to_string()),
@@ -1744,7 +1738,6 @@ print(json.dumps({
                 matcher: Some("Bash".to_string()),
                 hooks: vec![HookHandlerConfig::Command {
                     command: format!("python3 {}", script_path.display()),
-                    command_windows: None,
                     timeout_sec: Some(10),
                     r#async: false,
                     status_message: None,
@@ -1865,7 +1858,6 @@ fn plugin_hook_sources_expand_plugin_placeholders() {
                     command:
                         "run ${PLUGIN_ROOT} ${CLAUDE_PLUGIN_ROOT} ${PLUGIN_DATA} ${CLAUDE_PLUGIN_DATA}"
                             .to_string(),
-                    command_windows: None,
                     timeout_sec: Some(5),
                     r#async: false,
                     status_message: None,
