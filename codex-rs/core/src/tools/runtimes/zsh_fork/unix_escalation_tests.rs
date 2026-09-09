@@ -47,11 +47,7 @@ use std::time::Duration;
 use tokio::sync::RwLock;
 
 fn host_absolute_path(segments: &[&str]) -> String {
-    let mut path = if cfg!(windows) {
-        PathBuf::from(r"C:\")
-    } else {
-        PathBuf::from("/")
-    };
+    let mut path = PathBuf::from("/");
     for segment in segments {
         path.push(segment);
     }

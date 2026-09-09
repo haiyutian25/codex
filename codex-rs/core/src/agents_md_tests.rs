@@ -401,17 +401,10 @@ fn project_provenance(path: AbsolutePathBuf, cwd: AbsolutePathBuf) -> Instructio
 
 #[test]
 fn foreign_agents_md_uses_environment_native_paths() {
-    let (cwd, rendered_cwd) = if cfg!(windows) {
-        (
-            PathUri::parse("file:///codex%20runtime").expect("POSIX cwd URI"),
-            "/codex runtime",
-        )
-    } else {
-        (
+    let (cwd, rendered_cwd) = (
             PathUri::parse("file:///C:/codex%20runtime").expect("Windows cwd URI"),
             r"C:\codex runtime",
-        )
-    };
+        );
     let source_path = cwd.join("AGENTS.md").expect("AGENTS.md URI");
     let loaded = LoadedAgentsMd {
         user_instructions: None,

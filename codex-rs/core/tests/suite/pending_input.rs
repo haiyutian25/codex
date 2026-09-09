@@ -1545,11 +1545,7 @@ async fn steered_user_input_follows_compact_when_only_the_steer_needs_follow_up(
 async fn steered_user_input_waits_when_tool_output_triggers_compact_before_next_request() {
     let (gate_first_completed_tx, gate_first_completed_rx) = oneshot::channel();
 
-    let large_output_command = if cfg!(windows) {
-        "[Console]::Out.Write([string]::new([char]'0', 4000))"
-    } else {
-        "printf '%04000d' 0"
-    };
+    let large_output_command = "printf '%04000d' 0";
     let large_output_args = json!({
         "cmd": large_output_command,
         "login": false,

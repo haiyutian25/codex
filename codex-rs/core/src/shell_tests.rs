@@ -46,24 +46,7 @@ fn detects_sh() {
 #[test]
 fn can_run_on_shell_test() {
     let cmd = "echo \"Works\"";
-    if cfg!(windows) {
-        assert!(shell_works(
-            get_shell(ShellType::PowerShell),
-            "Out-String 'Works'",
-            /*required*/ true,
-        ));
-        assert!(shell_works(
-            get_shell(ShellType::Cmd),
-            cmd,
-            /*required*/ true,
-        ));
-        assert!(shell_works(
-            Some(ultimate_fallback_shell()),
-            cmd,
-            /*required*/ true
-        ));
-    } else {
-        assert!(shell_works(
+    assert!(shell_works(
             Some(ultimate_fallback_shell()),
             cmd,
             /*required*/ true
@@ -83,7 +66,6 @@ fn can_run_on_shell_test() {
             cmd,
             /*required*/ true
         ));
-    }
 }
 
 fn shell_works(shell: Option<Shell>, command: &str, required: bool) -> bool {

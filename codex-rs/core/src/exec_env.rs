@@ -48,11 +48,7 @@ pub(crate) fn inject_permission_profile_env(
     env: &mut HashMap<String, String>,
     active_permission_profile: Option<&ActivePermissionProfile>,
 ) {
-    if cfg!(windows) {
-        env.retain(|key, _| !key.eq_ignore_ascii_case(CODEX_PERMISSION_PROFILE_ENV_VAR));
-    } else {
-        env.remove(CODEX_PERMISSION_PROFILE_ENV_VAR);
-    }
+    env.remove(CODEX_PERMISSION_PROFILE_ENV_VAR);
     if let Some(active_permission_profile) = active_permission_profile {
         env.insert(
             CODEX_PERMISSION_PROFILE_ENV_VAR.to_string(),

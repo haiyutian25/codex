@@ -2279,11 +2279,7 @@ async fn spawn_agent_reapplies_runtime_sandbox_after_role_config() {
             },
             // TODO(anp): Configure this fixture with the elevated Windows backend so it can
             // enforce denied reads while reapplying the owner's restrictive policy.
-            access: if cfg!(windows) {
-                FileSystemAccessMode::Read
-            } else {
-                FileSystemAccessMode::Deny
-            },
+            access: FileSystemAccessMode::Deny,
             missing_path_behavior: None,
         });
     let expected_network_sandbox_policy = NetworkSandboxPolicy::from(&expected_sandbox);

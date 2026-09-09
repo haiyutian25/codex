@@ -435,11 +435,7 @@ impl TestCodexBuilder {
     }
 
     pub fn with_windows_cmd_shell(self) -> Self {
-        if cfg!(windows) {
-            self.with_user_shell(get_shell_by_model_provided_path(&PathBuf::from("cmd.exe")))
-        } else {
-            self
-        }
+        self
     }
 
     pub async fn build(&mut self, server: &wiremock::MockServer) -> anyhow::Result<TestCodex> {

@@ -77,7 +77,7 @@ async fn interrupt_aborts_server_initiated_mcp_guardian_review() -> Result<()> {
     let server = responses::start_mock_server().await;
     let mcp_servers = serde_json::from_value(json!({
         "elicitation": {
-            "command": if cfg!(windows) { "python" } else { "python3" },
+            "command": "python3",
             "args": ["-u", "-c", ELICITATION_SERVER],
             "default_tools_approval_mode": "approve",
         }
@@ -225,7 +225,7 @@ async fn server_initiated_mcp_elicitation_can_require_synchronous_auto_review(
     let server = responses::start_mock_server().await;
     let mcp_servers = serde_json::from_value(json!({
         "elicitation": {
-            "command": if cfg!(windows) { "python" } else { "python3" },
+            "command": "python3",
             "args": ["-u", "-c", ELICITATION_SERVER, serde_json::to_string(&meta)?],
             "default_tools_approval_mode": "approve",
         }

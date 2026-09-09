@@ -157,18 +157,10 @@ async fn exec_command_rejects_login_when_selected_environment_disallows_it() {
 fn test_get_command_rejects_explicit_shell_in_zsh_fork_mode() -> anyhow::Result<()> {
     let json = r#"{"cmd": "echo hello", "shell": "/bin/bash"}"#;
     let args: ExecCommandArgs = parse_arguments(json)?;
-    let shell_zsh_path = AbsolutePathBuf::from_absolute_path(if cfg!(windows) {
-        r"C:\opt\codex\zsh"
-    } else {
-        "/opt/codex/zsh"
-    })?;
+    let shell_zsh_path = AbsolutePathBuf::from_absolute_path("/opt/codex/zsh")?;
     let shell_mode = UnifiedExecShellMode::ZshFork(ZshForkConfig {
         shell_zsh_path,
-        main_execve_wrapper_exe: AbsolutePathBuf::from_absolute_path(if cfg!(windows) {
-            r"C:\opt\codex\codex-execve-wrapper"
-        } else {
-            "/opt/codex/codex-execve-wrapper"
-        })?,
+        main_execve_wrapper_exe: AbsolutePathBuf::from_absolute_path("/opt/codex/codex-execve-wrapper")?,
     });
 
     let err = get_command(
@@ -189,18 +181,10 @@ fn test_get_command_rejects_explicit_shell_in_zsh_fork_mode() -> anyhow::Result<
 #[tokio::test]
 async fn shell_mode_for_environment_uses_direct_mode_for_remote_environments() -> anyhow::Result<()>
 {
-    let shell_zsh_path = AbsolutePathBuf::from_absolute_path(if cfg!(windows) {
-        r"C:\opt\codex\zsh"
-    } else {
-        "/opt/codex/zsh"
-    })?;
+    let shell_zsh_path = AbsolutePathBuf::from_absolute_path("/opt/codex/zsh")?;
     let shell_mode = UnifiedExecShellMode::ZshFork(ZshForkConfig {
         shell_zsh_path,
-        main_execve_wrapper_exe: AbsolutePathBuf::from_absolute_path(if cfg!(windows) {
-            r"C:\opt\codex\codex-execve-wrapper"
-        } else {
-            "/opt/codex/codex-execve-wrapper"
-        })?,
+        main_execve_wrapper_exe: AbsolutePathBuf::from_absolute_path("/opt/codex/codex-execve-wrapper")?,
     });
     let local_environment = Environment::default_for_tests();
     let remote_environment =
