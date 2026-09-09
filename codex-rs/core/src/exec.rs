@@ -823,15 +823,15 @@ fn synthetic_exit_status_for_code(code: i32) -> ExitStatus {
     std::process::ExitStatus::from_raw(code << 8)
 }
 
-#[cfg(windows)]
+#[cfg(not(unix))]
 fn synthetic_exit_status(code: i32) -> ExitStatus {
     use std::os::windows::process::ExitStatusExt;
-    // On Windows the raw status is a u32. Use a direct cast to avoid
-    // panicking on negative i32 values produced by prior narrowing casts.
+    // The raw status is a u32 on this platform; cast to avoid panicking on
+    // negative i32 values produced by prior narrowing casts.
     std::process::ExitStatus::from_raw(code as u32)
 }
 
-#[cfg(windows)]
+#[cfg(not(unix))]
 fn synthetic_exit_status_for_code(code: i32) -> ExitStatus {
     synthetic_exit_status(code)
 }

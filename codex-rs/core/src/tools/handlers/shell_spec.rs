@@ -23,11 +23,8 @@ pub(crate) fn create_exec_command_tool_with_environment_id(
     include_environment_id: bool,
     include_shell_parameter: bool,
 ) -> ToolSpec {
-    let yield_time_ms_description = if cfg!(windows) {
-        "Maximum time to wait before returning a session ID for a still-running command. Commands that finish sooner return immediately. For ordinary commands, omit this parameter to use the 10000 ms default. Effective range on Windows is 10000-30000 ms."
-    } else {
-        "Wait before yielding output. Defaults to 10000 ms; effective range is 250-30000 ms."
-    };
+    let yield_time_ms_description =
+        "Wait before yielding output. Defaults to 10000 ms; effective range is 250-30000 ms.";
     let mut properties = BTreeMap::from([
         (
             "cmd".to_string(),
@@ -90,15 +87,8 @@ pub(crate) fn create_exec_command_tool_with_environment_id(
 
     ToolSpec::Function(ResponsesApiTool {
         name: "exec_command".to_string(),
-        description: if cfg!(windows) {
-            format!(
-                "Runs a command in a PTY, returning output or a session ID for ongoing interaction.\n\n{}",
-                windows_shell_guidance()
-            )
-        } else {
-            "Runs a command in a PTY, returning output or a session ID for ongoing interaction."
-                .to_string()
-        },
+        description: "Runs a command in a PTY, returning output or a session ID for ongoing interaction."
+            .to_string(),
         strict: false,
         defer_loading: None,
         parameters: JsonSchema::object(
@@ -330,13 +320,6 @@ fn file_system_permissions_schema() -> JsonSchema {
     );
     schema.description = Some("Filesystem access request.".to_string());
     schema
-}
-
-fn windows_shell_guidance() -> &'static str {
-    r#"Windows safety rules:
-- Do not compose destructive filesystem commands across shells. Do not enumerate paths in PowerShell and then pass them to `cmd /c`, batch builtins, or another shell for deletion or moving. Use one shell end-to-end, prefer native PowerShell cmdlets such as `Remove-Item` / `Move-Item` with `-LiteralPath`, and avoid string-built shell commands for file operations.
-- Before any recursive delete or move on Windows, verify the resolved absolute target paths stay within the intended workspace or explicitly named target directory. Never issue a recursive delete or move against a computed path if the final target has not been checked.
-- When using `Start-Process` to launch a background helper or service, pass `-WindowStyle Hidden` unless the user explicitly asked for a visible interactive window. Use visible windows only for interactive tools the user needs to see or control."#
 }
 
 #[cfg(test)]
