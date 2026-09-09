@@ -7,7 +7,7 @@ use super::SpanData;
 use super::SpanProcessor;
 use pretty_assertions::assert_eq;
 use std::io::ErrorKind;
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[cfg(target_os = "linux")]
 use std::process::Command;
 use std::sync::Arc;
 use std::sync::Condvar;
@@ -18,58 +18,9 @@ use std::sync::atomic::Ordering;
 use std::sync::mpsc;
 use std::time::Duration;
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[cfg(target_os = "linux")]
 const GUARD_PAGE_FAILURE_CHILD_TEST: &str =
     "provider::shutdown_tests::bounded_shutdown_survives_worker_guard_page_failure_child";
-
-#[cfg(target_os = "macos")]
-static GUARD_PAGE_INJECTION_ENABLED: AtomicBool = AtomicBool::new(false);
-#[cfg(target_os = "macos")]
-static GUARD_PAGE_INJECTION_ARMED: AtomicBool = AtomicBool::new(false);
-#[cfg(target_os = "macos")]
-static GUARD_PAGE_INJECTION_OBSERVED: AtomicBool = AtomicBool::new(false);
-
-#[cfg(target_os = "macos")]
-#[unsafe(export_name = "mprotect")]
-unsafe extern "C" fn fault_injected_mprotect(
-    address: *mut libc::c_void,
-    length: usize,
-    protection: libc::c_int,
-) -> libc::c_int {
-    let original_symbol = unsafe { libc::dlsym(libc::RTLD_NEXT, c"mprotect".as_ptr()) };
-    let original_mprotect: unsafe extern "C" fn(
-        *mut libc::c_void,
-        usize,
-        libc::c_int,
-    ) -> libc::c_int = unsafe { std::mem::transmute(original_symbol) };
-
-    if GUARD_PAGE_INJECTION_ENABLED.load(Ordering::Relaxed)
-        && protection == libc::PROT_NONE
-        && length == unsafe { libc::sysconf(libc::_SC_PAGESIZE) } as usize
-    {
-        let mut thread_name = [0; 64];
-        let named_shutdown_worker = unsafe {
-            libc::pthread_getname_np(
-                libc::pthread_self(),
-                thread_name.as_mut_ptr(),
-                thread_name.len(),
-            )
-        } == 0
-            && unsafe { std::ffi::CStr::from_ptr(thread_name.as_ptr()) }
-                .to_bytes()
-                .starts_with(b"codex-otel-shut");
-
-        if named_shutdown_worker {
-            GUARD_PAGE_INJECTION_OBSERVED.store(/*val*/ true, Ordering::Relaxed);
-            if GUARD_PAGE_INJECTION_ARMED.load(Ordering::Relaxed) {
-                unsafe { *libc::__error() = libc::ENOMEM };
-                return -1;
-            }
-        }
-    }
-
-    unsafe { original_mprotect(address, length, protection) }
-}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ShutdownBehavior {
@@ -202,7 +153,7 @@ async fn bounded_shutdown_does_not_flush_when_worker_creation_fails() {
     assert_eq!(completed.try_recv(), Err(mpsc::TryRecvError::Empty));
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[cfg(target_os = "linux")]
 #[test]
 fn bounded_shutdown_survives_worker_guard_page_failure() {
     let unique_suffix = std::time::SystemTime::now()
@@ -248,7 +199,7 @@ fn bounded_shutdown_survives_worker_guard_page_failure() {
     );
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[cfg(target_os = "linux")]
 #[test]
 // The parent regression invokes this ignored test in a fresh subprocess with
 // `--exact --ignored`, isolating fatal native-thread initialization failures.
@@ -264,9 +215,6 @@ fn bounded_shutdown_survives_worker_guard_page_failure_child() {
         ..
     } = test_provider(ShutdownBehavior::Complete);
 
-    #[cfg(target_os = "macos")]
-    GUARD_PAGE_INJECTION_ENABLED.store(/*val*/ true, Ordering::Relaxed);
-
     provider
         .prepare_shutdown_worker()
         .expect("pre-initialize bounded shutdown worker");
@@ -276,16 +224,6 @@ fn bounded_shutdown_survives_worker_guard_page_failure_child() {
         .build()
         .expect("create current-thread runtime");
 
-    #[cfg(target_os = "macos")]
-    {
-        assert!(
-            GUARD_PAGE_INJECTION_OBSERVED.load(Ordering::Relaxed),
-            "Rust mprotect interposer did not observe shutdown-worker guard-page setup"
-        );
-        GUARD_PAGE_INJECTION_ARMED.store(/*val*/ true, Ordering::Relaxed);
-    }
-
-    #[cfg(target_os = "linux")]
     {
         use seccompiler::BpfProgram;
         use seccompiler::SeccompAction;

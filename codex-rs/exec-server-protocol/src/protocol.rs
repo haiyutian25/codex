@@ -163,11 +163,7 @@ impl EnvironmentInfo {
     }
 
     fn local_temporary_directories_with_cwd(cwd: Option<&std::path::Path>) -> Vec<PathUri> {
-        let temporary_directory_env_vars: &[&str] = if cfg!(windows) {
-            &["TEMP", "TMP"]
-        } else {
-            &["TMPDIR"]
-        };
+        let temporary_directory_env_vars: &[&str] = &["TMPDIR"];
         let normalize_temp_path = |path: std::ffi::OsString| {
             PathUri::from_host_native_path(&path).ok().or_else(|| {
                 if cfg!(unix) {
@@ -1026,11 +1022,7 @@ mod tests {
     #[test]
     fn local_environment_info_reads_platform_temporary_directories() {
         let cwd = std::env::current_dir().expect("current directory");
-        let names: &[&str] = if cfg!(windows) {
-            &["TEMP", "TMP"]
-        } else {
-            &["TMPDIR"]
-        };
+        let names: &[&str] = &["TMPDIR"];
         let mut expected = names
             .iter()
             .filter_map(std::env::var_os)

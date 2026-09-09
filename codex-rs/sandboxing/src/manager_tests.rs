@@ -1,5 +1,4 @@
 use super::SandboxCommand;
-#[cfg(target_os = "windows")]
 use super::SandboxManager;
 use super::SandboxTransformRequest;
 use super::SandboxType;
@@ -78,11 +77,7 @@ fn restricted_file_system_uses_platform_sandbox_without_managed_network() {
 #[test]
 fn unsandboxed_transform_preserves_foreign_cwd_and_unrestricted_file_system_policy() {
     let manager = SandboxManager::new();
-    let cwd_uri = if cfg!(windows) {
-        PathUri::parse("file:///workspace/remote").expect("POSIX path URI")
-    } else {
-        PathUri::parse("file:///C:/workspace/remote").expect("Windows path URI")
-    };
+    let cwd_uri = PathUri::parse("file:///workspace/remote").expect("POSIX path URI");
     let permissions = PermissionProfile::from_runtime_permissions(
         &FileSystemSandboxPolicy::unrestricted(),
         NetworkSandboxPolicy::Restricted,

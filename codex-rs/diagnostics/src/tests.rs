@@ -39,20 +39,12 @@ fn snapshot_includes_process_memory_and_registers_gauges_once() {
     assert_eq!(diagnostics.process.id, std::process::id());
     assert_eq!(registered.len(), 1);
     assert_eq!(registered[0].value, 2);
-    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+    #[cfg(target_os = "linux")]
     assert!(
         diagnostics
             .process
             .resident_memory_bytes
             .is_some_and(|bytes| bytes > 0)
     );
-    #[cfg(target_os = "macos")]
-    assert!(
-        diagnostics
-            .process
-            .physical_footprint_bytes
-            .is_some_and(|bytes| bytes > 0)
-    );
-    #[cfg(not(target_os = "macos"))]
     assert_eq!(diagnostics.process.physical_footprint_bytes, None);
 }

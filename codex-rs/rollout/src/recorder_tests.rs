@@ -414,7 +414,7 @@ async fn load_rollout_items_preserves_legacy_guardian_assessment_lines() -> std:
                     "type": "command",
                     "source": "shell",
                     "command": "rm -rf /tmp/guardian",
-                    "cwd": if cfg!(windows) { r"C:\tmp" } else { "/tmp" },
+                    "cwd": "/tmp",
                 },
             },
         })

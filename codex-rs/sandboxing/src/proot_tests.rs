@@ -19,11 +19,7 @@ use std::path::Path;
 /// PRoot itself only ever runs on POSIX hosts; these tests exercise the argv
 /// construction mechanics on whatever host compiles them.
 fn host_path(posix_like: &str) -> AbsolutePathBuf {
-    if cfg!(windows) {
-        AbsolutePathBuf::try_from(format!("C:{posix_like}")).expect("absolute host path")
-    } else {
-        AbsolutePathBuf::try_from(posix_like).expect("absolute host path")
-    }
+    AbsolutePathBuf::try_from(posix_like).expect("absolute host path")
 }
 
 fn test_config() -> ProotConfig {
