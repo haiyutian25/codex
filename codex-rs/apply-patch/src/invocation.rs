@@ -27,13 +27,6 @@ use tree_sitter::LanguageError;
 
 const APPLY_PATCH_COMMANDS: [&str; 2] = ["apply_patch", "applypatch"];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ApplyPatchShell {
-    Unix,
-    PowerShell,
-    Cmd,
-}
-
 #[derive(Debug, PartialEq)]
 pub enum MaybeApplyPatch {
     Body(ApplyPatchArgs),
@@ -60,51 +53,17 @@ fn classify_shell_name(shell: &str, convention: PathConvention) -> Option<String
     Some(stem.to_ascii_lowercase())
 }
 
-fn classify_shell(shell: &str, flag: &str, convention: PathConvention) -> Option<ApplyPatchShell> {
-    classify_shell_name(shell, convention).and_then(|name| match name.as_str() {
-        "bash" | "zsh" | "sh" if matches!(flag, "-lc" | "-c") => Some(ApplyPatchShell::Unix),
-        "pwsh" | "powershell" if flag.eq_ignore_ascii_case("-command") => {
-            Some(ApplyPatchShell::PowerShell)
-        }
-        "cmd" if flag.eq_ignore_ascii_case("/c") => Some(ApplyPatchShell::Cmd),
-        _ => None,
-    })
-}
-
-fn can_skip_flag(shell: &str, flag: &str, convention: PathConvention) -> bool {
+fn classify_shell(shell: &str, flag: &str, convention: PathConvention) -> bool {
     classify_shell_name(shell, convention).is_some_and(|name| {
-        matches!(name.as_str(), "pwsh" | "powershell") && flag.eq_ignore_ascii_case("-noprofile")
+        matches!(name.as_str(), "bash" | "zsh" | "sh") && matches!(flag, "-lc" | "-c")
     })
 }
 
-fn parse_shell_script<'a>(argv: &'a [String], cwd: &PathUri) -> Option<(ApplyPatchShell, &'a str)> {
+fn parse_shell_script<'a>(argv: &'a [String], cwd: &PathUri) -> Option<&'a str> {
     let convention = cwd.infer_path_convention()?;
     match argv {
-        [shell, flag, script] => classify_shell(shell, flag, convention).map(|shell_type| {
-            let script = script.as_str();
-            (shell_type, script)
-        }),
-        [shell, skip_flag, flag, script] => {
-            if !can_skip_flag(shell, skip_flag, convention) {
-                return None;
-            }
-            classify_shell(shell, flag, convention).map(|shell_type| {
-                let script = script.as_str();
-                (shell_type, script)
-            })
-        }
+        [shell, flag, script] if classify_shell(shell, flag, convention) => Some(script.as_str()),
         _ => None,
-    }
-}
-
-fn extract_apply_patch_from_shell(
-    shell: ApplyPatchShell,
-    script: &str,
-) -> std::result::Result<(String, Option<String>), ExtractHeredocError> {
-    match shell {
-        ApplyPatchShell::Unix | ApplyPatchShell::PowerShell | ApplyPatchShell::Cmd => {
-            extract_apply_patch_from_bash(script)
-        }
     }
 }
 
@@ -119,7 +78,7 @@ pub fn maybe_parse_apply_patch(argv: &[String], cwd: &PathUri) -> MaybeApplyPatc
         },
         // Shell heredoc form: (optional `cd <path> &&`) apply_patch <<'EOF' ...
         _ => match parse_shell_script(argv, cwd) {
-            Some((shell, script)) => match extract_apply_patch_from_shell(shell, script) {
+            Some(script) => match extract_apply_patch_from_bash(script) {
                 Ok((body, workdir)) => match parse_patch(&body) {
                     Ok(mut source) => {
                         source.workdir = workdir;
@@ -171,7 +130,7 @@ pub async fn maybe_parse_apply_patch_verified_with_mode(
     {
         return MaybeApplyPatchVerified::CorrectnessError(ApplyPatchError::ImplicitInvocation);
     }
-    if let Some((_, script)) = parse_shell_script(argv, cwd)
+    if let Some(script) = parse_shell_script(argv, cwd)
         && parse_patch(script).is_ok()
     {
         return MaybeApplyPatchVerified::CorrectnessError(ApplyPatchError::ImplicitInvocation);
@@ -472,33 +431,13 @@ mod tests {
         strs_to_strings(&["bash", "-lc", script])
     }
 
-    fn args_powershell(script: &str) -> Vec<String> {
-        strs_to_strings(&["powershell.exe", "-Command", script])
-    }
-
-    fn args_powershell_no_profile(script: &str) -> Vec<String> {
-        strs_to_strings(&["powershell.exe", "-NoProfile", "-Command", script])
-    }
-
-    fn args_pwsh(script: &str) -> Vec<String> {
-        strs_to_strings(&["pwsh", "-NoProfile", "-Command", script])
-    }
-
-    fn args_cmd(script: &str) -> Vec<String> {
-        strs_to_strings(&["cmd.exe", "/c", script])
-    }
-
     fn heredoc_script(prefix: &str) -> String {
         format!(
             "{prefix}apply_patch <<'PATCH'\n*** Begin Patch\n*** Add File: foo\n+hi\n*** End Patch\nPATCH"
         )
     }
 
-    fn heredoc_script_ps(prefix: &str, suffix: &str) -> String {
-        format!(
-            "{prefix}apply_patch <<'PATCH'\n*** Begin Patch\n*** Add File: foo\n+hi\n*** End Patch\nPATCH{suffix}"
-        )
-    }
+
 
     fn expected_single_add() -> Vec<Hunk> {
         vec![Hunk::AddFile {
@@ -682,46 +621,6 @@ PATCH"#,
     }
 
     #[tokio::test]
-    async fn test_powershell_heredoc() {
-        let script = heredoc_script("");
-        assert_match_args(args_powershell(&script), /*expected_workdir*/ None);
-    }
-    #[tokio::test]
-    async fn test_powershell_heredoc_no_profile() {
-        let script = heredoc_script("");
-        assert_match_args(
-            args_powershell_no_profile(&script),
-            /*expected_workdir*/ None,
-        );
-    }
-    #[tokio::test]
-    async fn test_pwsh_heredoc() {
-        let script = heredoc_script("");
-        assert_match_args(args_pwsh(&script), /*expected_workdir*/ None);
-    }
-
-    #[tokio::test]
-    async fn test_apply_patch_interception_uses_cwd_convention_for_windows_pwsh_path() {
-        let script = heredoc_script("");
-        assert_match_args_with_cwd(
-            strs_to_strings(&[
-                r"C:\Program Files\PowerShell\7\pwsh.exe",
-                "-NoProfile",
-                "-Command",
-                &script,
-            ]),
-            &PathUri::parse("file:///C:/windows").expect("valid Windows test cwd"),
-            /*expected_workdir*/ None,
-        );
-    }
-
-    #[tokio::test]
-    async fn test_cmd_heredoc_with_cd() {
-        let script = heredoc_script("cd foo && ");
-        assert_match_args(args_cmd(&script), Some("foo"));
-    }
-
-    #[tokio::test]
     async fn test_heredoc_with_leading_cd() {
         assert_match(&heredoc_script("cd foo && "), Some("foo"));
     }
@@ -774,7 +673,7 @@ PATCH"#,
 
     #[tokio::test]
     async fn test_cd_then_apply_patch_then_extra_is_ignored() {
-        let script = heredoc_script_ps("cd bar && ", " && echo done");
+        let script = format!("{} && echo done", heredoc_script("cd bar && "));
         assert_not_match(&script);
     }
 
