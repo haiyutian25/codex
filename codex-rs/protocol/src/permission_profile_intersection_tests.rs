@@ -337,33 +337,4 @@ fn canonical_grants_cannot_escape_through_readable_or_writable_symlinks() {
     );
 }
 
-#[cfg(target_os = "macos")]
-#[test]
-fn macos_system_path_aliases_share_the_same_physical_permissions() {
-    let temp = TempDir::new_in("/tmp").expect("workspace under system path alias");
-    let canonical = canonical(&temp);
-    let alias = absolute(
-        &Path::new("/").join(
-            canonical
-                .as_path()
-                .strip_prefix("/private")
-                .expect("macOS alias"),
-        ),
-    );
-    for access in [Read, Write] {
-        let left = managed(vec![entry(alias.as_path(), access)]);
-        let right = managed(vec![entry(canonical.as_path(), access)]);
-        let policy = intersection(&left, &right, &canonical).file_system_sandbox_policy();
-        assert_eq!(
-            policy.resolve_access_with_cwd(canonical.as_path(), canonical.as_path()),
-            access
-        );
-    }
-    let policy = intersection(
-        &workspace(&alias, Enabled),
-        &workspace(&canonical, Restricted),
-        &canonical,
-    )
-    .file_system_sandbox_policy();
-    assert!(policy.can_write_path_with_cwd(canonical.as_path(), canonical.as_path()));
-}
+

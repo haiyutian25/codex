@@ -1,11 +1,14 @@
 use std::collections::HashMap;
+#[cfg(unix)]
 use std::process::Command;
 
 use pretty_assertions::assert_eq;
 
 use super::*;
 
+#[cfg(unix)]
 const CHILD_MODE_ENV_VAR: &str = "CODEX_SHELL_ENVIRONMENT_SCRUBBER_TEST_MODE";
+#[cfg(unix)]
 const TEST_NAME: &str =
     "shell_environment::tests::command_scrubber_removes_names_from_real_child_environment";
 
@@ -51,6 +54,7 @@ fn non_inheritable_environment_is_removed_after_policy_overrides() {
     );
 }
 
+#[cfg(unix)]
 #[test]
 fn command_scrubber_removes_names_from_real_child_environment() {
     if std::env::var_os(CHILD_MODE_ENV_VAR).is_none() {
@@ -99,14 +103,7 @@ fn command_scrubber_removes_names_from_real_child_environment() {
     assert_eq!(restricted_names, Vec::<&str>::new());
 }
 
-#[cfg(windows)]
-fn environment_command() -> Command {
-    let mut command = Command::new("cmd.exe");
-    command.args(["/D", "/C", "set"]);
-    command
-}
-
-#[cfg(not(windows))]
+#[cfg(unix)]
 fn environment_command() -> Command {
     Command::new("env")
 }

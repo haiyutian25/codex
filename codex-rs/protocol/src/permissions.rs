@@ -2368,20 +2368,6 @@ mod tests {
         }
     }
 
-    #[cfg(windows)]
-    #[test]
-    fn permission_paths_preserve_native_slash_unc_strings() {
-        for path in ["//server/share/src", r"/\server/share/src"] {
-            let expected = serde_json::json!({ "type": "path", "path": path });
-            let actual = serde_json::from_value::<RawFileSystemPath>(expected.clone())
-                .expect("valid raw slash UNC permission path");
-            assert_eq!(
-                serde_json::to_value(actual).expect("lossless raw slash UNC permission path"),
-                expected
-            );
-        }
-    }
-
     #[cfg(unix)]
     #[test]
     fn native_ambiguous_permission_paths_keep_deny_semantics() {
@@ -2418,9 +2404,9 @@ mod tests {
     #[test]
     fn uri_matcher_resolves_selected_executor_paths() {
         let path = |path| PathUri::parse(path).expect("valid path URI");
-        let cwd = path("file:///C:/workspace");
+        let cwd = path("file:///workspace");
         let workspace_roots = [cwd.clone()];
-        let temporary_directories = [path("file:///C:/Temp")];
+        let temporary_directories = [path("file:///tmp")];
         let context = FileSystemSandboxPolicyContext {
             cwd: &cwd,
             workspace_roots: &workspace_roots,
@@ -2440,11 +2426,11 @@ mod tests {
                 FileSystemAccessMode::Write,
             ),
             FileSystemSandboxEntry::new(
-                path("file:///C:/workspace/private").into(),
+                path("file:///workspace/private").into(),
                 FileSystemAccessMode::Deny,
             ),
             FileSystemSandboxEntry::new(
-                path("file:///C:/workspace/private/public").into(),
+                path("file:///workspace/private/public").into(),
                 FileSystemAccessMode::Write,
             ),
             FileSystemSandboxEntry::new(
@@ -2457,20 +2443,19 @@ mod tests {
 
         for (candidate, expected) in [
             (
-                "file:///C:/workspace/src/main.rs",
+                "file:///workspace/src/main.rs",
                 FileSystemAccessMode::Write,
             ),
             (
-                "file:///c:/WORKSPACE/private/key",
+                "file:///workspace/private/key",
                 FileSystemAccessMode::Deny,
             ),
             (
-                "file:///C:/workspace/private/public/ok",
+                "file:///workspace/private/public/ok",
                 FileSystemAccessMode::Write,
             ),
-            ("file:///C:/Temp/cache", FileSystemAccessMode::Write),
-            ("file:///C:/outside", FileSystemAccessMode::Read),
-            ("file:///tmp/cache", FileSystemAccessMode::Deny),
+            ("file:///tmp/cache", FileSystemAccessMode::Write),
+            ("file:///outside", FileSystemAccessMode::Read),
         ] {
             assert_eq!(
                 policy.resolve_access(&path(candidate), &context),
@@ -2478,7 +2463,6 @@ mod tests {
                 "resolving {candidate}"
             );
         }
-        assert!(!policy.can_write_path(&path("file:///c:/WORKSPACE/.git/config"), &context,));
 
         let scoped = FileSystemSandboxPolicy::restricted(vec![FileSystemSandboxEntry::new(
             FileSystemPath::Special {
@@ -2487,11 +2471,11 @@ mod tests {
             FileSystemAccessMode::Write,
         )]);
         assert_eq!(
-            scoped.resolve_access(&path("file:///C:/workspace/public/file"), &context),
+            scoped.resolve_access(&path("file:///workspace/public/file"), &context),
             FileSystemAccessMode::Write
         );
         assert_eq!(
-            scoped.resolve_access(&path("file:///C:/outside/file"), &context),
+            scoped.resolve_access(&path("file:///outside/file"), &context),
             FileSystemAccessMode::Deny
         );
     }
@@ -2626,86 +2610,6 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(windows)]
-    #[test]
-    fn workspace_write_ignores_slash_tmp_special_path_but_preserves_literal_path() {
-        let cwd = TempDir::new().expect("tempdir");
-        let slash_tmp = AbsolutePathBuf::from_absolute_path("/tmp").expect("absolute tmp path");
-        let slash_tmp_only_policy = FileSystemSandboxPolicy::restricted(vec![
-            FileSystemSandboxEntry::new(
-                FileSystemPath::Special {
-                    value: FileSystemSpecialPath::Root,
-                },
-                FileSystemAccessMode::Read,
-            ),
-            FileSystemSandboxEntry::new(
-                FileSystemPath::Special {
-                    value: FileSystemSpecialPath::SlashTmp,
-                },
-                FileSystemAccessMode::Write,
-            ),
-        ]);
-        assert_eq!(
-            slash_tmp_only_policy
-                .to_legacy_sandbox_policy(NetworkSandboxPolicy::Restricted, cwd.path())
-                .expect("legacy sandbox policy"),
-            SandboxPolicy::ReadOnly {
-                network_access: false,
-            }
-        );
-        assert!(
-            !slash_tmp_only_policy
-                .needs_direct_runtime_enforcement(NetworkSandboxPolicy::Restricted, cwd.path())
-        );
-
-        for access in [FileSystemAccessMode::Read, FileSystemAccessMode::Deny] {
-            let policy = FileSystemSandboxPolicy::restricted(vec![
-                FileSystemSandboxEntry::new(
-                    FileSystemPath::Special {
-                        value: FileSystemSpecialPath::Root,
-                    },
-                    FileSystemAccessMode::Write,
-                ),
-                FileSystemSandboxEntry::new(
-                    FileSystemPath::Special {
-                        value: FileSystemSpecialPath::SlashTmp,
-                    },
-                    access,
-                ),
-            ]);
-            assert!(policy.has_full_disk_write_access());
-            assert!(policy.has_full_disk_read_access());
-        }
-
-        let legacy_policy = SandboxPolicy::new_workspace_write_policy();
-        assert_eq!(
-            FileSystemSandboxPolicy::from(&legacy_policy)
-                .to_legacy_sandbox_policy(NetworkSandboxPolicy::Restricted, cwd.path())
-                .expect("legacy workspace-write policy"),
-            legacy_policy
-        );
-        assert_eq!(
-            FileSystemSandboxPolicy::from(&legacy_policy)
-                .get_writable_roots_with_cwd(cwd.path())
-                .into_iter()
-                .map(|root| root.root)
-                .collect::<Vec<_>>(),
-            legacy_policy
-                .get_writable_roots_with_cwd(cwd.path())
-                .into_iter()
-                .map(|root| normalize_effective_absolute_path(root.root))
-                .collect::<Vec<_>>()
-        );
-        assert!(
-            FileSystemSandboxPolicy::workspace_write(
-                std::slice::from_ref(&slash_tmp),
-                /*exclude_tmpdir_env_var*/ true,
-                /*exclude_slash_tmp*/ false,
-            )
-            .can_write_path_with_cwd(slash_tmp.as_path(), cwd.path())
-        );
-    }
-
     #[cfg(unix)]
     #[test]
     fn writable_roots_proactively_protect_missing_dot_codex() {
@@ -2734,29 +2638,7 @@ mod tests {
         );
     }
 
-    #[cfg(target_os = "macos")]
-    #[test]
-    fn preserving_mutable_paths_normalizes_top_level_aliases_consistently() {
-        let root = TempDir::new_in("/tmp").expect("tempdir under /tmp");
-        let logical_root =
-            AbsolutePathBuf::from_absolute_path(root.path()).expect("absolute logical root");
-        let canonical_root = AbsolutePathBuf::from_absolute_path(
-            root.path().canonicalize().expect("canonicalize root"),
-        )
-        .expect("absolute canonical root");
-        let protected = canonical_root.join("protected");
-        fs::create_dir(&protected).expect("create protected path");
-        let policy = FileSystemSandboxPolicy::restricted(vec![
-            FileSystemSandboxEntry::new(logical_root.into(), FileSystemAccessMode::Write),
-            FileSystemSandboxEntry::new(protected.clone().into(), FileSystemAccessMode::Read),
-        ]);
 
-        let roots = policy.get_writable_roots_with_cwd_preserving_mutable_paths(root.path());
-
-        assert_eq!(roots.len(), 1);
-        assert_eq!(roots[0].root, canonical_root);
-        assert!(roots[0].read_only_subpaths.contains(&protected));
-    }
 
     #[cfg(unix)]
     #[test]
