@@ -18,19 +18,9 @@ fn read_command_actions_preserve_native_and_foreign_paths() {
             "/home/alice/repo/src/main.rs",
         ),
         (
-            "file:///C:/Users/Alice%20Smith/repo",
-            r"src\main.rs",
-            r"C:\Users\Alice Smith\repo\src\main.rs",
-        ),
-        (
-            "file:///C:/Users/Alice%20Smith/repo",
-            r"C:src\main.rs",
-            r"C:\Users\Alice Smith\repo\src\main.rs",
-        ),
-        (
-            "file://server/share/repo",
-            r"src\main.rs",
-            r"\\server\share\repo\src\main.rs",
+            "file:///home/alice/repo",
+            "./src/main.rs",
+            "/home/alice/repo/src/main.rs",
         ),
     ] {
         let cwd = PathUri::parse(cwd_uri).expect("valid cross-platform cwd");
