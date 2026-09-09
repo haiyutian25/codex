@@ -23,7 +23,6 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_host_windows;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::submit_thread_settings;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
@@ -118,7 +117,6 @@ async fn saved_prefix_only_bypasses_guardian_for_general_models(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(Ok(()), "Guardian command reviews require host-native paths");
 
     let server = start_mock_server().await;
     let builder = match shell_backend {
@@ -190,7 +188,6 @@ async fn saved_prefix_only_bypasses_guardian_for_general_models(
 async fn cyber_model_user_approval_never_offers_a_reusable_prefix() -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(Ok(()), "command approval requires host-native paths");
 
     let server = start_mock_server().await;
     let mut builder = test_codex()
@@ -269,7 +266,6 @@ async fn cyber_model_user_approval_never_offers_a_reusable_prefix() -> Result<()
 async fn switching_models_suppresses_and_restores_saved_prefix_approvals() -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(Ok(()), "Guardian command reviews require host-native paths");
 
     let server = start_mock_server().await;
     let mut builder = test_codex()

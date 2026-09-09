@@ -40,8 +40,6 @@ pub(crate) use test_environment::TestEnvironment;
 pub use test_environment::TestTargetOs;
 pub use test_environment::is_remote_test_environment;
 #[doc(hidden)]
-pub use test_environment::is_wine_exec_test_environment;
-#[doc(hidden)]
 pub use test_environment::test_docker_container_name;
 pub(crate) use test_environment::test_environment;
 pub use test_environment::test_target_os;
@@ -629,44 +627,6 @@ macro_rules! skip_if_no_remote_env {
             eprintln!("Skipping test because it requires a remote test environment.");
             return $return_value;
         }
-    }};
-}
-
-#[macro_export]
-macro_rules! skip_if_wine_exec {
-    ($reason:expr $(,)?) => {{
-        $crate::skip_if_test_condition!(
-            $crate::is_wine_exec_test_environment(),
-            "the Wine-exec test environment",
-            $reason,
-        );
-    }};
-    ($return_value:expr, $reason:expr $(,)?) => {{
-        $crate::skip_if_test_condition!(
-            $return_value,
-            $crate::is_wine_exec_test_environment(),
-            "the Wine-exec test environment",
-            $reason,
-        );
-    }};
-}
-
-#[macro_export]
-macro_rules! skip_if_target_windows {
-    ($reason:expr $(,)?) => {{
-        $crate::skip_if_test_condition!(
-            $crate::test_target_os() == $crate::TestTargetOs::Windows,
-            "a Windows target environment",
-            $reason,
-        );
-    }};
-    ($return_value:expr, $reason:expr $(,)?) => {{
-        $crate::skip_if_test_condition!(
-            $return_value,
-            $crate::test_target_os() == $crate::TestTargetOs::Windows,
-            "a Windows target environment",
-            $reason,
-        );
     }};
 }
 

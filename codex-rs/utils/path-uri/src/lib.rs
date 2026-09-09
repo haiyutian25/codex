@@ -4,13 +4,11 @@
 
 use base64::Engine;
 use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_absolute_path::normalize_windows_device_path;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
 use serde::Serializer;
-use std::borrow::Cow;
 use std::fmt;
 use std::hash::Hash;
 use std::hash::Hasher;
@@ -43,16 +41,14 @@ const BAD_PATH_URI_PREFIX: &str = "file:///%00/bad/path/";
 /// created by [`Self::from_abs_path`] are opaque to these lexical operations.
 ///
 /// `file:` paths retain their URI spelling so they can be parsed independently
-/// of the current host, except that Windows drive letters are canonicalized to
-/// uppercase. A local POSIX `file:` URI can also retain percent-encoded non-UTF-8
-/// bytes for lossless native round trips.
+/// of the current host. A local POSIX `file:` URI can also retain percent-encoded
+/// non-UTF-8 bytes for lossless native round trips.
 ///
 /// Like [VS Code resources], path operations use `/` URI separators on every
 /// host. Lexical path operations preserve a URL authority without interpreting
-/// Windows drive or UNC roots from path text. Windows path equality and hashing
-/// ignore ASCII case, while POSIX paths remain case-sensitive. Native path
-/// normalization, filesystem aliases, symlinks, and Unicode normalization are
-/// not resolved.
+/// foreign path roots from path text. POSIX paths remain case-sensitive. Native
+/// path normalization, filesystem aliases, symlinks, and Unicode normalization
+/// are not resolved.
 ///
 /// Serde represents a `PathUri` as its canonical URI string. Deserialization
 /// accepts only valid `file:` URI strings. These strings round-trip through
@@ -65,16 +61,7 @@ pub struct PathUri(Url);
 
 impl PartialEq for PathUri {
     fn eq(&self, other: &Self) -> bool {
-        if self.0 == other.0 {
-            return true;
-        }
-        let (Some(path), Some(other_path)) = (
-            self.windows_identity_path_bytes(),
-            other.windows_identity_path_bytes(),
-        ) else {
-            return false;
-        };
-        self.0.host_str() == other.0.host_str() && path.eq_ignore_ascii_case(&other_path)
+        self.0 == other.0
     }
 }
 
@@ -82,17 +69,7 @@ impl Eq for PathUri {}
 
 impl Hash for PathUri {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        // Preserve URL hashing for POSIX paths; Windows paths must hash the
-        // same decoded, ASCII-folded identity that `PartialEq` compares.
-        let Some(path) = self.windows_identity_path_bytes() else {
-            self.0.hash(state);
-            return;
-        };
-        self.0.host_str().hash(state);
-        path.len().hash(state);
-        for byte in path.as_ref() {
-            byte.to_ascii_lowercase().hash(state);
-        }
+        self.0.hash(state);
     }
 }
 
@@ -146,17 +123,11 @@ impl PathUri {
         path: &str,
         convention: PathConvention,
     ) -> Option<Self> {
-        let uri = match convention {
-            PathConvention::Posix => parse_posix_path(path),
-            PathConvention::Windows => parse_windows_path(path),
-        }?;
+        let uri = parse_posix_path(path)?;
         if uri.0.host_str() != Some("") && uri.infer_path_convention() == Some(convention) {
             return Some(uri);
         }
-        Some(match convention {
-            PathConvention::Posix => Self::from_opaque_path_bytes(path.as_bytes()),
-            PathConvention::Windows => windows_opaque_path_uri(path),
-        })
+        Some(Self::from_opaque_path_bytes(path.as_bytes()))
     }
 
     fn from_opaque_path_bytes(path_bytes: &[u8]) -> Self {
@@ -186,60 +157,20 @@ impl PathUri {
         self.0.path()
     }
 
-    fn windows_identity_path_bytes(&self) -> Option<Cow<'_, [u8]>> {
-        if self.infer_path_convention() != Some(PathConvention::Windows)
-            || self.opaque_fallback_bytes().is_some()
-            || self.0.path_segments()?.any(|segment| {
-                urlencoding::decode_binary(segment.as_bytes())
-                    .iter()
-                    .any(|byte| matches!(byte, b'/' | b'\\'))
-            })
-        {
-            return None;
-        }
-        // Decode equivalent URI spellings here; comparisons and hashing apply
-        // ASCII case folding to these shared Windows identity bytes.
-        Some(urlencoding::decode_binary(self.0.path().as_bytes()))
-    }
-
     fn opaque_fallback_bytes(&self) -> Option<Vec<u8>> {
         decode_bad_path_uri(&self.0)
     }
 
     /// Infers the native path convention represented by this URI.
     ///
-    /// A URI authority is treated as a Windows UNC host, and a leading
-    /// drive-letter segment such as `C:` is treated as a Windows drive. All
-    /// other ordinary file URIs are treated as POSIX paths. This deliberately
-    /// classifies `file:///C:/src` as Windows even though `/C:/src` is also a
-    /// valid POSIX path. In practice, POSIX paths with a drive-shaped first
-    /// component are rare enough that recognizing foreign Windows paths is the
-    /// more useful default.
-    ///
-    /// Opaque fallback URIs are inspected for an absolute POSIX byte prefix or
-    /// an absolute Windows UTF-16LE prefix. `None` is returned when their
-    /// payload does not identify either convention.
-    ///
-    /// TODO(anp): Once `PathUri` carries an environment identifier, prefer the
-    /// environment's declared convention over this spelling-based heuristic.
+    /// Opaque fallback URIs are inspected for an absolute POSIX byte prefix.
+    /// All other ordinary file URIs are treated as POSIX paths. `None` is
+    /// returned when an opaque fallback payload does not identify a convention.
     pub fn infer_path_convention(&self) -> Option<PathConvention> {
         if let Some(path_bytes) = self.opaque_fallback_bytes() {
             return infer_opaque_path_convention(&path_bytes);
         }
-        if self.0.host_str().is_some() {
-            return Some(PathConvention::Windows);
-        }
-
-        let has_windows_drive = self
-            .0
-            .path_segments()
-            .and_then(|mut segments| segments.find(|segment| !segment.is_empty()))
-            .is_some_and(is_windows_drive_uri_segment);
-        if has_windows_drive {
-            Some(PathConvention::Windows)
-        } else {
-            Some(PathConvention::Posix)
-        }
+        Some(PathConvention::Posix)
     }
 
     /// Renders this URI using the native path syntax inferred from its shape.
@@ -285,17 +216,12 @@ impl PathUri {
             return None;
         }
 
-        let convention = self.infer_path_convention()?;
-        // In URI form, both a Windows drive root (`file:///C:`) and a UNC share root
-        // (`file://server/share`) retain one non-empty path segment. Keep that segment as the
-        // anchor so parent traversal cannot produce a URI that is not an absolute Windows path.
-        let anchor_depth = usize::from(convention == PathConvention::Windows);
         let depth = self
             .0
             .path_segments()?
             .filter(|segment| !segment.is_empty())
             .count();
-        if depth <= anchor_depth {
+        if depth == 0 {
             return None;
         }
         let mut url = self.0.clone();
@@ -333,18 +259,16 @@ impl PathUri {
             return false;
         }
 
-        let convention = self.infer_path_convention();
-        if convention != base.infer_path_convention() {
+        if self.infer_path_convention() != base.infer_path_convention() {
             return false;
         }
-        let convention = convention.unwrap_or(PathConvention::Posix);
-        let Some(path_segments) = containment_path_segments(&self.0, convention) else {
+        let Some(path_segments) = containment_path_segments(&self.0) else {
             return false;
         };
-        let Some(base_segments) = containment_path_segments(&base.0, convention) else {
+        let Some(base_segments) = containment_path_segments(&base.0) else {
             return false;
         };
-        native_path_segments_start_with(&path_segments, &base_segments, convention)
+        native_path_segments_start_with(&path_segments, &base_segments)
     }
 
     /// Returns whether the lexical subtrees rooted at these URIs overlap.
@@ -374,8 +298,7 @@ impl PathUri {
         if decode_bad_path_uri(&self.0).is_some() {
             return None;
         }
-        let convention = self.infer_path_convention()?;
-        containment_path_segments(&self.0, convention).map(|segments| segments.len())
+        containment_path_segments(&self.0).map(|segments| segments.len())
     }
 
     /// Returns the decoded relative path from `base` to this URI.
@@ -399,17 +322,13 @@ impl PathUri {
             return None;
         }
 
-        let convention = self.infer_path_convention()?;
-        let path_segments = containment_path_segments(&self.0, convention)?;
-        let base_segments = containment_path_segments(&base.0, convention)?;
-        if !native_path_segments_start_with(&path_segments, &base_segments, convention) {
+        let path_segments = containment_path_segments(&self.0)?;
+        let base_segments = containment_path_segments(&base.0)?;
+        if !native_path_segments_start_with(&path_segments, &base_segments) {
             return None;
         }
         let relative_segments = &path_segments[base_segments.len()..];
-        let separator = match convention {
-            PathConvention::Posix => "/",
-            PathConvention::Windows => "\\",
-        };
+        let separator = "/";
         Some(
             relative_segments
                 .iter()
@@ -454,28 +373,6 @@ impl PathUri {
         if let Some(absolute) = Self::from_absolute_native_path(path, convention) {
             return Ok(absolute);
         }
-        let path_bytes = path.as_bytes();
-        let path = if convention == PathConvention::Windows
-            && matches!(path_bytes, [drive, b':', ..] if drive.is_ascii_alphabetic())
-        {
-            let same_drive = self
-                .0
-                .path_segments()
-                .and_then(|mut segments| segments.find(|segment| !segment.is_empty()))
-                .is_some_and(|segment| {
-                    is_windows_drive_uri_segment(segment)
-                        && segment.as_bytes()[0].eq_ignore_ascii_case(&path_bytes[0])
-                });
-            if !same_drive {
-                return Err(PathUriParseError::InvalidFileUriPath {
-                    path: path.to_string(),
-                });
-            }
-            &path[2..]
-        } else {
-            path
-        };
-        let path_bytes = path.as_bytes();
         if decode_bad_path_uri(&self.0).is_some() {
             return Err(PathUriParseError::InvalidFileUriPath {
                 path: self.to_string(),
@@ -483,28 +380,17 @@ impl PathUri {
         }
 
         let mut url = self.0.clone();
-        let anchor_depth = usize::from(convention == PathConvention::Windows);
+        let anchor_depth = 0;
         let mut depth = url
             .path_segments()
             .map(|segments| segments.filter(|segment| !segment.is_empty()).count())
             .unwrap_or_default();
-        let windows_root_relative = convention == PathConvention::Windows
-            && matches!(path_bytes, [b'\\' | b'/', rest @ ..] if !matches!(rest, [b'\\' | b'/', ..]));
         {
             let Ok(mut segments) = url.path_segments_mut() else {
                 unreachable!("validated file URLs support hierarchical path segments");
             };
             segments.pop_if_empty();
-            if windows_root_relative {
-                while depth > anchor_depth {
-                    segments.pop();
-                    depth -= 1;
-                }
-            }
-            let path = match convention {
-                PathConvention::Posix => path.to_string(),
-                PathConvention::Windows => path.replace('\\', "/"),
-            };
+            let path = path.to_string();
             for component in path.split('/') {
                 match component {
                     "" | "." => {}
@@ -526,18 +412,10 @@ impl PathUri {
 
     /// Lexically resolves a relative native path that remains at or below this URI.
     ///
-    /// Absolute, Windows root- or drive-relative, and escaping paths are rejected.
+    /// Absolute and escaping paths are rejected.
     pub fn join_descendant(&self, path: &str) -> Result<Self, PathUriParseError> {
         let descendant = self.join(path)?;
-        let windows = self.infer_path_convention() == Some(PathConvention::Windows);
-        if path.starts_with('/')
-            || windows
-                && (path.starts_with('\\')
-                    || PathConvention::Windows
-                        .path_segments(path)
-                        .any(|segment| segment.contains(':')))
-            || !descendant.starts_with(self)
-        {
+        if path.starts_with('/') || !descendant.starts_with(self) {
             return Err(PathUriParseError::JoinPathMustBeDescendant(
                 path.to_string(),
             ));
@@ -553,10 +431,7 @@ impl PathUri {
     /// projected onto a syntactically valid but unrelated host path. Encoded Windows path
     /// separators are rejected before native conversion can reinterpret URI segment boundaries.
     pub fn to_abs_path(&self) -> io::Result<AbsolutePathBuf> {
-        if self.infer_path_convention() != Some(PathConvention::native())
-            || (PathConvention::native() == PathConvention::Windows
-                && containment_path_segments(&self.0, PathConvention::Windows).is_none())
-        {
+        if self.infer_path_convention() != Some(PathConvention::native()) {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 PathUriParseError::InvalidFileUriPath {
@@ -633,7 +508,6 @@ impl TryFrom<Url> for PathUri {
         }
         validate_file_url(&url)?;
         let url = without_localhost_authority(url);
-        let url = with_normalized_windows_drive_letter(url);
         Ok(Self(url))
     }
 }
@@ -705,32 +579,6 @@ fn without_localhost_authority(mut url: Url) -> Url {
     url
 }
 
-fn with_normalized_windows_drive_letter(mut url: Url) -> Url {
-    if url.host_str().is_some() {
-        return url;
-    }
-
-    let path = url.path();
-    let Some(drive_start) = path.bytes().position(|byte| byte != b'/') else {
-        return url;
-    };
-    let Some(drive) = path[drive_start..].split('/').next() else {
-        return url;
-    };
-    if !is_windows_drive_uri_segment(drive) || drive.as_bytes()[0].is_ascii_uppercase() {
-        return url;
-    }
-
-    let drive_letter = char::from(drive.as_bytes()[0]).to_ascii_uppercase();
-    let normalized_path = format!(
-        "{}{drive_letter}{}",
-        &path[..drive_start],
-        &path[drive_start + 1..]
-    );
-    url.set_path(&normalized_path);
-    url
-}
-
 /// Percent-decodes a URI path when it is valid UTF-8.
 ///
 /// `file:` URLs may contain encoded non-UTF-8 bytes. In that case the encoded
@@ -756,14 +604,7 @@ fn decode_bad_path_uri(url: &Url) -> Option<Vec<u8>> {
         .then_some(path_bytes)
 }
 
-fn is_windows_drive_uri_segment(segment: &str) -> bool {
-    matches!(
-        segment.as_bytes(),
-        [drive, b':'] | [drive, b'%', b'3', b'A' | b'a'] if drive.is_ascii_alphabetic()
-    )
-}
-
-fn containment_path_segments(url: &Url, convention: PathConvention) -> Option<Vec<&str>> {
+fn containment_path_segments(url: &Url) -> Option<Vec<&str>> {
     let segments = url
         .path_segments()?
         .filter(|segment| !segment.is_empty())
@@ -771,51 +612,20 @@ fn containment_path_segments(url: &Url, convention: PathConvention) -> Option<Ve
     (!segments.iter().any(|segment| {
         urlencoding::decode_binary(segment.as_bytes())
             .iter()
-            .any(|byte| *byte == b'/' || (convention == PathConvention::Windows && *byte == b'\\'))
+            .any(|byte| *byte == b'/')
     }))
     .then_some(segments)
 }
 
-fn native_path_segments_start_with(
-    path_segments: &[&str],
-    base_segments: &[&str],
-    convention: PathConvention,
-) -> bool {
-    match convention {
-        PathConvention::Posix => {
-            path_segments.len() >= base_segments.len()
-                && path_segments.iter().zip(base_segments).all(|(path, base)| {
-                    urlencoding::decode_binary(path.as_bytes())
-                        == urlencoding::decode_binary(base.as_bytes())
-                })
-        }
-        PathConvention::Windows => {
-            path_segments.len() >= base_segments.len()
-                && path_segments.iter().zip(base_segments).all(|(path, base)| {
-                    path.eq_ignore_ascii_case(base)
-                        || decode_uri_path(path).eq_ignore_ascii_case(&decode_uri_path(base))
-                })
-        }
-    }
+fn native_path_segments_start_with(path_segments: &[&str], base_segments: &[&str]) -> bool {
+    path_segments.len() >= base_segments.len()
+        && path_segments.iter().zip(base_segments).all(|(path, base)| {
+            urlencoding::decode_binary(path.as_bytes()) == urlencoding::decode_binary(base.as_bytes())
+        })
 }
 
 fn infer_opaque_path_convention(path_bytes: &[u8]) -> Option<PathConvention> {
-    if path_bytes.starts_with(b"/") {
-        return Some(PathConvention::Posix);
-    }
-    if !path_bytes.len().is_multiple_of(2) {
-        return None;
-    }
-
-    let mut path_wide = path_bytes
-        .chunks_exact(2)
-        .map(|bytes| u16::from_le_bytes([bytes[0], bytes[1]]));
-    let first = path_wide.next()?;
-    let second = path_wide.next()?;
-    let has_drive = u8::try_from(first).is_ok_and(|drive| drive.is_ascii_alphabetic())
-        && second == u16::from(b':');
-    let has_unc_prefix = first == u16::from(b'\\') && second == u16::from(b'\\');
-    (has_drive || has_unc_prefix).then_some(PathConvention::Windows)
+    path_bytes.starts_with(b"/").then_some(PathConvention::Posix)
 }
 
 fn parse_posix_path(path: &str) -> Option<PathUri> {
@@ -825,90 +635,7 @@ fn parse_posix_path(path: &str) -> Option<PathUri> {
             format!("/{path}").as_bytes(),
         ));
     }
-    path_uri_from_segments(PathConvention::Posix, /*host*/ None, path.split('/'))
-}
-
-fn parse_windows_path(path: &str) -> Option<PathUri> {
-    if let Some(normalized_path) = normalize_windows_device_path(path) {
-        if let Some(unc_path) = normalized_path.strip_prefix(r"\\") {
-            let mut components = unc_path.split(is_windows_separator_char);
-            if matches!(components.next(), None | Some("" | "." | ".."))
-                || matches!(components.next(), None | Some("" | "." | ".."))
-            {
-                return Some(windows_opaque_path_uri(path));
-            }
-        }
-        return Some(
-            parse_unnormalized_windows_path(&normalized_path)
-                .filter(|uri| {
-                    uri.infer_path_convention() == Some(PathConvention::Windows)
-                        && uri.opaque_fallback_bytes().is_none()
-                        && (!normalized_path.starts_with(r"\\")
-                            || uri.0.host_str().is_some_and(|host| !host.is_empty()))
-                })
-                .unwrap_or_else(|| windows_opaque_path_uri(path)),
-        );
-    }
-    parse_unnormalized_windows_path(path)
-}
-
-fn parse_unnormalized_windows_path(path: &str) -> Option<PathUri> {
-    let bytes = path.as_bytes();
-    let uses_namespace = matches!(
-        bytes,
-        [first, second, namespace @ (b'.' | b'?'), separator, ..]
-            if is_windows_separator_byte(*first)
-                && is_windows_separator_byte(*second)
-                && is_windows_separator_byte(*separator)
-                && matches!(*namespace, b'.' | b'?')
-    );
-    if uses_namespace || path.contains('\0') {
-        return Some(windows_opaque_path_uri(path));
-    }
-
-    if matches!(
-        bytes,
-        [drive, b':', separator, ..]
-            if drive.is_ascii_alphabetic() && is_windows_separator_byte(*separator)
-    ) {
-        return path_uri_from_segments(
-            PathConvention::Windows,
-            /*host*/ None,
-            std::iter::once(&path[..2]).chain(path[3..].split(is_windows_separator_char)),
-        );
-    }
-
-    if matches!(bytes, [first, second, ..]
-        if is_windows_separator_byte(*first) && is_windows_separator_byte(*second))
-    {
-        let mut components = path[2..].split(is_windows_separator_char);
-        let host = components.next().filter(|host| !host.is_empty())?;
-        let share = components.next().filter(|share| !share.is_empty())?;
-        return path_uri_from_segments(
-            PathConvention::Windows,
-            Some(host),
-            std::iter::once(share).chain(components),
-        )
-        .or_else(|| Some(windows_opaque_path_uri(path)));
-    }
-
-    None
-}
-
-fn windows_opaque_path_uri(path: &str) -> PathUri {
-    let path_bytes = path
-        .encode_utf16()
-        .flat_map(u16::to_le_bytes)
-        .collect::<Vec<_>>();
-    PathUri::from_opaque_path_bytes(&path_bytes)
-}
-
-fn is_windows_separator_char(character: char) -> bool {
-    matches!(character, '\\' | '/')
-}
-
-pub(crate) fn is_windows_separator_byte(character: u8) -> bool {
-    matches!(character, b'\\' | b'/')
+    path_uri_from_segments(/*host*/ None, path.split('/'))
 }
 
 /// Rejects URI metadata that has no defined meaning for `file:` URIs.
@@ -964,39 +691,25 @@ pub enum PathUriParseError {
 }
 
 /// Path syntax used to render a [`PathUri`] as an operating-system path.
-///
-/// This describes path grammar rather than a specific operating system because
-/// Linux and macOS share the POSIX representation relevant here.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(rename_all = "snake_case")]
 pub enum PathConvention {
     Posix,
-    Windows,
 }
 
 impl PathConvention {
     /// Returns the path convention used by the current process.
-    #[cfg(windows)]
-    pub const fn native() -> Self {
-        Self::Windows
-    }
-
-    /// Returns the path convention used by the current process.
-    #[cfg(unix)]
     pub const fn native() -> Self {
         Self::Posix
     }
 
     /// Splits absolute or relative native path text into lexical segments.
     ///
-    /// This does not validate the path or require it to be absolute. POSIX paths split on `/`,
-    /// while Windows paths split on both `\\` and `/`. Empty segments are retained.
+    /// This does not validate the path or require it to be absolute. POSIX paths split on
+    /// `/`. Empty segments are retained.
     pub fn path_segments(self, path: &str) -> impl DoubleEndedIterator<Item = &str> {
-        path.split(move |character| match self {
-            Self::Posix => character == '/',
-            Self::Windows => matches!(character, '/' | '\\'),
-        })
+        path.split('/')
     }
 }
 
@@ -1004,7 +717,6 @@ impl fmt::Display for PathConvention {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Posix => f.write_str("POSIX"),
-            Self::Windows => f.write_str("Windows"),
         }
     }
 }

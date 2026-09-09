@@ -1734,19 +1734,14 @@ fn resolve_candidate_path(path: &Path, cwd: &Path) -> Option<AbsolutePathBuf> {
 
 /// Resolves a workspace-relative path using the root's own path convention.
 ///
-/// Rejects absolute paths, traversal, Windows drive changes, and any result
-/// outside the root so foreign-platform permission rules cannot escape scope.
+/// Rejects absolute paths, traversal, and any result outside the root so
+/// permission rules cannot escape scope.
 fn resolve_scoped_workspace_path(root: &PathUri, subpath: &str) -> Option<PathUri> {
     let convention = root.infer_path_convention()?;
     if subpath.starts_with('/')
-        || convention == PathConvention::Windows && subpath.starts_with('\\')
         || convention
             .path_segments(subpath)
             .any(|segment| segment == "." || segment == "..")
-        || convention == PathConvention::Windows
-            && convention
-                .path_segments(subpath)
-                .any(|segment| segment.contains(':'))
     {
         return None;
     }

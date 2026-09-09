@@ -54,7 +54,6 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_host_windows;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
 use core_test_support::test_codex::test_codex;
@@ -2838,21 +2837,12 @@ async fn permission_request_hook_allows_exec_command_without_user_approval() -> 
 #[tokio::test]
 async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "request_permissions currently requires a host-native cwd"
-    );
 
     let server = start_mock_server().await;
     let permission_call_id = "strict-hook-permissions";
     let command_call_id = "strict-hook-exec-command";
     let marker_name = "strict-hook-exec-command-marker";
-    let command = match test_target_os() {
-        TestTargetOs::Linux | TestTargetOs::MacOs => format!("rm -f {marker_name}"),
-        TestTargetOs::Windows => {
-            format!("Remove-Item -Force -ErrorAction SilentlyContinue {marker_name}")
-        }
-    };
+    let command = format!("rm -f {marker_name}");
     let requested_permissions = RequestPermissionProfile {
         network: Some(NetworkPermissions {
             enabled: Some(true),

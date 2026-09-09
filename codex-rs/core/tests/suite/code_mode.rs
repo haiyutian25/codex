@@ -75,7 +75,6 @@ use core_test_support::responses::namespace_child_tool;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::stdio_server_bin;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::TestCodexBuilder;
@@ -851,10 +850,6 @@ async fn code_mode_only_restricts_prompt_tools() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_excludes_mcp_servers_using_their_configured_identity() -> Result<()> {
-    skip_if_wine_exec!(
-        Ok(()),
-        "requires a Windows test_stdio_server in the Wine-exec environment"
-    );
     skip_if_no_network!(Ok(()));
 
     for omit_tools_from in [
@@ -1051,10 +1046,6 @@ async fn code_mode_excludes_mcp_servers_using_their_configured_identity() -> Res
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn mcp_code_mode_exclusion_does_not_change_direct_mode_tool_exposure() -> Result<()> {
-    skip_if_wine_exec!(
-        Ok(()),
-        "requires a Windows test_stdio_server in the Wine-exec environment"
-    );
     skip_if_no_network!(Ok(()));
 
     for omit_tools_from in [
@@ -1884,10 +1875,6 @@ text(result.output);
 async fn code_mode_exec_nested_limit_preserves_result_variable_before_default_history_truncation()
 -> Result<()> {
     // TODO(anp): Remove after Wine exec returns complete nested-tool output to code mode.
-    skip_if_wine_exec!(
-        Ok(()),
-        "only part of nested exec_command stdout reaches the code-mode result"
-    );
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -1921,10 +1908,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_nested_limit_truncates_result_variable_when_exceeded() -> Result<()> {
     // TODO(anp): Remove after Wine exec returns complete nested-tool output to code mode.
-    skip_if_wine_exec!(
-        Ok(()),
-        "only part of nested exec_command stdout reaches the code-mode result"
-    );
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -1968,10 +1951,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
 async fn code_mode_exec_nested_limit_preserves_result_variable_before_configured_history_truncation()
 -> Result<()> {
     // TODO(anp): Remove after Wine exec returns complete nested-tool output to code mode.
-    skip_if_wine_exec!(
-        Ok(()),
-        "only part of nested exec_command stdout reaches the code-mode result"
-    );
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2015,10 +1994,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
 async fn code_mode_exec_without_nested_limit_preserves_result_variable_before_default_history_truncation()
 -> Result<()> {
     // TODO(anp): Remove after Wine exec returns complete nested-tool output to code mode.
-    skip_if_wine_exec!(
-        Ok(()),
-        "only part of nested exec_command stdout reaches the code-mode result"
-    );
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -2052,10 +2027,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
 async fn code_mode_exec_without_nested_limit_preserves_result_variable_before_configured_history_truncation()
 -> Result<()> {
     // TODO(anp): Remove after Wine exec returns complete nested-tool output to code mode.
-    skip_if_wine_exec!(
-        Ok(()),
-        "only part of nested exec_command stdout reaches the code-mode result"
-    );
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -4330,10 +4301,6 @@ contentLength=0"
 async fn code_mode_node_repl_screenshots_can_be_captured_without_guardian_transcript_flags(
     repl_server: &'static str,
 ) -> Result<()> {
-    skip_if_wine_exec!(
-        Ok(()),
-        "requires a Windows test_stdio_server in the Wine-exec environment"
-    );
     skip_if_no_network!(Ok(()));
 
     const SCREENSHOT: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==";
@@ -4408,10 +4375,6 @@ async fn code_mode_node_repl_image_flag_without_enhanced_stays_disabled(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "Guardian approval actions require host-native paths"
-    );
 
     let server = responses::start_mock_server().await;
     let mcp_server_bin = remote_aware_stdio_server_bin()?;
@@ -4525,10 +4488,6 @@ async fn code_mode_node_repl_text_evidence_is_visible_only_to_guardian(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "Guardian approval actions require host-native paths"
-    );
     const NODE_REPL_DOM_MIDDLE: &str = "guardian-visible-dom-middle";
     const DIRECT_NODE_REPL_MIDDLE: &str = "direct-node-repl-visible-middle";
     const DIRECT_UNRELATED_MIDDLE: &str = "direct-unrelated-hidden-middle";
@@ -5832,10 +5791,6 @@ text(JSON.stringify({
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_omits_configured_mcp_server_tools() -> Result<()> {
-    skip_if_wine_exec!(
-        Ok(()),
-        "requires a Windows test_stdio_server in the Wine-exec environment"
-    );
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -5923,10 +5878,6 @@ text(JSON.stringify({
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_only_keeps_mcp_tools_direct_when_nested_exposure_is_omitted() -> Result<()> {
-    skip_if_wine_exec!(
-        Ok(()),
-        "requires a Windows test_stdio_server in the Wine-exec environment"
-    );
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
@@ -6016,10 +5967,6 @@ async fn code_mode_only_keeps_mcp_tools_direct_when_nested_exposure_is_omitted()
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_only_can_call_mcp_tools_hidden_from_direct_and_deferred_exposure() -> Result<()>
 {
-    skip_if_wine_exec!(
-        Ok(()),
-        "requires a Windows test_stdio_server in the Wine-exec environment"
-    );
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;

@@ -10,7 +10,6 @@ use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_path_uri::PathUri;
 #[cfg(windows)]
 use core_test_support::PathExt;
-use core_test_support::TestTargetOs;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ev_apply_patch_custom_tool_call;
 use core_test_support::responses::ev_assistant_message;
@@ -20,10 +19,8 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
-use core_test_support::test_target_os;
 use serde_json::json;
 use test_case::test_case;
 use wiremock::MockServer;
@@ -71,12 +68,7 @@ fn sibling_workspace_root_name(cwd: &AbsolutePathBuf, suffix: &str) -> String {
 }
 
 fn command_arguments(path: &str, contents: &str) -> Result<String> {
-    let (shell, command) = match test_target_os() {
-        TestTargetOs::Linux | TestTargetOs::MacOs => {
-            ("bash", format!("printf %s '{contents}' > '{path}'"))
-        }
-        TestTargetOs::Windows => ("cmd", format!("echo {contents}>{path}")),
-    };
+    let (shell, command) = ("bash", format!("printf %s '{contents}' > '{path}'"));
     Ok(serde_json::to_string(&json!({
         "cmd": command,
         "shell": shell,
@@ -149,10 +141,6 @@ async fn workspace_roots_allow_file_and_command_writes() -> Result<()> {
     const PATCH_CONTENTS: &str = "workspace root patch access";
     const COMMAND_CONTENTS: &str = "workspace root command access";
 
-    skip_if_wine_exec!(
-        Ok(()),
-        "Wine does not emulate Windows restricted-token and ACL sandbox semantics"
-    );
 
     let server = start_mock_server().await;
     let test = workspace_roots_test(&server).await?;
@@ -205,10 +193,6 @@ async fn workspace_roots_allow_file_and_command_writes_in_secondary_root(
     const SECONDARY_ROOT_NAME: &str = "secondary-workspace-root";
     const COMMAND_CONTENTS: &str = "secondary root command";
 
-    skip_if_wine_exec!(
-        Ok(()),
-        "Wine does not emulate Windows restricted-token and ACL sandbox semantics"
-    );
 
     let server = start_mock_server().await;
     let mut builder = test_codex()
@@ -338,10 +322,6 @@ async fn workspace_roots_allow_patches_but_protect_metadata_directories() -> Res
     const PATCH_CONTENTS: &str = "workspace root patch access";
     const PROTECTED_METADATA_DIRECTORIES: [&str; 3] = [".git", ".agents", ".codex"];
 
-    skip_if_wine_exec!(
-        Ok(()),
-        "Wine does not emulate Windows restricted-token and ACL sandbox semantics"
-    );
 
     let server = start_mock_server().await;
     let test = workspace_roots_test(&server).await?;
@@ -431,10 +411,6 @@ async fn workspace_roots_deny_file_and_command_writes_outside_roots() -> Result<
     const PATCH_CONTENTS: &str = "outside workspace root patch";
     const COMMAND_CONTENTS: &str = "outside workspace root command";
 
-    skip_if_wine_exec!(
-        Ok(()),
-        "Wine does not emulate Windows restricted-token and ACL sandbox semantics"
-    );
 
     let server = start_mock_server().await;
     let test = workspace_roots_test(&server).await?;

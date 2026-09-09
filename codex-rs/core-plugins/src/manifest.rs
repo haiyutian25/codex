@@ -1,6 +1,5 @@
 use codex_config::HooksFile;
 use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::PathConvention;
 use codex_utils_path_uri::PathUri;
 use codex_utils_plugins::AGENT_PLUGIN_MANIFEST_RELATIVE_PATH;
 use codex_utils_plugins::find_plugin_manifest_path;
@@ -612,24 +611,13 @@ fn resolve_manifest_path(
         return None;
     }
 
-    let convention = plugin_root.infer_path_convention();
-    let has_parent_component = match convention {
-        Some(PathConvention::Windows) => relative_path
-            .split(['/', '\\'])
-            .any(|component| component == ".."),
-        Some(PathConvention::Posix) | None => {
-            relative_path.split('/').any(|component| component == "..")
-        }
-    };
+    let has_parent_component = relative_path.split('/').any(|component| component == "..");
     if has_parent_component {
         tracing::warn!("ignoring {field}: path must not contain '..'");
         return None;
     }
 
-    let has_windows_root = convention == Some(PathConvention::Windows)
-        && (relative_path.starts_with('\\')
-            || matches!(relative_path.as_bytes(), [drive, b':', ..] if drive.is_ascii_alphabetic()));
-    if relative_path.starts_with('/') || has_windows_root {
+    if relative_path.starts_with('/') {
         tracing::warn!("ignoring {field}: path must stay within the plugin root");
         return None;
     }

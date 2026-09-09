@@ -1,6 +1,5 @@
 use crate::PathConvention;
 use crate::PathUri;
-use crate::is_windows_separator_byte;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -73,10 +72,8 @@ impl LegacyAppPathString {
             return render_opaque_fallback(path, &path_bytes, convention).map(Self);
         }
         match convention {
-            PathConvention::Posix => render_posix_path(path),
-            PathConvention::Windows => render_windows_path(path),
+            PathConvention::Posix => render_posix_path(path).map(Self),
         }
-        .map(Self)
     }
 
     /// Parses this API string as an absolute path using the requested native
@@ -116,23 +113,9 @@ impl LegacyAppPathString {
 
     /// Infers the path convention of an absolute API path from its spelling.
     ///
-    /// Relative paths and ambiguous spellings return `None`. In particular,
-    /// slash-prefixed paths are treated as POSIX even when they could also be
-    /// interpreted as slash-delimited Windows UNC paths.
+    /// Relative paths return `None`.
     pub fn infer_absolute_path_convention(&self) -> Option<PathConvention> {
-        let bytes = self.0.as_bytes();
-        let has_windows_drive_root = matches!(
-            bytes,
-            [drive, b':', separator, ..]
-                if drive.is_ascii_alphabetic() && is_windows_separator_byte(*separator)
-        );
-        if has_windows_drive_root || self.0.starts_with(r"\\") {
-            Some(PathConvention::Windows)
-        } else if self.0.starts_with('/') {
-            Some(PathConvention::Posix)
-        } else {
-            None
-        }
+        self.0.starts_with('/').then_some(PathConvention::Posix)
     }
 
     pub fn as_str(&self) -> &str {
@@ -197,43 +180,11 @@ fn render_opaque_fallback(
         PathConvention::Posix if path_bytes.starts_with(b"/") => {
             Some(String::from_utf8_lossy(path_bytes).into_owned())
         }
-        PathConvention::Windows => render_windows_opaque_fallback(path_bytes),
-        PathConvention::Posix => None,
+        _ => None,
     };
     rendered.ok_or_else(|| LegacyAppPathStringError::OpaqueFallback {
         path: path.to_string(),
     })
-}
-
-fn render_windows_opaque_fallback(path_bytes: &[u8]) -> Option<String> {
-    if !path_bytes.len().is_multiple_of(2) {
-        return None;
-    }
-    let path_wide = path_bytes
-        .chunks_exact(2)
-        .map(|bytes| u16::from_le_bytes([bytes[0], bytes[1]]))
-        .collect::<Vec<_>>();
-
-    // Windows absolute paths either have a rooted drive prefix (`C:\\`) or a
-    // rooted namespace/UNC prefix (`\\server`, `\\.\\`, or `\\?\\`).
-    let has_drive_root = matches!(
-        path_wide.as_slice(),
-        [drive, colon, separator, ..]
-            if ((u16::from(b'A')..=u16::from(b'Z')).contains(drive)
-                || (u16::from(b'a')..=u16::from(b'z')).contains(drive))
-                && *colon == u16::from(b':')
-                && is_windows_separator(*separator)
-    );
-    let has_namespace_or_unc_root = matches!(
-        path_wide.as_slice(),
-        [first, second, ..]
-            if is_windows_separator(*first) && is_windows_separator(*second)
-    );
-    (has_drive_root || has_namespace_or_unc_root).then(|| String::from_utf16_lossy(&path_wide))
-}
-
-fn is_windows_separator(character: u16) -> bool {
-    character == u16::from(b'\\') || character == u16::from(b'/')
 }
 
 impl fmt::Display for LegacyAppPathString {
@@ -275,55 +226,6 @@ fn render_posix_path(path: &PathUri) -> Result<String, LegacyAppPathStringError>
     for segment in path_segments(&url) {
         rendered.push('/');
         rendered.push_str(&decode_native_segment(segment));
-    }
-    Ok(rendered)
-}
-
-fn render_windows_path(path: &PathUri) -> Result<String, LegacyAppPathStringError> {
-    let url = path.to_url();
-    let mut segments = path_segments(&url);
-    let mut rendered = String::new();
-    if let Some(host) = url.host_str() {
-        // A URI authority selects the UNC form: `file://server/share/file`
-        // becomes `\\server\share\file`. The first segment is the share name,
-        // which must be present.
-        let Some(share) = segments.next() else {
-            return Err(incompatible_convention(path, PathConvention::Windows));
-        };
-        let share = decode_native_segment(share);
-        if share.is_empty() {
-            return Err(incompatible_convention(path, PathConvention::Windows));
-        }
-        rendered.push_str(r"\\");
-        rendered.push_str(host);
-        rendered.push('\\');
-        rendered.push_str(&share);
-    } else {
-        // Without an authority, Windows requires a drive root. For example,
-        // `file:///C:/src/main.rs` begins with the `C:` URI segment and renders
-        // as `C:\src\main.rs`; a POSIX URI such as `file:///usr/bin` is rejected.
-        let Some(drive) = segments.next() else {
-            return Err(incompatible_convention(path, PathConvention::Windows));
-        };
-        let drive = decode_native_segment(drive);
-        let bytes = drive.as_bytes();
-        if bytes.len() != 2 || !bytes[0].is_ascii_alphabetic() || bytes[1] != b':' {
-            return Err(incompatible_convention(path, PathConvention::Windows));
-        }
-        rendered.push_str(&drive);
-    }
-
-    for segment in segments {
-        // URL path separators become Windows separators after each component
-        // has been decoded.
-        let segment = decode_native_segment(segment);
-        rendered.push('\\');
-        rendered.push_str(&segment);
-    }
-    // `file:///C:` and `file:///C:/` both identify the drive root, never the
-    // drive-relative path `C:`.
-    if rendered.len() == 2 && rendered.as_bytes()[1] == b':' {
-        rendered.push('\\');
     }
     Ok(rendered)
 }

@@ -28,7 +28,6 @@ use core_test_support::responses;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_mcp_server;
@@ -107,10 +106,6 @@ async fn wait_for_new_pid(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn mcp_calls_stay_bound_to_each_thread() -> anyhow::Result<()> {
-    skip_if_wine_exec!(
-        Ok(()),
-        "requires a Windows test_stdio_server in the Wine-exec environment"
-    );
     skip_if_no_network!(Ok(()));
 
     let responses_server = responses::start_mock_server().await;
@@ -387,10 +382,6 @@ async fn cached_http_mcp_starts_lazily_for_subagents(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn cached_mcp_startup_is_eager_for_root_and_lazy_for_subagents() -> anyhow::Result<()> {
-    skip_if_wine_exec!(
-        Ok(()),
-        "requires a Windows test_stdio_server in the Wine-exec environment"
-    );
     skip_if_no_network!(Ok(()));
 
     let responses_server = responses::start_mock_server().await;

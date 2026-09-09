@@ -26,7 +26,6 @@ use core_test_support::responses::ev_custom_tool_call;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
 use core_test_support::test_codex::turn_permission_fields;
@@ -148,10 +147,6 @@ async fn submit_turn(test: &TestCodex, permission_profile: PermissionProfile) ->
 #[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_holds_yielded_result_during_command_approval() -> Result<()> {
-    skip_if_wine_exec!(
-        Ok(()),
-        "command approvals currently require a host-native cwd"
-    );
     skip_if_no_network!(Ok(()));
 
     let harness = CodeModeElicitationHarness::start(

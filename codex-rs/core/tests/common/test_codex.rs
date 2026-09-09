@@ -60,8 +60,6 @@ use codex_protocol::protocol::TurnEnvironmentSelections;
 use codex_protocol::user_input::UserInput;
 use codex_thread_store::ThreadStore;
 use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_path_uri::LegacyAppPathString;
-use codex_utils_path_uri::PathConvention;
 use codex_utils_path_uri::PathUri;
 use futures::future::BoxFuture;
 use serde_json::Value;
@@ -126,19 +124,9 @@ pub fn local(cwd: AbsolutePathBuf) -> TurnEnvironmentSelection {
     }
 }
 
-/// Converts the host-shaped /C:/... cwd projection used by Wine tests back
-/// into the selected executor's Windows URI.
+/// Converts a host-native path into the selected executor's path URI.
 pub fn executor_path_uri(path: impl AsRef<Path>) -> Result<PathUri> {
-    let path = path.as_ref();
-    if matches!(test_environment(), TestEnvironment::WineExec)
-        && let Some(path) = path.to_str()
-        && matches!(path.as_bytes(), [b'/', drive, b':', b'/' | b'\\', ..] if drive.is_ascii_alphabetic())
-    {
-        return LegacyAppPathString::from_string(path[1..].to_string())
-            .to_path_uri(PathConvention::Windows)
-            .map_err(Into::into);
-    }
-    Ok(PathUri::from_host_native_path(path)?)
+    Ok(PathUri::from_host_native_path(path.as_ref())?)
 }
 
 pub fn local_selections(cwd: AbsolutePathBuf) -> TurnEnvironmentSelections {
@@ -219,7 +207,7 @@ impl Drop for TestEnv {
 
 pub async fn test_env() -> Result<TestEnv> {
     match test_environment() {
-        remote_env @ (TestEnvironment::Docker { .. } | TestEnvironment::WineExec) => {
+        remote_env @ TestEnvironment::Docker { .. } => {
             let websocket_url = remote_exec_server_url()?;
             let environment =
                 codex_exec_server::Environment::create_for_tests(Some(websocket_url.clone()))?;
@@ -244,20 +232,7 @@ pub async fn test_env() -> Result<TestEnv> {
                 workspace_roots: vec![cwd_uri.clone()],
                 config: EnvironmentConfigState::FromThread,
             };
-            let cwd = if remote_env == TestEnvironment::WineExec {
-                // TODO(anp): Convert `Config::cwd` to `LegacyAppPathString` and remove this
-                // compatibility projection.
-                // `Config::cwd` still requires `AbsolutePathBuf`. Preserve the test harness's
-                // Linux-absolute `/C:/...` compatibility spelling so converting it back to a
-                // `PathUri` recovers the remote Windows convention. Production conversions stay
-                // strict: `PathUri::to_abs_path` intentionally rejects foreign paths.
-                let path = cwd_uri.to_url().to_file_path().map_err(|()| {
-                    anyhow!("remote test cwd URI cannot be projected onto the host: {cwd_uri}")
-                })?;
-                AbsolutePathBuf::try_from(path)?
-            } else {
-                cwd_uri.to_abs_path()?
-            };
+            let cwd = cwd_uri.to_abs_path()?;
             Ok(TestEnv {
                 environment,
                 exec_server_url: Some(websocket_url),
@@ -671,7 +646,7 @@ impl TestCodexBuilder {
         cwd: Arc<TempDir>,
         home: Arc<TempDir>,
         resume_from: Option<PathBuf>,
-        mut test_env: TestEnv,
+        test_env: TestEnv,
         environment_manager: Arc<codex_exec_server::EnvironmentManager>,
     ) -> anyhow::Result<TestCodex> {
         let auth = self.auth.clone();
@@ -776,23 +751,9 @@ impl TestCodexBuilder {
                 .await?
             }
             (None, None) => {
-                let environments = if test_env.selection().cwd.infer_path_convention()
-                    == Some(PathConvention::Windows)
-                    && PathUri::from_abs_path(&config.cwd) != test_env.selection().cwd
-                {
-                    let cwd = executor_path_uri(&config.cwd)?;
-                    let mut selection = test_env.selection().clone();
-                    selection.cwd = cwd.clone();
-                    selection.workspace_roots = vec![cwd];
-                    test_env.selection = selection.clone();
-                    Some(vec![selection])
-                } else {
-                    None
-                };
                 Box::pin(thread_manager.start_thread(StartThreadOptions {
                     history_mode: self.history_mode,
                     client_mcp_extensions: client_mcp_extensions(),
-                    environments,
                     ..StartThreadOptions::new(config.clone())
                 }))
                 .await?

@@ -65,7 +65,6 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_websocket_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_remote;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
@@ -501,10 +500,6 @@ async fn rendered_catalogs_for_turns(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn capability_sections_render_in_order_with_host_repo_and_plugin_skills() -> Result<()> {
-    skip_if_wine_exec!(
-        Ok(()),
-        "executor-backed repo skills require matching host and executor path conventions"
-    );
     skip_if_no_network!(Ok(()));
 
     const HOST_SKILL_BODY: &str = "Use the host skill instructions.";
@@ -1467,10 +1462,6 @@ async fn production_turn_aliases_executor_skill_roots() -> Result<()> {
 async fn opted_in_executor_provider_skips_host_discovery_but_injects_discovered_skill() -> Result<()>
 {
     skip_if_no_network!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "executor-backed repo skills require matching host and executor path conventions"
-    );
 
     const AMBIENT_SKILL_NAME: &str = "ambient-repo";
     const AMBIENT_SKILL_BODY: &str = "AMBIENT_REPO_SKILL_SHOULD_NOT_BE_LOADED";
@@ -1718,10 +1709,6 @@ async fn opted_in_executor_provider_skips_host_discovery_but_injects_discovered_
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn executor_only_provider_preserves_structured_repo_skill_without_discovery_opt_out()
 -> Result<()> {
-    skip_if_wine_exec!(
-        Ok(()),
-        "structured host skill inputs require matching host and executor path conventions"
-    );
 
     const AMBIENT_SKILL_NAME: &str = "ambient-repo";
     const AMBIENT_SKILL_BODY: &str = "AMBIENT_REPO_SKILL_REMAINS_AVAILABLE";

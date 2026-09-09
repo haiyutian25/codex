@@ -30,8 +30,6 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::skip_if_target_windows;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::test_codex::local_selections;
 use core_test_support::test_codex::test_codex;
 use core_test_support::test_codex::turn_permission_fields;
@@ -105,7 +103,6 @@ fn assert_no_matched_rules_invariant(output_item: &Value) {
 
 #[tokio::test]
 async fn git_status_requires_approval_under_unless_trusted() -> Result<()> {
-    skip_if_wine_exec!(Ok(()), "command approval requires host-native paths");
 
     let server = start_mock_server().await;
     let mut builder = test_codex().with_model("gpt-5.2").with_config(|config| {
@@ -239,7 +236,6 @@ prefix_rule(pattern=["git", "status"], decision="allow")
 
 #[tokio::test]
 async fn granular_complex_forced_rm_denial_explains_why_the_command_was_rejected() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses a POSIX shell command fixture");
 
     let server = start_mock_server().await;
     let mut builder = test_codex();
@@ -303,7 +299,6 @@ async fn granular_complex_forced_rm_denial_explains_why_the_command_was_rejected
 
 #[tokio::test]
 async fn granular_complex_forced_rm_requests_approval_when_allowed() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses a POSIX shell command fixture");
 
     let server = start_mock_server().await;
     let mut builder = test_codex();
@@ -380,7 +375,6 @@ async fn granular_complex_forced_rm_requests_approval_when_allowed() -> Result<(
 #[tokio::test]
 async fn deeply_nested_forced_rm_is_rejected_before_execution_when_approvals_are_disabled()
 -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses a POSIX shell command fixture");
 
     let server = start_mock_server().await;
     let mut builder = test_codex();
@@ -529,10 +523,6 @@ async fn execpolicy_blocks_shell_invocation() -> Result<()> {
 
 #[tokio::test]
 async fn malformed_custom_rules_preserve_managed_forbidden_prefix() -> Result<()> {
-    skip_if_target_windows!(
-        Ok(()),
-        "managed prefix fixture uses POSIX executable semantics"
-    );
 
     let mut builder = test_codex()
         .with_cloud_config_bundle(
@@ -607,10 +597,6 @@ prefix_rules = [
 
 #[tokio::test]
 async fn environment_command_restrictions_override_saved_prefix_approvals() -> Result<()> {
-    skip_if_target_windows!(
-        Ok(()),
-        "managed prefix fixture uses POSIX executable semantics"
-    );
 
     let mut builder = test_codex().with_config(|config| {
         config
@@ -725,10 +711,6 @@ async fn environment_command_restrictions_override_saved_prefix_approvals() -> R
 
 #[tokio::test]
 async fn environment_command_policy_changes_invalidate_session_approvals() -> Result<()> {
-    skip_if_target_windows!(
-        Ok(()),
-        "managed prefix fixture uses POSIX executable semantics"
-    );
 
     let mut builder = test_codex().with_config(|config| {
         config

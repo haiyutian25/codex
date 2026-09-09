@@ -59,7 +59,6 @@ use core_test_support::skip_if_host_windows;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_no_remote_env;
 use core_test_support::skip_if_sandbox;
-use core_test_support::skip_if_target_windows;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::local;
 use core_test_support::test_codex::test_codex;
@@ -89,7 +88,6 @@ const NETWORK_TEST_TARGET: &str = "http://codex-network-test.invalid:80";
     ignore = "requires the trusted Linux proxy bridge"
 )]
 async fn guardian_network_approval_preserves_action_and_outcome_routing() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -230,7 +228,6 @@ async fn guardian_network_approval_preserves_action_and_outcome_routing() -> Res
 )]
 async fn strict_auto_review_routes_network_approval_to_guardian_when_user_reviewer_is_selected()
 -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -345,7 +342,6 @@ async fn strict_auto_review_routes_network_approval_to_guardian_when_user_review
 )]
 async fn cancelled_guardian_network_review_fails_closed_without_rewriting_turn_state() -> Result<()>
 {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -444,7 +440,6 @@ async fn disconnected_network_request_explains_failure_to_model(
     method: &str,
     target: &str,
 ) -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -556,7 +551,6 @@ PY"#
 )]
 async fn timed_out_guardian_network_review_uses_timeout_outcome_without_user_fallback() -> Result<()>
 {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -665,7 +659,6 @@ async fn timed_out_guardian_network_review_uses_timeout_outcome_without_user_fal
 )]
 async fn background_network_approval_uses_active_turn_after_original_turn_completes() -> Result<()>
 {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -852,7 +845,6 @@ async fn background_network_approval_uses_active_turn_after_original_turn_comple
     ignore = "requires the trusted Linux proxy bridge"
 )]
 async fn user_network_approval_once_session_and_denial_semantics() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -1039,7 +1031,6 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
     ignore = "requires the trusted Linux proxy bridge"
 )]
 async fn latest_network_rejection_wins_for_multiple_reviews_of_one_execution() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -1126,7 +1117,6 @@ async fn latest_network_rejection_wins_for_multiple_reviews_of_one_execution() -
     ignore = "requires the trusted Linux proxy bridge"
 )]
 async fn allowing_network_policy_amendment_persists_context_and_bypasses_prompt() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -1213,7 +1203,6 @@ async fn allowing_network_policy_amendment_persists_context_and_bypasses_prompt(
     ignore = "requires the trusted Linux proxy bridge"
 )]
 async fn denying_network_policy_amendment_persists_and_blocks_request() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -1269,7 +1258,6 @@ async fn denying_network_policy_amendment_persists_and_blocks_request() -> Resul
     ignore = "requires the trusted Linux proxy bridge"
 )]
 async fn failed_network_policy_amendment_denies_request_and_does_not_approve_host() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -1347,7 +1335,6 @@ async fn failed_network_policy_amendment_denies_request_and_does_not_approve_hos
     ignore = "requires the trusted Linux proxy bridge"
 )]
 async fn unattributed_network_request_uses_active_turn_environment_fallback() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses a raw TCP proxy fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -1413,7 +1400,6 @@ async fn unattributed_network_request_uses_active_turn_environment_fallback() ->
     ignore = "requires the trusted Linux proxy bridge"
 )]
 async fn ambiguous_unattributed_network_request_is_not_assigned_to_active_calls() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses POSIX shell and raw TCP fixtures");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -1510,7 +1496,6 @@ async fn ambiguous_unattributed_network_request_is_not_assigned_to_active_calls(
     ignore = "requires the trusted Linux proxy bridge"
 )]
 async fn guardian_receives_exact_triggers_for_concurrent_network_requests() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -1664,7 +1649,6 @@ async fn guardian_receives_exact_triggers_for_concurrent_network_requests() -> R
     ignore = "requires the trusted Linux proxy bridge"
 )]
 async fn guardian_receives_exact_trigger_for_single_network_request() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -1719,7 +1703,6 @@ async fn guardian_receives_exact_trigger_for_single_network_request() -> Result<
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_guardian_network_decisions_are_scoped_to_each_request_and_environment() -> Result<()>
 {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -1943,7 +1926,6 @@ async fn remote_guardian_network_decisions_are_scoped_to_each_request_and_enviro
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
@@ -2138,7 +2120,6 @@ async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn approved_network_host_for_one_environment_still_prompts_in_another() -> Result<()> {
-    skip_if_target_windows!(Ok(()), "uses the POSIX/Python network fixture");
     skip_if_host_windows!(Ok(()));
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));

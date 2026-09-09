@@ -240,7 +240,8 @@ pub mod test_support {
 
     /// Creates a platform-absolute [`PathBuf`] from a Unix-style absolute test path.
     ///
-    /// On Windows, `/tmp/example` maps to `C:\tmp\example`.
+    /// Test infrastructure: on Windows hosts `/tmp/example` maps to `C:\tmp\example`
+    /// so the shared test suites remain runnable for verification.
     pub fn test_path_buf(unix_path: &str) -> PathBuf {
         if cfg!(windows) {
             let mut path = PathBuf::from(r"C:\");
@@ -470,19 +471,6 @@ mod tests {
         assert_eq!(
             normalize_windows_device_path(r"\\?\GLOBALROOT\Device"),
             None
-        );
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn from_absolute_path_strips_windows_verbatim_prefix() {
-        let path =
-            AbsolutePathBuf::from_absolute_path_checked(r"\\?\D:\c\x\worktrees\2508\swift-base")
-                .expect("verbatim drive path should be absolute");
-
-        assert_eq!(
-            path.as_path(),
-            Path::new(r"D:\c\x\worktrees\2508\swift-base")
         );
     }
 
@@ -718,39 +706,5 @@ mod tests {
             canonicalize_existing_preserving_symlinks(&link).expect("canonicalize symlink");
 
         assert_eq!(canonicalized, link);
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn home_directory_backslash_subpath_is_expanded_in_deserialization() {
-        let Some(home) = home_dir() else {
-            return;
-        };
-        let temp_dir = tempdir().expect("base dir");
-        let abs_path_buf = {
-            let _guard = AbsolutePathBufGuard::new(temp_dir.path());
-            let input =
-                serde_json::to_string(r#"~\code"#).expect("string should serialize as JSON");
-            serde_json::from_str::<AbsolutePathBuf>(&input).expect("is valid abs path")
-        };
-        assert_eq!(abs_path_buf.as_path(), home.join("code").as_path());
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn canonicalize_preserving_symlinks_avoids_verbatim_prefixes() {
-        let temp_dir = tempdir().expect("temp dir");
-
-        let canonicalized =
-            canonicalize_preserving_symlinks(temp_dir.path()).expect("canonicalize");
-
-        assert_eq!(
-            canonicalized,
-            dunce::canonicalize(temp_dir.path()).expect("canonicalize temp dir")
-        );
-        assert!(
-            !canonicalized.to_string_lossy().starts_with(r"\\?\"),
-            "expected a non-verbatim Windows path, got {canonicalized:?}"
-        );
     }
 }

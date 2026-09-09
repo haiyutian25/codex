@@ -13,27 +13,19 @@ pub const DOCKER_CONTAINER_ENV_VAR: &str = "CODEX_TEST_REMOTE_ENV_CONTAINER_NAME
 pub enum TestTargetOs {
     Linux,
     MacOs,
-    Windows,
 }
 
 impl TestTargetOs {
     const fn host() -> Self {
         if cfg!(target_os = "macos") {
             Self::MacOs
-        } else if cfg!(target_os = "windows") {
-            Self::Windows
-        } else if cfg!(target_os = "linux") {
-            Self::Linux
         } else {
-            unreachable!()
+            Self::Linux
         }
     }
 
     const fn path_convention(self) -> PathConvention {
-        match self {
-            Self::Linux | Self::MacOs => PathConvention::Posix,
-            Self::Windows => PathConvention::Windows,
-        }
+        PathConvention::Posix
     }
 }
 
@@ -41,7 +33,6 @@ impl TestTargetOs {
 pub(crate) enum TestEnvironment {
     Local,
     Docker { container_name: String },
-    WineExec,
 }
 
 impl TestEnvironment {
@@ -52,7 +43,7 @@ impl TestEnvironment {
     pub(crate) fn docker_container_name(&self) -> Option<&str> {
         match self {
             Self::Docker { container_name } => Some(container_name),
-            Self::Local | Self::WineExec => None,
+            Self::Local => None,
         }
     }
 
@@ -60,7 +51,6 @@ impl TestEnvironment {
         match self {
             Self::Local => TestTargetOs::host(),
             Self::Docker { .. } => TestTargetOs::Linux,
-            Self::WineExec => TestTargetOs::Windows,
         }
     }
 
@@ -69,11 +59,6 @@ impl TestEnvironment {
             Self::Local => return Ok(None),
             Self::Docker { .. } => {
                 PathUri::parse(&format!("file:///tmp/codex-core-test-cwd-{instance_id}"))?
-            }
-            Self::WineExec => {
-                // Each Wine-exec test process has an isolated filesystem root, so this drive-root
-                // path cannot collide with a different Bazel shard.
-                PathUri::parse(&format!("file:///C:/codex-core-test-cwd-{instance_id}"))?
             }
         };
         Ok(Some(LegacyAppPathString::from_path_uri(
@@ -88,18 +73,12 @@ impl TestEnvironment {
 }
 
 pub(crate) fn test_environment() -> TestEnvironment {
-    let environment = parse_test_environment(
+    parse_test_environment(
         std::env::var_os(TEST_ENVIRONMENT_ENV_VAR).as_deref(),
         std::env::var_os(LEGACY_REMOTE_ENV_ENV_VAR).as_deref(),
         std::env::var_os(DOCKER_CONTAINER_ENV_VAR).as_deref(),
     )
-    .expect("invalid test environment configuration");
-
-    if matches!(environment, TestEnvironment::WineExec) && !cfg!(target_os = "linux") {
-        panic!("{TEST_ENVIRONMENT_ENV_VAR}=wine-exec is only supported on Linux");
-    }
-
-    environment
+    .expect("invalid test environment configuration")
 }
 
 /// Returns the operating system used by the selected test execution environment.
@@ -117,14 +96,8 @@ pub fn is_remote_test_environment() -> bool {
 pub fn test_docker_container_name() -> Option<String> {
     match test_environment() {
         TestEnvironment::Docker { container_name } => Some(container_name),
-        TestEnvironment::Local | TestEnvironment::WineExec => None,
+        TestEnvironment::Local => None,
     }
-}
-
-/// Returns whether the Wine-backed executor is selected.
-#[doc(hidden)]
-pub fn is_wine_exec_test_environment() -> bool {
-    matches!(test_environment(), TestEnvironment::WineExec)
 }
 
 fn parse_test_environment(
@@ -164,9 +137,8 @@ fn parse_test_environment(
                 container_name: non_empty_utf8(container_name_env_var, container_name)?,
             })
         }
-        Some("wine-exec") => Ok(TestEnvironment::WineExec),
         Some(value) => Err(format!(
-            "{TEST_ENVIRONMENT_ENV_VAR} must be one of local, docker, or wine-exec; got {value:?}"
+            "{TEST_ENVIRONMENT_ENV_VAR} must be one of local or docker; got {value:?}"
         )),
     }
 }

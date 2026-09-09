@@ -62,7 +62,6 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::responses::start_websocket_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::test_codex::local_selections;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
@@ -137,10 +136,6 @@ async fn guardian_session_inherits_parent_http_fallback(
     expected_guardian_path: &str,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "Guardian approval actions require host-native paths"
-    );
 
     let server = start_mock_server().await;
     let websocket_fallback = Mock::given(method("GET"))
@@ -553,10 +548,6 @@ async fn guardian_node_repl_policy_follows_production_approval_path(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "Guardian MCP approvals require a host-native test stdio server"
-    );
 
     let server = start_mock_server().await;
     let mcp_server_bin = remote_aware_stdio_server_bin()?;
@@ -689,10 +680,6 @@ async fn guardian_node_repl_policy_follows_production_approval_path(
 async fn guardian_session_is_reused_for_consecutive_tool_reviews_without_prewarm() -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "Guardian approval actions require host-native paths"
-    );
 
     const SECRET: &str = "guardian-parent-policy-test-secret";
     let server = start_mock_server().await;
@@ -912,10 +899,6 @@ async fn guardian_session_is_reused_for_consecutive_tool_reviews_without_prewarm
 async fn interrupted_guardian_tool_review_aborts_without_executing_the_command() -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "Guardian approval actions require host-native paths"
-    );
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;
@@ -1068,10 +1051,6 @@ async fn guardian_denial_rejects_tool_call_with_rationale(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "Guardian approval actions require host-native paths"
-    );
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;
@@ -1221,10 +1200,6 @@ async fn guardian_timeout_rejects_tool_call_with_acting_model_instructions(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "Guardian approval actions require host-native paths"
-    );
 
     struct TimedOutReviewContributor;
 
@@ -1326,10 +1301,6 @@ async fn guardian_timeout_rejects_tool_call_with_acting_model_instructions(
 async fn cyber_model_guardian_denial_interrupts_turn_immediately() -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    skip_if_wine_exec!(
-        Ok(()),
-        "Guardian approval actions require host-native paths"
-    );
 
     let server = start_mock_server().await;
     let approval_policy = AskForApproval::OnRequest;

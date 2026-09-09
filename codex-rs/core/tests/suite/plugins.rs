@@ -48,7 +48,6 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_remote;
-use core_test_support::skip_if_target_windows;
 use core_test_support::stdio_server_bin;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::local_selections;
@@ -357,7 +356,6 @@ fn searched_plugin_tools(
 async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
     zsh_fork: bool,
 ) -> Result<()> {
-    skip_if_target_windows!(Ok(()), "executes a POSIX shell script");
     skip_if_no_network!(Ok(()));
     skip_if_remote!(
         Ok(()),
@@ -1541,7 +1539,6 @@ enum ImplicitPluginSkillInvocation {
 async fn implicit_plugin_skill_invocation_tracks_remote_plugin_id(
     invocation: ImplicitPluginSkillInvocation,
 ) -> Result<()> {
-    skip_if_target_windows!(Ok(()), "executes POSIX cat and bash commands");
     skip_if_remote!(Ok(()), "shell commands use host plugin-cache paths");
     skip_if_no_network!(Ok(()));
     let server = start_mock_server().await;

@@ -7,7 +7,6 @@ use codex_protocol::capabilities::CapabilityRootLocation;
 use codex_protocol::protocol::Product;
 use codex_protocol::protocol::SkillScope;
 use codex_skills::EnvironmentSkillMetadata;
-use codex_utils_path_uri::PathConvention;
 use codex_utils_path_uri::PathUri;
 use futures::StreamExt;
 
@@ -289,12 +288,7 @@ fn catalog_entry_from_skill(
 }
 
 fn normalized_environment_path(path: &PathUri) -> String {
-    let convention = path.infer_path_convention();
-    let path = path.inferred_native_path_string();
-    match convention {
-        Some(PathConvention::Windows) => path.replace('\\', "/"),
-        Some(PathConvention::Posix) | None => path,
-    }
+    path.inferred_native_path_string()
 }
 
 async fn read_bounded_text(

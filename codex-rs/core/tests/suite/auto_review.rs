@@ -45,7 +45,6 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::local_selections;
 use core_test_support::test_codex::test_codex;
@@ -100,7 +99,6 @@ impl ApprovalReviewContributor for EscalationApprovingReviewContributor {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn approval_review_contributor_skips_existing_guardian_model_call() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_wine_exec!(Ok(()), "request_permissions requires host-native paths");
 
     let server = MockServer::start().await;
     let permissions_call_id = "extension-approved-permissions";
@@ -180,7 +178,6 @@ async fn approval_review_contributor_skips_existing_guardian_model_call() -> Res
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn require_escalated_bypasses_extension_approval_and_runs_guardian() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_wine_exec!(Ok(()), "exec_command requires host-native paths");
 
     let server = MockServer::start().await;
     let call_id = "require-escalated-command";
@@ -287,7 +284,6 @@ async fn required_model_bypasses_extension_approval_when_guardian_v2_is_disabled
     disable_source: GuardianV2DisableSource,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_wine_exec!(Ok(()), "request_permissions requires host-native paths");
 
     let server = MockServer::start().await;
     let model = "gpt-5.4";

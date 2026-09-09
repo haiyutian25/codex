@@ -13,7 +13,6 @@ use codex_protocol::protocol::ThreadSettingsOverrides;
 use codex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::skip_if_wine_exec;
 use core_test_support::test_codex::local_selections;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_mcp_server;
@@ -74,7 +73,6 @@ for line in sys.stdin:
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn interrupt_aborts_server_initiated_mcp_guardian_review() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_wine_exec!(Ok(()), "the MCP fixture requires a host Python interpreter");
 
     let server = responses::start_mock_server().await;
     let mcp_servers = serde_json::from_value(json!({
@@ -193,7 +191,6 @@ async fn server_initiated_mcp_elicitation_can_require_synchronous_auto_review(
     strict_auto_review: bool,
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
-    skip_if_wine_exec!(Ok(()), "the MCP fixture requires a host Python interpreter");
 
     const RATIONALE: &str = "The server-side action is not authorized.";
     const REJECTION_INSTRUCTIONS: &str = "Do not retry the rejected action.";

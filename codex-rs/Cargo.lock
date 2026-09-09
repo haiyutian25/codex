@@ -3180,7 +3180,6 @@ name = "codex-utils-path"
 version = "0.0.0"
 dependencies = [
  "codex-utils-absolute-path",
- "dunce",
  "pretty_assertions",
  "tempfile",
 ]
