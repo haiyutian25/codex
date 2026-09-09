@@ -1,7 +1,6 @@
 #![allow(clippy::expect_used)]
 use std::any::Any;
 use std::fs;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use anyhow::Context;
@@ -40,23 +39,14 @@ fn absolute_path(path: &str) -> AbsolutePathBuf {
 }
 
 fn host_absolute_path(segments: &[&str]) -> String {
-    let mut path = if cfg!(windows) {
-        PathBuf::from(r"C:\")
-    } else {
-        PathBuf::from("/")
-    };
-    for segment in segments {
-        path.push(segment);
-    }
-    path.to_string_lossy().into_owned()
+    let posix = format!("/{}", segments.join("/"));
+    codex_utils_absolute_path::test_support::test_path_buf(&posix)
+        .to_string_lossy()
+        .into_owned()
 }
 
 fn host_executable_name(name: &str) -> String {
-    if cfg!(windows) {
-        format!("{name}.exe")
-    } else {
-        name.to_string()
-    }
+    name.to_string()
 }
 
 fn starlark_string(value: &str) -> String {

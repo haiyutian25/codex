@@ -339,18 +339,9 @@ async fn windows_executor_skill_read_rejects_disabled_sandbox_on_any_orchestrato
 
 #[tokio::test]
 async fn selected_root_id_distinguishes_identical_executor_paths() {
-    let root_label = if cfg!(unix) {
-        r"root\identity"
-    } else {
-        "root-identity"
-    };
+    let root_label = r"root\identity";
     let test_root = create_local_skill_root(root_label).expect("create local skill root");
     let selected_root = test_root.to_string_lossy().into_owned();
-    let selected_root = if cfg!(windows) {
-        selected_root.replace('\\', "/")
-    } else {
-        selected_root
-    };
     let provider = ExecutorSkillProvider::new_with_restriction_product(
         Arc::new(EnvironmentManager::default_for_tests()),
         /*restriction_product*/ None,

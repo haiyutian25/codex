@@ -66,25 +66,10 @@ async fn exec_command_approval_triggers_elicitation() -> anyhow::Result<()> {
         .path()
         .join(created_filename);
 
-    let (shell_command, timeout_ms) = if cfg!(windows) {
-        (
-            vec![
-                "New-Item".to_string(),
-                "-ItemType".to_string(),
-                "File".to_string(),
-                "-Path".to_string(),
-                created_filename.to_string(),
-                "-Force".to_string(),
-            ],
-            // `powershell.exe` startup can be slow on loaded Windows CI workers
-            10_000,
-        )
-    } else {
-        (
-            vec!["touch".to_string(), created_filename.to_string()],
-            5_000,
-        )
-    };
+    let (shell_command, timeout_ms) = (
+        vec!["touch".to_string(), created_filename.to_string()],
+        5_000,
+    );
     let expected_shell_command =
         format_with_current_shell(&shlex::try_join(shell_command.iter().map(String::as_str))?);
 
@@ -240,12 +225,6 @@ async fn test_patch_approval_triggers_elicitation() {
 }
 
 async fn patch_approval_triggers_elicitation() -> anyhow::Result<()> {
-    if cfg!(windows) {
-        // powershell apply_patch shell calls are not parsed into apply patch approvals
-
-        return Ok(());
-    }
-
     let cwd = TempDir::new()?;
     let test_file = Path::new("/").join(
         cwd.path()
