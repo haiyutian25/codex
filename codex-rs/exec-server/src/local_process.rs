@@ -1317,10 +1317,7 @@ mod tests {
 
     #[tokio::test]
     async fn start_process_rejects_non_native_cwd_before_launch() {
-        #[cfg(unix)]
         let uri = "file://server/share/checkout";
-        #[cfg(windows)]
-        let uri = "file:///usr/local/checkout";
         let cwd = PathUri::parse(uri).expect("non-native cwd URI");
         let source = cwd
             .to_abs_path()

@@ -360,7 +360,7 @@ async fn unsandboxed_intercepted_exec_strips_managed_network_env() -> anyhow::Re
         env: HashMap::new(),
         network: Some(network.clone()),
         network_environment_id: None,
-        proot_enabled: false,
+        proot: None,
         arg0: None,
         sandbox_policy_cwd: workdir.clone(),
         sandbox_workspace_roots: vec![workdir.clone()],

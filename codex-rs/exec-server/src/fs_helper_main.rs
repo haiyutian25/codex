@@ -44,23 +44,9 @@ async fn run_main() -> Result<(), Box<dyn Error + Send + Sync>> {
             let result: io::Result<_> = async {
                 let path = params.path.to_abs_path()?;
                 let file = regular_file::open(path.as_path()).await?;
-                // Unix can hand the opened fd directly to the parent.
-                #[cfg(unix)]
                 crate::sandboxed_file_open::transfer_file(&file)?;
-                let response = FsHelperOpenResponse {
-                    // Windows duplicates from the helper process instead.
-                    #[cfg(windows)]
-                    process_id: std::process::id(),
-                    // The parent needs the raw handle to duplicate it.
-                    #[cfg(windows)]
-                    file_handle: {
-                        use std::os::windows::io::AsRawHandle;
-
-                        file.as_raw_handle() as usize as u64
-                    },
-                };
                 opened_file = Some(file);
-                Ok(FsHelperPayload::Open(response))
+                Ok(FsHelperPayload::Open(FsHelperOpenResponse {}))
             }
             .await;
             result.map_err(map_fs_error)
@@ -78,14 +64,6 @@ async fn run_main() -> Result<(), Box<dyn Error + Send + Sync>> {
     stdout.write_all(b"\n").await?;
     stdout.flush().await?;
 
-    // Keep the Windows handle alive until the parent duplicates it.
-    #[cfg(windows)]
-    if opened_file.is_some() {
-        use tokio::io::AsyncReadExt;
-
-        let mut acknowledgement = Vec::new();
-        stdin.read_to_end(&mut acknowledgement).await?;
-    }
     drop(opened_file);
     Ok(())
 }

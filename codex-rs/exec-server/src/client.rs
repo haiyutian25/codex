@@ -1736,7 +1736,6 @@ mod tests {
     use super::LazyRemoteExecServerClient;
     use crate::EnvironmentObservedStatus;
     use crate::ProcessId;
-    #[cfg(not(windows))]
     use crate::client_api::DEFAULT_REMOTE_EXEC_SERVER_INITIALIZE_TIMEOUT;
     use crate::client_api::ExecServerTransportParams;
     use crate::client_api::RemoteExecServerConnectArgs;
@@ -2003,7 +2002,6 @@ mod tests {
         }
     }
 
-    #[cfg(not(windows))]
     #[tokio::test]
     async fn connect_stdio_command_initializes_json_rpc_client() {
         let client = ExecServerClient::connect_stdio_command(StdioExecServerConnectArgs {
@@ -2026,7 +2024,6 @@ mod tests {
         assert_eq!(client.session_id().as_deref(), Some("stdio-test"));
     }
 
-    #[cfg(not(windows))]
     #[tokio::test]
     async fn connect_for_transport_initializes_stdio_command() {
         let client = ExecServerClient::connect_for_transport(
@@ -2052,31 +2049,6 @@ mod tests {
         assert_eq!(client.session_id().as_deref(), Some("stdio-test"));
     }
 
-    #[cfg(windows)]
-    #[tokio::test]
-    async fn connect_stdio_command_initializes_json_rpc_client_on_windows() {
-        let client = ExecServerClient::connect_stdio_command(StdioExecServerConnectArgs {
-            command: StdioExecServerCommand {
-                program: "powershell".to_string(),
-                args: vec![
-                    "-NoProfile".to_string(),
-                    "-Command".to_string(),
-                    "$null = [Console]::In.ReadLine(); [Console]::Out.WriteLine('{\"id\":1,\"result\":{\"sessionId\":\"stdio-test\"}}'); $null = [Console]::In.ReadLine(); Start-Sleep -Seconds 60".to_string(),
-                ],
-                env: HashMap::new(),
-                cwd: None,
-            },
-            client_name: "stdio-test-client".to_string(),
-            initialize_timeout: Duration::from_secs(1),
-            resume_session_id: None,
-        })
-        .await
-        .expect("stdio client should connect");
-
-        assert_eq!(client.session_id().as_deref(), Some("stdio-test"));
-    }
-
-    #[cfg(unix)]
     #[tokio::test]
     async fn dropping_stdio_client_terminates_spawned_process() {
         let tempdir = tempfile::tempdir().expect("tempdir should be created");

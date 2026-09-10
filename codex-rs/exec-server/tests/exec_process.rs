@@ -15,6 +15,8 @@ use codex_exec_server::ExecOutputStream;
 use codex_exec_server::ExecParams;
 use codex_exec_server::ExecProcess;
 use codex_exec_server::ExecProcessEvent;
+#[cfg(unix)]
+use codex_exec_server::FileSystemSandboxContext;
 use codex_exec_server::ProcessId;
 use codex_exec_server::ProcessSignal;
 use codex_exec_server::ReadResponse;
