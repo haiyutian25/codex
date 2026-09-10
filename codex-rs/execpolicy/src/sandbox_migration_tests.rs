@@ -5,10 +5,10 @@ use tempfile::tempdir;
 #[tokio::test]
 async fn removes_banned_allow_rules_once() {
     const BANNED_PREFIXES: &[&[&str]] = &[
-        &["cmd.exe", "/k"],
+        &["bash", "-lc"],
         &["git"],
-        &["pwsh", "-ec"],
-        &["pwsh", "-f"],
+        &["sh", "-c"],
+        &["zsh", "-lc"],
     ];
     let codex_home = tempdir().expect("create codex home");
     let policy_path = codex_home.path().join("rules/default.rules");
@@ -20,9 +20,9 @@ async fn removes_banned_allow_rules_once() {
 prefix_rule(pattern=["git"], decision="prompt")
 prefix_rule(pattern=["git"], decision="deny")
 prefix_rule(pattern=["git", "status"], decision="allow")
-prefix_rule(pattern=["CMD.EXE", "/K"], decision="allow")
-prefix_rule(pattern=["PWSH", "-EC"], decision="allow")
-prefix_rule(pattern=["PwSh", "-F"], decision="allow")
+prefix_rule(pattern=["BASH", "-LC"], decision="allow")
+prefix_rule(pattern=["SH", "-C"], decision="allow")
+prefix_rule(pattern=["Zsh", "-Lc"], decision="allow")
 network_rule(host="api.github.com", protocol="https", decision="allow")
 "#,
     )
