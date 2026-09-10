@@ -445,67 +445,8 @@
       "properties": {
         "default_app_access": {
           "$ref": "#/definitions/AllowDenyRequirementToml"
-        },
-        "macos": {
-          "$ref": "#/definitions/ComputerUseMacosConfigToml"
-        },
-        "windows": {
-          "$ref": "#/definitions/ComputerUseWindowsConfigToml"
         }
       },
-      "type": "object"
-    },
-    "ComputerUseMacosConfigToml": {
-      "additionalProperties": false,
-      "properties": {
-        "bundle_ids": {
-          "additionalProperties": {
-            "$ref": "#/definitions/AllowDenyRequirementToml"
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    "ComputerUseWindowsConfigToml": {
-      "additionalProperties": false,
-      "properties": {
-        "aumids": {
-          "additionalProperties": {
-            "$ref": "#/definitions/AllowDenyRequirementToml"
-          },
-          "type": "object"
-        },
-        "exes": {
-          "items": {
-            "$ref": "#/definitions/ComputerUseWindowsExeConfigToml"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "ComputerUseWindowsExeConfigToml": {
-      "additionalProperties": false,
-      "properties": {
-        "access": {
-          "$ref": "#/definitions/AllowDenyRequirementToml"
-        },
-        "binary_name": {
-          "type": "string"
-        },
-        "product_name": {
-          "type": "string"
-        },
-        "publisher_name": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "access",
-        "product_name",
-        "publisher_name"
-      ],
       "type": "object"
     },
     "ConfigProfile": {
@@ -2475,7 +2416,7 @@
           "type": "boolean"
         },
         "hide_world_writable_warning": {
-          "description": "Tracks whether the user has acknowledged the Windows world-writable directories warning.",
+          "description": "Tracks whether the user has acknowledged the world-writable directories warning.",
           "type": "boolean"
         },
         "model_migrations": {
