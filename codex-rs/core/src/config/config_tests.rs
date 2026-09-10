@@ -2555,7 +2555,10 @@ async fn managed_unrestricted_permission_profile_still_enables_network_requireme
             enabled: Some(true),
             ..Default::default()
         },
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        },
     ));
     let mut requirements_toml = config.config_layer_stack.requirements_toml().clone();
     requirements_toml.network = Some(codex_config::NetworkRequirementsToml {
@@ -4480,7 +4483,10 @@ fn filter_mcp_servers_by_allowlist_enforces_identity_rules() {
         (MATCHED_URL_SERVER.to_string(), http_mcp(GOOD_URL)),
         (DIFFERENT_NAME_SERVER.to_string(), stdio_mcp("same-cmd")),
     ]);
-    let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+    let source = RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        };
     let requirements = Sourced::new(
         BTreeMap::from([
             (
@@ -4626,7 +4632,10 @@ fn filter_mcp_servers_by_matchers_enforces_command_and_positional_args() {
             ),
         ),
     ]);
-    let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+    let source = RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        };
     let requirement = McpServerRequirement::Command(McpServerCommandMatcher {
         executable: "company-cli".to_string(),
         args: vec![
@@ -4684,7 +4693,10 @@ fn filter_mcp_servers_by_allowlist_blocks_all_when_empty() {
         ("server-b".to_string(), http_mcp("https://example.com/b")),
     ]);
 
-    let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+    let source = RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        };
     let requirements = Sourced::new(BTreeMap::new(), source.clone());
     filter_mcp_servers_by_requirements(&mut servers, Some(&requirements));
 
@@ -4715,7 +4727,10 @@ fn filter_plugin_mcp_servers_without_allowlists_does_not_filter_any_plugin() {
             "sites@openai-bundled".to_string(),
             codex_config::PluginRequirementsToml { mcp_servers: None },
         )]),
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        },
     );
 
     for plugin_name in ["sites@openai-bundled", "sample@test"] {
@@ -4732,7 +4747,10 @@ fn filter_plugin_mcp_servers_by_empty_allowlist_blocks_all() {
         ("server-a".to_string(), stdio_mcp("cmd-a")),
         ("server-b".to_string(), http_mcp("https://example.com/b")),
     ]);
-    let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+    let source = RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        };
     let requirements = Sourced::new(
         BTreeMap::from([(
             "sample@test".to_string(),
@@ -4776,7 +4794,10 @@ fn filter_plugin_mcp_servers_by_allowlist_enforces_plugin_and_identity_rules() {
             http_mcp("https://example.com/mcp"),
         ),
     ]);
-    let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+    let source = RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        };
     let requirements = Sourced::new(
         BTreeMap::from([(
             "sample@test".to_string(),
@@ -4826,7 +4847,10 @@ fn filter_plugin_mcp_servers_by_allowlist_enforces_plugin_and_identity_rules() {
 #[test]
 fn filter_plugin_mcp_servers_by_allowlist_blocks_unlisted_plugin() {
     let mut servers = HashMap::from([("server-a".to_string(), stdio_mcp("cmd-a"))]);
-    let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+    let source = RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        };
     let requirements = Sourced::new(
         BTreeMap::from([(
             "other@test".to_string(),
@@ -4884,7 +4908,10 @@ fn filter_plugin_mcp_servers_by_matchers_enforces_name_and_invocation() {
             stdio_mcp_with_args("company-cli", &["approved"]),
         ),
     ]);
-    let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+    let source = RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        };
     let requirement = McpServerRequirement::Command(McpServerCommandMatcher {
         executable: "company-cli".to_string(),
         args: vec![McpServerValueMatcher::Exact {
@@ -4999,7 +5026,10 @@ async fn rebuild_preserving_session_layers_refreshes_requirements() -> std::io::
                 .into(),
             ),
             ConfigLayerEntry::new(
-                ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
+                ConfigLayerSource::LegacyManagedConfigTomlFromFile {
+                    file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                        .expect("absolute path"),
+                },
                 toml::toml! {
                     [mcp_servers.managed_overrides_session]
                     command = "managed-command"
@@ -5066,7 +5096,10 @@ async fn rebuild_preserving_session_layers_refreshes_requirements() -> std::io::
                 .into(),
             ),
             ConfigLayerEntry::new(
-                ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
+                ConfigLayerSource::LegacyManagedConfigTomlFromFile {
+                    file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                        .expect("absolute path"),
+                },
                 toml::toml! {
                     [mcp_servers.managed_overrides_session]
                     command = "old-managed-command"

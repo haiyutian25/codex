@@ -266,9 +266,9 @@ fn relative_paths_resolve_against_their_own_layer_base() {
 
 #[test]
 fn composition_strategy_applies_to_non_cloud_layers() {
-    let mdm_source = RequirementSource::MdmManagedPreferences {
-        domain: "com.openai.codex".to_string(),
-        key: "requirements_toml_base64".to_string(),
+    let enterprise_source = RequirementSource::EnterpriseManaged {
+        id: "test-layer".to_string(),
+        name: "Test Layer".to_string(),
     };
     let system_file = "/etc/codex/requirements.toml";
     let system_source = RequirementSource::SystemRequirementsToml {
@@ -300,7 +300,7 @@ deny_read = [{low_path:?}]
                 ),
             ),
             RequirementsLayerEntry::from_toml(
-                mdm_source.clone(),
+                enterprise_source.clone(),
                 format!(
                     r#"
 allowed_approval_policies = ["never"]
@@ -352,12 +352,12 @@ deny_read = [{high_path:?}, {low_path:?}]
         composed.allowed_approval_policies,
         Some(Sourced::new(
             vec![AskForApproval::Never],
-            mdm_source.clone()
+            enterprise_source.clone()
         ))
     );
     assert_eq!(
         composed.allow_remote_control,
-        Some(Sourced::new(/*value*/ false, mdm_source))
+        Some(Sourced::new(/*value*/ false, enterprise_source))
     );
 }
 

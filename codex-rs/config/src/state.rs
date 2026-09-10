@@ -78,7 +78,7 @@ impl LoaderOverrides {
         }
     }
 
-    /// Returns overrides with host MDM disabled and managed config loaded from
+    /// Returns overrides with managed config loaded from
     /// `managed_config_path`. System requirements are loaded from a sibling
     /// `requirements.toml` fixture.
     ///
@@ -212,14 +212,12 @@ impl ConfigLayerEntry {
     pub fn config_folder(&self) -> Option<AbsolutePathBuf> {
         match &self.name {
             ConfigLayerSource::PackagedDefaults { .. } => None,
-            ConfigLayerSource::Mdm { .. } => None,
             ConfigLayerSource::System { file } => file.parent(),
             ConfigLayerSource::EnterpriseManaged { .. } => None,
             ConfigLayerSource::User { file, .. } => file.parent(),
             ConfigLayerSource::Project { dot_codex_folder } => Some(dot_codex_folder.clone()),
             ConfigLayerSource::SessionFlags => None,
             ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. } => None,
-            ConfigLayerSource::LegacyManagedConfigTomlFromMdm => None,
         }
     }
 
@@ -246,7 +244,7 @@ pub struct ConfigLayerStack {
     /// layers.
     requirements: ConfigRequirements,
 
-    /// Raw requirements data as loaded from requirements.toml/MDM/legacy
+    /// Raw requirements data as loaded from requirements.toml/legacy
     /// sources. This preserves the original allow-lists so they can be
     /// surfaced via APIs.
     requirements_toml: ConfigRequirementsToml,

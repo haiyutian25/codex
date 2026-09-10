@@ -313,9 +313,6 @@ fn fallback_managed_hooks_source_path(
     match requirement_source {
         Some(RequirementSource::SystemRequirementsToml { file })
         | Some(RequirementSource::LegacyManagedConfigTomlFromFile { file }) => file.clone(),
-        Some(RequirementSource::MdmManagedPreferences { domain, key }) => {
-            synthetic_layer_path(&format!("<mdm:{domain}:{key}>/requirements.toml"))
-        }
         Some(RequirementSource::Composite { .. }) => {
             synthetic_layer_path("<requirements-composition>/requirements.toml")
         }
@@ -325,9 +322,6 @@ fn fallback_managed_hooks_source_path(
             synthetic_layer_path(&format!(
                 "<enterprise-managed:{name}:{id}>/requirements.toml"
             ))
-        }
-        Some(RequirementSource::LegacyManagedConfigTomlFromMdm) => {
-            synthetic_layer_path("<legacy-managed-config.toml-mdm>/managed_config.toml")
         }
         Some(RequirementSource::Unknown) | None => {
             synthetic_layer_path("<managed-requirements>/requirements.toml")
@@ -408,15 +402,9 @@ fn config_toml_source_path(layer: &ConfigLayerEntry) -> AbsolutePathBuf {
             .hooks_config_folder()
             .unwrap_or_else(|| dot_codex_folder.clone())
             .join(CONFIG_TOML_FILE),
-        ConfigLayerSource::Mdm { domain, key } => {
-            synthetic_layer_path(&format!("<mdm:{domain}:{key}>/{CONFIG_TOML_FILE}"))
-        }
         ConfigLayerSource::EnterpriseManaged { id, name } => synthetic_layer_path(&format!(
             "<enterprise-managed:{name}:{id}>/{CONFIG_TOML_FILE}"
         )),
-        ConfigLayerSource::LegacyManagedConfigTomlFromMdm => {
-            synthetic_layer_path("<legacy-managed-config.toml-mdm>/managed_config.toml")
-        }
         ConfigLayerSource::SessionFlags => synthetic_layer_path("<session-flags>/config.toml"),
     }
 }
@@ -795,27 +783,19 @@ fn hook_metadata_for_config_layer_source(source: &ConfigLayerSource) -> (HookSou
         ConfigLayerSource::System { .. } => (HookSource::System, true),
         ConfigLayerSource::User { .. } => (HookSource::User, false),
         ConfigLayerSource::Project { .. } => (HookSource::Project, false),
-        ConfigLayerSource::Mdm { .. } => (HookSource::Mdm, true),
         ConfigLayerSource::EnterpriseManaged { .. } => (HookSource::CloudManagedConfig, true),
         ConfigLayerSource::SessionFlags => (HookSource::SessionFlags, false),
         ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. } => {
             (HookSource::LegacyManagedConfigFile, true)
-        }
-        ConfigLayerSource::LegacyManagedConfigTomlFromMdm => {
-            (HookSource::LegacyManagedConfigMdm, true)
         }
     }
 }
 
 fn hook_source_for_requirement_source(source: Option<&RequirementSource>) -> HookSource {
     match source {
-        Some(RequirementSource::MdmManagedPreferences { .. }) => HookSource::Mdm,
         Some(RequirementSource::SystemRequirementsToml { .. }) => HookSource::System,
         Some(RequirementSource::LegacyManagedConfigTomlFromFile { .. }) => {
             HookSource::LegacyManagedConfigFile
-        }
-        Some(RequirementSource::LegacyManagedConfigTomlFromMdm) => {
-            HookSource::LegacyManagedConfigMdm
         }
         Some(RequirementSource::Composite { sources }) => {
             // Requirements hook composition preserves contributing sources in
@@ -1663,13 +1643,6 @@ mod tests {
             (HookSource::Project, false),
         );
         assert_eq!(
-            super::hook_metadata_for_config_layer_source(&ConfigLayerSource::Mdm {
-                domain: "com.openai.codex".to_string(),
-                key: "config".to_string(),
-            }),
-            (HookSource::Mdm, true),
-        );
-        assert_eq!(
             super::hook_metadata_for_config_layer_source(&ConfigLayerSource::EnterpriseManaged {
                 id: "cfg_123".to_string(),
                 name: "Base policy".to_string(),
@@ -1685,12 +1658,6 @@ mod tests {
                 &ConfigLayerSource::LegacyManagedConfigTomlFromFile { file: config_file },
             ),
             (HookSource::LegacyManagedConfigFile, true),
-        );
-        assert_eq!(
-            super::hook_metadata_for_config_layer_source(
-                &ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
-            ),
-            (HookSource::LegacyManagedConfigMdm, true),
         );
     }
 }

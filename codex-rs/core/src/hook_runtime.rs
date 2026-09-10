@@ -907,13 +907,11 @@ fn hook_run_metric_tags(run: &HookRunSummary) -> [(&'static str, &'static str); 
         HookSource::System => "system",
         HookSource::User => "user",
         HookSource::Project => "project",
-        HookSource::Mdm => "mdm",
         HookSource::SessionFlags => "session_flags",
         HookSource::Plugin => "plugin",
         HookSource::CloudRequirements => "cloud_requirements",
         HookSource::CloudManagedConfig => "cloud_managed_config",
         HookSource::LegacyManagedConfigFile => "legacy_managed_config_file",
-        HookSource::LegacyManagedConfigMdm => "legacy_managed_config_mdm",
         HookSource::Unknown => "unknown",
     };
     let status = match run.status {
@@ -1155,14 +1153,14 @@ mod tests {
 
     #[test]
     fn hook_run_metric_tags_include_expanded_hook_sources() {
-        let mut run = sample_hook_run(HookRunStatus::Completed, HookSource::LegacyManagedConfigMdm);
+        let mut run = sample_hook_run(HookRunStatus::Completed, HookSource::LegacyManagedConfigFile);
         run.execution_mode = HookExecutionMode::Async;
 
         assert_eq!(
             hook_run_metric_tags(&run),
             [
                 ("hook_name", "Stop"),
-                ("source", "legacy_managed_config_mdm"),
+                ("source", "legacy_managed_config_file"),
                 ("status", "completed"),
                 ("handler_type", "command"),
                 ("execution_mode", "async"),

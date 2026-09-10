@@ -1398,7 +1398,10 @@ async fn danger_full_access_tool_attempts_do_not_enforce_managed_network() -> an
                 enabled: Some(true),
                 ..Default::default()
             },
-            RequirementSource::LegacyManagedConfigTomlFromMdm,
+            RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        },
         ));
         let mut requirements_toml = config.config_layer_stack.requirements_toml().clone();
         requirements_toml.network = Some(codex_config::NetworkRequirementsToml {
@@ -2042,7 +2045,10 @@ async fn refresh_mcp_config_replaces_managed_server_and_plugin_requirements() {
     let mut requirements = next_config.config_layer_stack.requirements().clone();
     requirements.plugins = Some(Sourced::new(
         plugin_requirements.clone(),
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        },
     ));
     let mut requirements_toml = next_config.config_layer_stack.requirements_toml().clone();
     requirements_toml.plugins = Some(plugin_requirements.clone());
@@ -9396,7 +9402,10 @@ async fn record_context_updates_emits_environment_item_for_network_changes() {
             }),
             ..Default::default()
         },
-        RequirementSource::LegacyManagedConfigTomlFromMdm,
+        RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: codex_config::AbsolutePathBuf::from_absolute_path("/etc/codex/managed_config.toml")
+                .expect("absolute path"),
+        },
     ));
     let layers = config
         .config_layer_stack

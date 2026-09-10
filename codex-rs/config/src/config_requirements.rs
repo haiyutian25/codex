@@ -40,10 +40,6 @@ use crate::types::FeedbackConfigToml;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RequirementSource {
     Unknown,
-    MdmManagedPreferences {
-        domain: String,
-        key: String,
-    },
     /// Multiple requirements layers contributed to the final value. Sources are
     /// stored highest-priority first, matching the order surfaced in errors.
     Composite {
@@ -61,7 +57,6 @@ pub enum RequirementSource {
     LegacyManagedConfigTomlFromFile {
         file: AbsolutePathBuf,
     },
-    LegacyManagedConfigTomlFromMdm,
 }
 
 impl RequirementSource {
@@ -98,9 +93,6 @@ impl fmt::Display for RequirementSource {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             RequirementSource::Unknown => write!(f, "<unspecified>"),
-            RequirementSource::MdmManagedPreferences { domain, key } => {
-                write!(f, "MDM {domain}:{key}")
-            }
             RequirementSource::Composite { sources } => {
                 write!(f, "requirements layers: ")?;
                 for (index, source) in sources.iter().enumerate() {
@@ -119,9 +111,6 @@ impl fmt::Display for RequirementSource {
             }
             RequirementSource::LegacyManagedConfigTomlFromFile { file } => {
                 write!(f, "{}", file.as_path().display())
-            }
-            RequirementSource::LegacyManagedConfigTomlFromMdm => {
-                write!(f, "MDM managed_config.toml (legacy)")
             }
         }
     }
@@ -771,7 +760,7 @@ impl AppsRequirementsToml {
 }
 
 /// Merge app requirements from a lower-precedence source into an existing higher-precedence set.
-/// This lets managed sources (for example Cloud/MDM) enforce setting disablement across layers,
+/// This lets managed sources (for example Cloud) enforce setting disablement across layers,
 /// while exact tool approval settings keep the higher-precedence value when present.
 pub(crate) fn merge_app_requirements_descending(
     base: &mut AppsRequirementsToml,
@@ -801,7 +790,7 @@ pub(crate) fn merge_app_requirements_descending(
     }
 }
 
-/// Base config deserialized from system `requirements.toml` or MDM.
+/// Base config deserialized from system `requirements.toml`.
 #[derive(Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct ConfigRequirementsToml {
     pub allowed_login_methods: Option<Vec<ForcedLoginMethod>>,
@@ -1835,6 +1824,20 @@ mod tests {
         )?)
     }
 
+    fn legacy_managed_toml_requirement_source() -> RequirementSource {
+        RequirementSource::LegacyManagedConfigTomlFromFile {
+            file: AbsolutePathBuf::try_from(std::env::temp_dir().join("managed_config.toml"))
+                .expect("managed_config.toml path should be absolute"),
+        }
+    }
+
+    fn enterprise_managed_requirement_source() -> RequirementSource {
+        RequirementSource::EnterpriseManaged {
+            id: "test-layer".to_string(),
+            name: "Test Layer".to_string(),
+        }
+    }
+
     #[test]
     fn exact_requirement_for_config_path_matches_overlapping_paths() {
         let managed_path = AbsolutePathBuf::try_from(std::env::temp_dir().join("managed"))
@@ -1885,19 +1888,16 @@ mod tests {
 
     #[test]
     fn composite_requirement_source_flattens_and_deduplicates_sources() {
-        let mdm_source = RequirementSource::MdmManagedPreferences {
-            domain: "com.openai.codex".to_string(),
-            key: "requirements_toml_base64".to_string(),
-        };
-        let legacy_source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+        let enterprise_source = enterprise_managed_requirement_source();
+        let legacy_source = legacy_managed_toml_requirement_source();
 
         assert_eq!(
             RequirementSource::composite([
-                mdm_source.clone(),
-                RequirementSource::composite([legacy_source.clone(), mdm_source.clone()]),
+                enterprise_source.clone(),
+                RequirementSource::composite([legacy_source.clone(), enterprise_source.clone()]),
             ]),
             RequirementSource::Composite {
-                sources: vec![mdm_source, legacy_source],
+                sources: vec![enterprise_source, legacy_source],
             }
         );
     }
@@ -2357,7 +2357,7 @@ mod tests {
     #[test]
     fn merge_unset_fields_copies_every_field_and_sets_sources() {
         let mut target = ConfigRequirementsWithSources::default();
-        let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+        let source = legacy_managed_toml_requirement_source();
 
         let allowed_approval_policies = vec![AskForApproval::UnlessTrusted, AskForApproval::Never];
         let allowed_approvals_reviewers =
@@ -2550,10 +2550,7 @@ mod tests {
             "#,
         )?;
 
-        let source_location = RequirementSource::MdmManagedPreferences {
-            domain: "com.codex".to_string(),
-            key: "allowed_approval_policies".to_string(),
-        };
+        let source_location = enterprise_managed_requirement_source();
 
         let mut empty_target = ConfigRequirementsWithSources::default();
         empty_target.merge_unset_fields(source_location.clone(), source);
@@ -2595,7 +2592,7 @@ mod tests {
 
     #[test]
     fn merge_unset_fields_does_not_overwrite_existing_values() -> Result<()> {
-        let existing_source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+        let existing_source = legacy_managed_toml_requirement_source();
         let mut populated_target = ConfigRequirementsWithSources::default();
         let populated_requirements: ConfigRequirementsToml = from_str(
             r#"
@@ -2609,10 +2606,7 @@ mod tests {
                 allowed_approval_policies = ["on-request"]
             "#,
         )?;
-        let source_location = RequirementSource::MdmManagedPreferences {
-            domain: "com.codex".to_string(),
-            key: "allowed_approval_policies".to_string(),
-        };
+        let source_location = enterprise_managed_requirement_source();
         populated_target.merge_unset_fields(source_location, source);
 
         assert_eq!(
@@ -2655,7 +2649,7 @@ mod tests {
     fn merge_unset_fields_ignores_blank_guardian_override() {
         let mut target = ConfigRequirementsWithSources::default();
         target.merge_unset_fields(
-            RequirementSource::LegacyManagedConfigTomlFromMdm,
+            legacy_managed_toml_requirement_source(),
             ConfigRequirementsToml {
                 guardian_policy_config: Some("   \n\t".to_string()),
                 ..Default::default()
@@ -2995,11 +2989,8 @@ allowed_approvals_reviewers = ["user"]
 
     #[test]
     fn merge_unset_fields_merges_apps_across_sources_with_enabled_evaluation() {
-        let higher_source = RequirementSource::LegacyManagedConfigTomlFromMdm;
-        let lower_source = RequirementSource::MdmManagedPreferences {
-            domain: "com.openai.codex".to_string(),
-            key: "requirements_toml_base64".to_string(),
-        };
+        let higher_source = legacy_managed_toml_requirement_source();
+        let lower_source = enterprise_managed_requirement_source();
         let mut target = ConfigRequirementsWithSources::default();
 
         target.merge_unset_fields(
@@ -3040,14 +3031,14 @@ allowed_approvals_reviewers = ["user"]
         let mut target = ConfigRequirementsWithSources::default();
 
         target.merge_unset_fields(
-            RequirementSource::LegacyManagedConfigTomlFromMdm,
+            legacy_managed_toml_requirement_source(),
             ConfigRequirementsToml {
                 apps: Some(apps_requirements(&[])),
                 ..Default::default()
             },
         );
         target.merge_unset_fields(
-            RequirementSource::LegacyManagedConfigTomlFromMdm,
+            legacy_managed_toml_requirement_source(),
             ConfigRequirementsToml {
                 apps: Some(apps_requirements(&[("connector_123123", Some(false))])),
                 ..Default::default()
@@ -3123,11 +3114,8 @@ allowed_approvals_reviewers = ["user"]
         )?;
 
         let source_location = RequirementSource::composite([
-            RequirementSource::MdmManagedPreferences {
-                domain: "com.openai.codex".to_string(),
-                key: "requirements_toml_base64".to_string(),
-            },
-            RequirementSource::LegacyManagedConfigTomlFromMdm,
+            enterprise_managed_requirement_source(),
+            legacy_managed_toml_requirement_source(),
         ]);
 
         let mut target = ConfigRequirementsWithSources::default();
@@ -3161,7 +3149,7 @@ allowed_approvals_reviewers = ["user"]
             "#,
         )?;
 
-        let source_location = RequirementSource::LegacyManagedConfigTomlFromMdm;
+        let source_location = legacy_managed_toml_requirement_source();
         let mut target = ConfigRequirementsWithSources::default();
         target.merge_unset_fields(source_location.clone(), source);
         let requirements = ConfigRequirements::try_from(target)?;
@@ -3392,7 +3380,7 @@ allowed_approvals_reviewers = ["user"]
 
     #[test]
     fn remote_sandbox_config_first_match_overrides_top_level() -> Result<()> {
-        let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+        let source = legacy_managed_toml_requirement_source();
         let mut requirements_toml: ConfigRequirementsToml = from_str(
             r#"
                 allowed_sandbox_modes = ["read-only"]
@@ -3483,7 +3471,7 @@ allowed_approvals_reviewers = ["user"]
 
     #[test]
     fn remote_sandbox_config_does_not_override_higher_precedence_sandbox_modes() -> Result<()> {
-        let high_source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+        let high_source = legacy_managed_toml_requirement_source();
         let mut high_precedence: ConfigRequirementsToml = from_str(
             r#"
                 allowed_sandbox_modes = ["read-only"]
@@ -3697,7 +3685,7 @@ statusMessage = "checking"
     fn merge_unset_fields_does_not_overwrite_existing_hooks() -> Result<()> {
         let mut target = ConfigRequirementsWithSources::default();
         target.merge_unset_fields(
-            RequirementSource::LegacyManagedConfigTomlFromMdm,
+            legacy_managed_toml_requirement_source(),
             from_str::<ConfigRequirementsToml>(
                 r#"
 [hooks]
@@ -3741,7 +3729,7 @@ command = "python3 /system/hooks/pre.py"
         );
         assert_eq!(
             target.hooks.as_ref().map(|hooks| hooks.source.clone()),
-            Some(RequirementSource::LegacyManagedConfigTomlFromMdm)
+            Some(legacy_managed_toml_requirement_source())
         );
         Ok(())
     }
@@ -3799,7 +3787,7 @@ command = "python3 /enterprise/hooks/pre.py"
             "blocked.example.com" = "deny"
         "#;
 
-        let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+        let source = legacy_managed_toml_requirement_source();
         let mut requirements_with_sources = ConfigRequirementsWithSources::default();
         requirements_with_sources.merge_unset_fields(source.clone(), from_str(toml_str)?);
 
@@ -3851,7 +3839,7 @@ command = "python3 /enterprise/hooks/pre.py"
             allow_local_binding = false
         "#;
 
-        let source = RequirementSource::LegacyManagedConfigTomlFromMdm;
+        let source = legacy_managed_toml_requirement_source();
         let mut requirements_with_sources = ConfigRequirementsWithSources::default();
         requirements_with_sources.merge_unset_fields(source.clone(), from_str(toml_str)?);
 

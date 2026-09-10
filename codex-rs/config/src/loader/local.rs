@@ -126,7 +126,7 @@ pub(super) async fn load_local_config_layers_with_overrides(
     let mut discovery_config = TomlValue::Table(toml::map::Map::new());
     merge_toml_values(&mut discovery_config, &system.toml);
     merge_toml_values(&mut discovery_config, &user.toml);
-    // Managed file and MDM values also govern the project boundary and trust.
+    // Managed file values also govern the project boundary and trust.
     // Only this snapshot is resolved; the returned local layers stay raw.
     project_discovery::merge_managed_config_for_discovery(
         &mut discovery_config,

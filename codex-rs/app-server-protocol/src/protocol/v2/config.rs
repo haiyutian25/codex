@@ -36,14 +36,6 @@ pub enum ConfigLayerSource {
         file: AbsolutePathBuf,
     },
 
-    /// Managed preferences layer delivered by MDM.
-    #[serde(rename_all = "camelCase")]
-    #[ts(rename_all = "camelCase")]
-    Mdm {
-        domain: String,
-        key: String,
-    },
-
     /// Managed config layer from a file (usually `managed_config.toml`).
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
@@ -102,8 +94,6 @@ pub enum ConfigLayerSource {
     LegacyManagedConfigTomlFromFile {
         file: AbsolutePathBuf,
     },
-
-    LegacyManagedConfigTomlFromMdm,
 }
 
 impl ConfigLayerSource {
@@ -112,7 +102,6 @@ impl ConfigLayerSource {
     pub fn precedence(&self) -> i16 {
         match self {
             ConfigLayerSource::PackagedDefaults { .. } => -10,
-            ConfigLayerSource::Mdm { .. } => 0,
             ConfigLayerSource::System { .. } => 10,
             ConfigLayerSource::EnterpriseManaged { .. } => 15,
             ConfigLayerSource::User { profile, .. } => {
@@ -125,7 +114,6 @@ impl ConfigLayerSource {
             ConfigLayerSource::Project { .. } => 25,
             ConfigLayerSource::SessionFlags => 30,
             ConfigLayerSource::LegacyManagedConfigTomlFromFile { .. } => 40,
-            ConfigLayerSource::LegacyManagedConfigTomlFromMdm => 50,
         }
     }
 }
@@ -655,7 +643,7 @@ pub enum ResidencyRequirement {
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub struct ConfigRequirementsReadResponse {
-    /// Null if no requirements are configured (e.g. no requirements.toml/MDM entries).
+    /// Null if no requirements are configured (e.g. no requirements.toml entries).
     #[experimental(nested)]
     pub requirements: Option<ConfigRequirements>,
 }

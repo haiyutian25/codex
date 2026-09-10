@@ -7,7 +7,7 @@ export type ConfigLayerSource = { "type": "packagedDefaults",
 /**
  * Path to the packaged default configuration file.
  */
-file: AbsolutePathBuf, } | { "type": "mdm", domain: string, key: string, } | { "type": "system",
+file: AbsolutePathBuf, } | { "type": "system",
 /**
  * This is the path to the system config.toml file, though it is not
  * guaranteed to exist.
@@ -32,4 +32,4 @@ file: AbsolutePathBuf,
  * Name of the selected profile-v2 config layered on top of the base
  * user config, when this layer represents one.
  */
-profile: string | null, } | { "type": "project", dotCodexFolder: AbsolutePathBuf, } | { "type": "sessionFlags" } | { "type": "legacyManagedConfigTomlFromFile", file: AbsolutePathBuf, } | { "type": "legacyManagedConfigTomlFromMdm" };
+profile: string | null, } | { "type": "project", dotCodexFolder: AbsolutePathBuf, } | { "type": "sessionFlags" } | { "type": "legacyManagedConfigTomlFromFile", file: AbsolutePathBuf, };

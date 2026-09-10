@@ -1421,13 +1421,13 @@ fn analytics_hook_source(source: HookSource) -> &'static str {
         HookSource::System => "system",
         HookSource::User => "user",
         HookSource::Project => "project",
-        HookSource::Mdm => "mdm",
+
         HookSource::SessionFlags => "session_flags",
         HookSource::Plugin => "plugin",
         HookSource::CloudRequirements => "cloud_requirements",
         HookSource::CloudManagedConfig => "cloud_managed_config",
         HookSource::LegacyManagedConfigFile => "legacy_managed_config_file",
-        HookSource::LegacyManagedConfigMdm => "legacy_managed_config_mdm",
+
         HookSource::Unknown => "unknown",
     }
 }

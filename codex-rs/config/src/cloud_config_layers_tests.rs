@@ -164,7 +164,7 @@ fn relative_absolute_path_fields_resolve_against_base_dir() {
         )],
         &base_dir,
     )
-    .expect("relative paths should match existing MDM semantics");
+    .expect("relative paths should match existing managed-config semantics");
 
     let path = layers[0]
         .config

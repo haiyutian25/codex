@@ -315,7 +315,6 @@ pub(crate) fn hook_source_label(source: codex_protocol::protocol::HookSource) ->
         codex_protocol::protocol::HookSource::System => "system",
         codex_protocol::protocol::HookSource::User => "user",
         codex_protocol::protocol::HookSource::Project => "project",
-        codex_protocol::protocol::HookSource::Mdm => "mdm",
         codex_protocol::protocol::HookSource::SessionFlags => "session_flags",
         codex_protocol::protocol::HookSource::Plugin => "plugin",
         codex_protocol::protocol::HookSource::CloudRequirements => "cloud_requirements",
@@ -323,7 +322,6 @@ pub(crate) fn hook_source_label(source: codex_protocol::protocol::HookSource) ->
         codex_protocol::protocol::HookSource::LegacyManagedConfigFile => {
             "legacy_managed_config_file"
         }
-        codex_protocol::protocol::HookSource::LegacyManagedConfigMdm => "legacy_managed_config_mdm",
         codex_protocol::protocol::HookSource::Unknown => "unknown",
     }
 }

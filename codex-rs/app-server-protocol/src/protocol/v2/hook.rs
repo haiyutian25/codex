@@ -47,14 +47,12 @@ v2_enum_from_core!(
         System,
         User,
         Project,
-        Mdm,
-        SessionFlags,
+            SessionFlags,
         Plugin,
         CloudRequirements,
         CloudManagedConfig,
         LegacyManagedConfigFile,
-        LegacyManagedConfigMdm,
-        Unknown,
+            Unknown,
     }
 );
 

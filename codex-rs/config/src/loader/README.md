@@ -1,6 +1,6 @@
 # `codex-config` loader
 
-This module is the canonical place to **load and describe Codex configuration layers** (user config, CLI/session overrides, cloud-managed config, managed config, and MDM-managed preferences) and to produce:
+This module is the canonical place to **load and describe Codex configuration layers** (user config, CLI/session overrides, cloud-managed config, and managed config) and to produce:
 
 - An **effective merged** TOML config.
 - **Per-key origins** metadata (which layer “wins” for a given key).
@@ -25,14 +25,13 @@ Exported from `codex_config::loader`:
 
 Precedence is **top overrides bottom**:
 
-1. `LegacyManagedConfigTomlFromMdm` (MDM-delivered `managed_config.toml`, while it is being phased out)
-2. `LegacyManagedConfigTomlFromFile` (`managed_config.toml`, while it is being phased out)
-3. `SessionFlags` (CLI overrides, applied as dotted-path TOML writes)
-4. `Project` config (`.codex/config.toml`)
-5. `User` profile config, when present
-6. `User` config (`config.toml`)
-7. `EnterpriseManaged` cloud-managed config bundle layers
-8. `System` config (`/etc/codex/config.toml` or the Windows system config path)
+1. `LegacyManagedConfigTomlFromFile` (`managed_config.toml`, while it is being phased out)
+2. `SessionFlags` (CLI overrides, applied as dotted-path TOML writes)
+3. `Project` config (`.codex/config.toml`)
+4. `User` profile config, when present
+5. `User` config (`config.toml`)
+6. `EnterpriseManaged` cloud-managed config bundle layers
+7. `System` config (`/etc/codex/config.toml`)
 
 `ConfigLayerStack` stores layers in the opposite order internally: lowest
 precedence first, highest precedence last, so later layers override earlier
@@ -40,7 +39,7 @@ layers when folded. Thread config entries supplied by `thread_config_loader` are
 inserted according to their translated `ConfigLayerSource` precedence.
 
 Project-root discovery and project trust use the applicable non-project layers,
-including legacy managed-file and MDM config at their normal precedence. The
+including legacy managed-file config at their normal precedence. The
 managed layers remain above project and session layers in the final stack.
 Executor-local reads use their own system, base-user, and legacy managed sources;
 they do not include cloud config, selected profiles, or session flags.

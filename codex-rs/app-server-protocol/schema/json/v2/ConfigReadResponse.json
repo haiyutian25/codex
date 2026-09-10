@@ -703,31 +703,6 @@
           "type": "object"
         },
         {
-          "description": "Managed preferences layer delivered by MDM (macOS only).",
-          "properties": {
-            "domain": {
-              "type": "string"
-            },
-            "key": {
-              "type": "string"
-            },
-            "type": {
-              "enum": [
-                "mdm"
-              ],
-              "title": "MdmConfigLayerSourceType",
-              "type": "string"
-            }
-          },
-          "required": [
-            "domain",
-            "key",
-            "type"
-          ],
-          "title": "MdmConfigLayerSource",
-          "type": "object"
-        },
-        {
           "description": "Managed config layer from a file (usually `managed_config.toml`).",
           "properties": {
             "file": {
@@ -870,22 +845,6 @@
             "type"
           ],
           "title": "LegacyManagedConfigTomlFromFileConfigLayerSource",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "type": {
-              "enum": [
-                "legacyManagedConfigTomlFromMdm"
-              ],
-              "title": "LegacyManagedConfigTomlFromMdmConfigLayerSourceType",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "title": "LegacyManagedConfigTomlFromMdmConfigLayerSource",
           "type": "object"
         }
       ]

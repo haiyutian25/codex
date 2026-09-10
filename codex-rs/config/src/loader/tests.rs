@@ -732,7 +732,9 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
                     "a=2\nignored=false\nonly_user=true",
                 ),
                 layer(
-                    ConfigLayerSource::LegacyManagedConfigTomlFromMdm,
+                    ConfigLayerSource::LegacyManagedConfigTomlFromFile {
+                        file: base_dir.join("managed_config.toml"),
+                    },
                     "[a]\nunrequested=true",
                 ),
             ],
@@ -771,7 +773,12 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
                     b=1"#,
                 ),
                 layer(ConfigLayerSource::SessionFlags, "a=2"),
-                layer(ConfigLayerSource::LegacyManagedConfigTomlFromMdm, "[a]"),
+                layer(
+                    ConfigLayerSource::LegacyManagedConfigTomlFromFile {
+                        file: base_dir.join("managed_config.toml"),
+                    },
+                    "[a]",
+                ),
             ],
             cloud_insertion_index: 1,
         }
