@@ -2277,8 +2277,6 @@ async fn spawn_agent_reapplies_runtime_sandbox_after_role_config() {
             path: FileSystemPath::GlobPattern {
                 pattern: "**/.env".to_string(),
             },
-            // TODO(anp): Configure this fixture with the elevated Windows backend so it can
-            // enforce denied reads while reapplying the owner's restrictive policy.
             access: FileSystemAccessMode::Deny,
             missing_path_behavior: None,
         });

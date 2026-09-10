@@ -495,7 +495,6 @@ fn assert_cwd_tool_output(structured: &Value, expected_cwd: &Path) {
         return;
     }
 
-    // Local Windows can report the same absolute directory through an 8.3 path.
     // Canonical paths keep the assertion focused on cwd precedence.
     assert_eq!(
         Path::new(actual_cwd)

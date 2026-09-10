@@ -42,7 +42,7 @@ pub enum ConfigEdit {
     SetModelPersonality { personality: Option<Personality> },
     /// Toggle the acknowledgement flag under `[notice]`.
     SetNoticeHideFullAccessWarning(bool),
-    /// Toggle the Windows world-writable directories warning acknowledgement flag.
+    /// Toggle the world-writable directories warning acknowledgement flag.
     SetNoticeHideWorldWritableWarning(bool),
     /// Toggle the rate limit model nudge acknowledgement flag.
     SetNoticeHideRateLimitModelNudge(bool),

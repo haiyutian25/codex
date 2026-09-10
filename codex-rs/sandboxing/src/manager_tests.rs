@@ -325,6 +325,7 @@ fn transform_linux_seccomp_request(
             network: None,
             sandbox_policy_cwd: &cwd_uri,
             codex_linux_sandbox_exe: Some(codex_linux_sandbox_exe),
+            proot: None,
             use_legacy_landlock: false,
         })
         .expect("transform")

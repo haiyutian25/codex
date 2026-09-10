@@ -2275,7 +2275,6 @@ async fn write_stdin_returns_exit_metadata_and_clears_session() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn write_stdin_ctrl_c_interrupts_non_tty_session() -> Result<()> {
-    // TODO(anp): Add a target-Windows test for explicit interrupt handling.
     assert_write_stdin_ctrl_c_interrupts_non_tty_session(
         "trap",
         "trap 'echo INT-TRAP; exit 42' INT; echo READY; while true; do sleep 30; done",
@@ -2287,7 +2286,6 @@ async fn write_stdin_ctrl_c_interrupts_non_tty_session() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn write_stdin_ctrl_c_default_interrupt_reports_130_for_non_tty_session() -> Result<()> {
-    // TODO(anp): Add a target-Windows test for Ctrl+C termination and exit reporting.
     assert_write_stdin_ctrl_c_interrupts_non_tty_session(
         "default",
         "echo READY; exec sleep 30",

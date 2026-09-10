@@ -376,8 +376,7 @@ async fn wait_for_subagent_notification(parent_thread: &Arc<CodexThread>) -> boo
             sleep(Duration::from_millis(25)).await;
         }
     };
-    // CI can take several seconds to schedule the detached completion watcher,
-    // especially on slower Windows runners.
+    // CI can take several seconds to schedule the detached completion watcher.
     timeout(Duration::from_secs(10), wait).await.is_ok()
 }
 

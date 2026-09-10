@@ -9705,7 +9705,7 @@ fn test_set_project_trusted_converts_inline_to_explicit() -> anyhow::Result<()> 
     } else {
         format!("\"{raw_path}\"")
     };
-    // Use a quoted key so backslashes don't require escaping on Windows
+    // Use a quoted key so backslashes don't require escaping.
     let initial = format!(
         r#"[projects]
 {path_str} = {{ trust_level = "untrusted" }}

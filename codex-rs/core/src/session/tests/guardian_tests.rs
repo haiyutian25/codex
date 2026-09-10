@@ -818,7 +818,6 @@ async fn network_approval_uses_published_task_authority_within_same_turn(
 #[tokio::test]
 async fn delayed_exec_command_uses_its_captured_authority_after_next_turn_starts() {
     let (mut session, mut action_turn, events) = make_session_and_context_with_rx().await;
-    // Windows can allow safe echo commands without prompting when its sandbox is disabled.
     let mut exec_policy = Policy::empty();
     exec_policy
         .add_prefix_rule(
