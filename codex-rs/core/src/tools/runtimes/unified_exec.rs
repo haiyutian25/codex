@@ -371,8 +371,6 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
             }
             runtime_path_prepends
         };
-        #[cfg(not(unix))]
-        let runtime_path_prepends = RuntimePathPrepends::default();
         let mut command = if environment_is_remote {
             base_command.to_vec()
         } else {

@@ -1,9 +1,7 @@
-#[cfg(unix)]
 use std::process::Command;
 
 pub const CODEX_ARG0_EXEC_HELPER_ARG1: &str = "--codex-run-as-arg0-exec-helper";
 
-#[cfg(unix)]
 pub fn main() -> ! {
     use std::os::unix::process::CommandExt;
 
@@ -21,11 +19,5 @@ pub fn main() -> ! {
 
     let error = Command::new(&program).arg0(arg0).args(args).exec();
     eprintln!("failed to exec {program:?}: {error}");
-    std::process::exit(1);
-}
-
-#[cfg(not(unix))]
-pub fn main() -> ! {
-    eprintln!("arg0 exec helper is only supported on Unix");
     std::process::exit(1);
 }

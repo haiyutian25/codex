@@ -803,29 +803,14 @@ async fn read_output<R: AsyncRead + Unpin + Send + 'static>(
     })
 }
 
-#[cfg(unix)]
 fn synthetic_exit_status(code: i32) -> ExitStatus {
     use std::os::unix::process::ExitStatusExt;
     std::process::ExitStatus::from_raw(code)
 }
 
-#[cfg(unix)]
 fn synthetic_exit_status_for_code(code: i32) -> ExitStatus {
     use std::os::unix::process::ExitStatusExt;
     std::process::ExitStatus::from_raw(code << 8)
-}
-
-#[cfg(not(unix))]
-fn synthetic_exit_status(code: i32) -> ExitStatus {
-    use std::os::windows::process::ExitStatusExt;
-    // The raw status is a u32 on this platform; cast to avoid panicking on
-    // negative i32 values produced by prior narrowing casts.
-    std::process::ExitStatus::from_raw(code as u32)
-}
-
-#[cfg(not(unix))]
-fn synthetic_exit_status_for_code(code: i32) -> ExitStatus {
-    synthetic_exit_status(code)
 }
 
 #[cfg(test)]

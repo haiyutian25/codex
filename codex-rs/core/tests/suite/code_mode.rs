@@ -700,7 +700,6 @@ async fn run_code_mode_turn_with_rmcp_config(
     Ok((test, second_mock))
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_can_return_exec_command_output() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -1527,7 +1526,6 @@ text(JSON.stringify({{
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_only_can_call_nested_tools() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -1700,7 +1698,6 @@ text(JSON.stringify(result));
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "flaky on windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_nested_tool_calls_can_run_in_parallel() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -1793,7 +1790,6 @@ text(JSON.stringify(results));
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_write_stdin_calls_run_in_parallel_across_sessions() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -1839,7 +1835,6 @@ const TOKEN_POLICY_TEST_MODEL: &str = "gpt-5.4";
 
 // A nested `exec_command` limit applies to `result.output` inside JavaScript.
 // The outer code-mode and history budgets apply after the script calls `text`.
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_nested_limit_formats_truncated_result_with_warning() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -1869,7 +1864,6 @@ text(result.output);
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_nested_limit_preserves_result_variable_before_default_history_truncation()
 -> Result<()> {
@@ -1902,7 +1896,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_nested_limit_truncates_result_variable_when_exceeded() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -1943,7 +1936,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_nested_limit_preserves_result_variable_before_configured_history_truncation()
 -> Result<()> {
@@ -1985,7 +1977,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_without_nested_limit_preserves_result_variable_before_default_history_truncation()
 -> Result<()> {
@@ -2017,7 +2008,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_without_nested_limit_preserves_result_variable_before_configured_history_truncation()
 -> Result<()> {
@@ -2060,7 +2050,6 @@ text(`Variable truncated: ${resultVariableWasTruncated ? "True" : "False"}. Vari
 
 // The outer directive limits output after JavaScript emits it; it does not
 // limit `result.output` returned by the nested command.
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_outer_limit_truncates_emitted_output() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -2131,7 +2120,6 @@ Error:\ boom\n
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_exec_surfaces_handler_errors_as_exceptions() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -2308,7 +2296,6 @@ async fn code_mode_wait_timeout_reconnects_on_next_exec() -> Result<()> {
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_can_yield_and_resume_with_wait() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -2454,7 +2441,6 @@ text("phase 3");
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_yield_and_termination_are_not_starved_by_runtime_output() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -2551,7 +2537,6 @@ for (let index = 0; index < 256; index++) {{
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_can_run_multiple_yielded_sessions() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -2760,7 +2745,6 @@ text("session b done");
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_concurrent_cells_merge_only_the_stored_values_they_write() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -2913,7 +2897,6 @@ yield_control();
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_wait_can_terminate_and_continue() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -3100,7 +3083,6 @@ async fn code_mode_wait_returns_error_for_unknown_session() -> Result<()> {
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_wait_terminate_returns_completed_session_if_it_finished_after_yield_control()
 -> Result<()> {
@@ -3296,7 +3278,6 @@ text("session b done");
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_background_keeps_running_on_later_turn_without_wait() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -3592,7 +3573,6 @@ async fn code_mode_interrupt_terminates_active_cells_and_nested_tools() -> Resul
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn code_mode_wait_uses_its_own_max_tokens_budget() -> Result<()> {
     skip_if_no_network!(Ok(()));
@@ -4360,7 +4340,6 @@ async fn code_mode_node_repl_screenshots_can_be_captured_without_guardian_transc
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[test_case("node_repl"; "node_repl")]
 #[test_case("cua_repl"; "cua_repl")]
@@ -4454,7 +4433,6 @@ await tools.exec_command({ cmd: "true", sandbox_permissions: "require_escalated"
     Ok(())
 }
 
-#[cfg_attr(windows, ignore = "no exec_command on Windows")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[test_case("node_repl", false, false, false, None; "disabled")]
 #[test_case("node_repl", true, false, false, None; "manually_enabled_text_only")]

@@ -1,4 +1,3 @@
-#[cfg(target_os = "linux")]
 mod bwrap;
 mod denial;
 pub mod landlock;
@@ -8,9 +7,7 @@ pub mod proot;
 mod spawn;
 mod violation;
 
-#[cfg(target_os = "linux")]
 pub use bwrap::find_system_bwrap_in_path;
-#[cfg(target_os = "linux")]
 pub use bwrap::system_bwrap_warning;
 pub use denial::is_likely_executor_managed_sandbox_denied;
 pub use denial::is_likely_sandbox_denied;
@@ -48,13 +45,6 @@ pub use violation::record_network_sandbox_violation;
 pub use violation::record_sandbox_violation;
 
 use codex_protocol::error::CodexErr;
-
-#[cfg(not(target_os = "linux"))]
-pub fn system_bwrap_warning(
-    _permission_profile: &codex_protocol::models::PermissionProfile,
-) -> Option<String> {
-    None
-}
 
 impl From<SandboxTransformError> for CodexErr {
     fn from(err: SandboxTransformError) -> Self {

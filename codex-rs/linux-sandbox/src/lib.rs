@@ -25,15 +25,8 @@ mod proxy_lifecycle;
 mod proxy_routing;
 
 /// Exit status returned when bundled bubblewrap fails digest verification.
-#[cfg(target_os = "linux")]
 pub const BUNDLED_BWRAP_DIGEST_VERIFICATION_FAILURE_EXIT_CODE: i32 = 8;
 
-#[cfg(target_os = "linux")]
 pub fn run_main() -> ! {
     linux_run_main::run_main();
-}
-
-#[cfg(not(target_os = "linux"))]
-pub fn run_main() -> ! {
-    panic!("codex-linux-sandbox is only supported on Linux");
 }

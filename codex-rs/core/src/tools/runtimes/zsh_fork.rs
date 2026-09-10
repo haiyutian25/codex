@@ -27,11 +27,9 @@ pub(crate) async fn maybe_prepare_unified_exec(
     imp::maybe_prepare_unified_exec(req, attempt, ctx, exec_request, zsh_fork_config).await
 }
 
-#[cfg(unix)]
 #[path = "zsh_fork/unix_escalation.rs"]
 mod unix_escalation;
 
-#[cfg(unix)]
 mod imp {
     use super::*;
     use crate::tools::runtimes::zsh_fork::unix_escalation;
@@ -85,21 +83,5 @@ mod imp {
                 escalation_session: prepared.escalation_session,
             }),
         }))
-    }
-}
-
-#[cfg(not(unix))]
-mod imp {
-    use super::*;
-
-    pub(super) async fn maybe_prepare_unified_exec(
-        req: &UnifiedExecRequest,
-        attempt: &SandboxAttempt<'_>,
-        ctx: &ToolCtx,
-        exec_request: ExecRequest,
-        zsh_fork_config: &ZshForkConfig,
-    ) -> Result<Option<PreparedUnifiedExecSpawn>, ToolError> {
-        let _ = (req, attempt, ctx, exec_request, zsh_fork_config);
-        Ok(None)
     }
 }

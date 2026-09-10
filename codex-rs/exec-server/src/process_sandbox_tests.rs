@@ -193,8 +193,7 @@ async fn native_request_preserves_native_launch_fields() {
     assert_eq!(prepared.arg0, params.arg0);
 }
 
-// Executor-local proxy launch path; the removed Windows shared-ingress backend
-// was the only Windows route for this scenario.
+// Executor-local proxy launch path.
 #[tokio::test]
 async fn native_request_handles_remote_proxy_config_for_platform() {
     let cwd: AbsolutePathBuf = std::env::current_dir()

@@ -3,7 +3,6 @@ use rustls_native_certs::CertificateResult;
 // `rustls_native_certs::load_native_certs()` first consults SSL_CERT_FILE and
 // SSL_CERT_DIR. Load platform roots directly so a startup custom CA can be
 // layered onto the managed bundle without replacing the platform trust store.
-#[cfg(unix)]
 pub(crate) fn load_platform_native_certs() -> CertificateResult {
     let mut result =
         rustls_native_certs::load_certs_from_paths(platform_cert_file().as_deref(), None);
@@ -17,24 +16,16 @@ pub(crate) fn load_platform_native_certs() -> CertificateResult {
     result
 }
 
-#[cfg(not(unix))]
-pub(crate) fn load_platform_native_certs() -> CertificateResult {
-    rustls_native_certs::load_native_certs()
-}
-
-#[cfg(unix)]
 fn extend_certificate_result(result: &mut CertificateResult, extra: CertificateResult) {
     result.certs.extend(extra.certs);
     result.errors.extend(extra.errors);
 }
 
-#[cfg(unix)]
 fn dedupe_certs(result: &mut CertificateResult) {
     result.certs.sort_unstable_by(|a, b| a.cmp(b));
     result.certs.dedup();
 }
 
-#[cfg(unix)]
 fn platform_cert_file() -> Option<std::path::PathBuf> {
     PLATFORM_CERTIFICATE_FILE_NAMES
         .iter()
@@ -43,7 +34,6 @@ fn platform_cert_file() -> Option<std::path::PathBuf> {
         .map(std::path::Path::to_path_buf)
 }
 
-#[cfg(unix)]
 fn platform_cert_dirs() -> impl Iterator<Item = std::path::PathBuf> {
     PLATFORM_CERTIFICATE_DIRS
         .iter()

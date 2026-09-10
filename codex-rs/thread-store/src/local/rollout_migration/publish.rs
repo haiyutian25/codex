@@ -249,20 +249,13 @@ pub(super) async fn write_migration_journal(path: &Path) -> ThreadStoreResult<()
 }
 
 pub(super) async fn sync_parent_directory(path: &Path) -> ThreadStoreResult<()> {
-    #[cfg(unix)]
-    {
-        let parent = path
-            .parent()
-            .ok_or_else(|| migration_error("rollout path has no parent directory"))?
-            .to_path_buf();
-        tokio::task::spawn_blocking(move || std::fs::File::open(parent)?.sync_all())
-            .await
-            .map_err(migration_error)?
-            .map_err(migration_error)?;
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = path;
-    }
+    let parent = path
+        .parent()
+        .ok_or_else(|| migration_error("rollout path has no parent directory"))?
+        .to_path_buf();
+    tokio::task::spawn_blocking(move || std::fs::File::open(parent)?.sync_all())
+        .await
+        .map_err(migration_error)?
+        .map_err(migration_error)?;
     Ok(())
 }

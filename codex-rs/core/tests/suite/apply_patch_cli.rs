@@ -187,17 +187,8 @@ fn workspace_write_with_unreadable_path(unreadable_path: AbsolutePathBuf) -> Per
     )
 }
 
-#[cfg(unix)]
 fn create_file_symlink(source: &std::path::Path, link: &std::path::Path) -> std::io::Result<()> {
     std::os::unix::fs::symlink(source, link)
-}
-
-#[cfg(not(unix))]
-fn create_file_symlink(_source: &std::path::Path, _link: &std::path::Path) -> std::io::Result<()> {
-    Err(std::io::Error::new(
-        std::io::ErrorKind::Unsupported,
-        "file symlinks are unsupported on this platform",
-    ))
 }
 
 pub async fn mount_apply_patch(

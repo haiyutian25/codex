@@ -1,6 +1,4 @@
-#[cfg(unix)]
 use dns_lookup::AddrInfoHints;
-#[cfg(unix)]
 use dns_lookup::getaddrinfo;
 use std::sync::LazyLock;
 
@@ -42,7 +40,6 @@ fn normalize_host_name(hostname: &str) -> Option<String> {
     (!hostname.is_empty()).then(|| hostname.to_ascii_lowercase())
 }
 
-#[cfg(unix)]
 fn local_fqdn_for_hostname(hostname: &str) -> Option<String> {
     let hints = AddrInfoHints {
         flags: libc::AI_CANONNAME,
@@ -58,13 +55,6 @@ fn local_fqdn_for_hostname(hostname: &str) -> Option<String> {
         .find_map(|hostname| normalize_fqdn_candidate(&hostname))
 }
 
-#[cfg(not(unix))]
-fn local_fqdn_for_hostname(_hostname: &str) -> Option<String> {
-    None
-}
-
-// On non-Unix targets this is only exercised by the unit tests.
-#[cfg_attr(not(unix), allow(dead_code))]
 fn normalize_fqdn_candidate(hostname: &str) -> Option<String> {
     normalize_host_name(hostname).filter(|hostname| hostname.contains('.'))
 }

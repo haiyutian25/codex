@@ -458,7 +458,6 @@ fn mode_label(mode: EntryMode) -> &'static str {
     }
 }
 
-#[cfg(unix)]
 fn file_mode(path: &Path, default: EntryKind) -> anyhow::Result<EntryMode> {
     use std::os::unix::fs::PermissionsExt;
 
@@ -470,46 +469,22 @@ fn file_mode(path: &Path, default: EntryKind) -> anyhow::Result<EntryMode> {
     })
 }
 
-#[cfg(not(unix))]
-fn file_mode(_path: &Path, default: EntryKind) -> anyhow::Result<EntryMode> {
-    Ok(default.into())
-}
-
-#[cfg(unix)]
 fn os_str_to_bstring(value: &OsStr) -> gix::bstr::BString {
     use std::os::unix::ffi::OsStrExt;
 
     value.as_bytes().into()
 }
 
-#[cfg(not(unix))]
-fn os_str_to_bstring(value: &OsStr) -> gix::bstr::BString {
-    value.to_string_lossy().as_bytes().into()
-}
-
-#[cfg(unix)]
 fn path_to_bytes(path: &Path) -> Vec<u8> {
     use std::os::unix::ffi::OsStrExt;
 
     path.as_os_str().as_bytes().to_vec()
 }
 
-#[cfg(not(unix))]
-fn path_to_bytes(path: &Path) -> Vec<u8> {
-    path.to_string_lossy().as_bytes().to_vec()
-}
-
 fn bstr_to_path(value: &gix::bstr::BStr) -> PathBuf {
-    #[cfg(unix)]
-    {
-        use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::ffi::OsStrExt;
 
-        PathBuf::from(OsStr::from_bytes(value))
-    }
-    #[cfg(not(unix))]
-    {
-        PathBuf::from(value.to_string())
-    }
+    PathBuf::from(OsStr::from_bytes(value))
 }
 
 fn relative_slash_path(root: &Path, path: &Path) -> anyhow::Result<String> {

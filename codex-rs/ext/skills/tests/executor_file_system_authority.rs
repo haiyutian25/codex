@@ -768,16 +768,11 @@ async fn direct_executor_discovery_preserves_hidden_nested_and_probed_metadata()
     std::fs::create_dir_all(hidden_metadata.parent().expect("metadata parent"))
         .expect("create metadata directory");
     let metadata_contents = "policy:\n  allow_implicit_invocation: false\n";
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::symlink;
+    use std::os::unix::fs::symlink;
 
-        let metadata_target = test_root.join("linked-openai.yaml");
-        std::fs::write(&metadata_target, metadata_contents).expect("write metadata target");
-        symlink(metadata_target, &hidden_metadata).expect("link metadata");
-    }
-    #[cfg(not(unix))]
-    std::fs::write(&hidden_metadata, metadata_contents).expect("write metadata");
+    let metadata_target = test_root.join("linked-openai.yaml");
+    std::fs::write(&metadata_target, metadata_contents).expect("write metadata target");
+    symlink(metadata_target, &hidden_metadata).expect("link metadata");
 
     let root_uri = PathUri::from_host_native_path(&test_root).expect("skill root URI");
     let selected_root = SelectedCapabilityRoot {

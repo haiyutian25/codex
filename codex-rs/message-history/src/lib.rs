@@ -43,9 +43,7 @@ pub use batch::HistoryBatchCursor;
 pub use batch::HistoryBatchEntry;
 pub use batch::lookup_batch;
 
-#[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
-#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
 /// Filename that stores the message history inside `~/.codex`.
@@ -162,8 +160,7 @@ pub async fn append_entry(
         for _ in 0..MAX_RETRIES {
             match history_file.try_lock() {
                 Ok(()) => {
-                    // While holding the exclusive lock, write the full line.
-                    // We do not open the file with `append(true)` on Windows, so ensure the
+                    // While holding the exclusive lock, write the full line. Ensure the
                     // cursor is positioned at the end before writing.
                     history_file.seek(SeekFrom::End(0))?;
                     history_file.write_all(line.as_bytes())?;
@@ -277,7 +274,7 @@ fn trim_target_bytes(max_bytes: u64, newest_entry_len: u64) -> u64 {
 
 /// Asynchronously fetch the history file's *identifier* and current entry count.
 ///
-/// The identifier is the file's inode on Unix or creation time on Windows.
+/// The identifier is the file's inode.
 /// The entry count is derived by counting newline bytes in the file. Returns
 /// `(0, 0)` when the file does not exist or its metadata cannot be read. If
 /// metadata succeeds but the file cannot be opened or scanned, returns
@@ -289,8 +286,8 @@ pub async fn history_metadata(config: &HistoryConfig) -> (u64, usize) {
 
 /// Look up a single history entry by file identity and zero-based offset.
 ///
-/// Returns `Some(entry)` when the current history file's identifier (inode on
-/// Unix, creation time on Windows) matches `log_id` **and** a valid JSON
+/// Returns `Some(entry)` when the current history file's identifier (inode)
+/// matches `log_id` **and** a valid JSON
 /// record exists at `offset`. Returns `None` on any mismatch, I/O error, or
 /// parse failure, all of which are logged at `warn` level.
 ///
@@ -302,9 +299,8 @@ pub fn lookup(log_id: u64, offset: usize, config: &HistoryConfig) -> Option<Hist
     lookup_history_entry(&path, log_id, offset)
 }
 
-/// On Unix systems, ensure the file permissions are `0o600` (rw-------). If the
-/// permissions cannot be changed the error is propagated to the caller.
-#[cfg(unix)]
+/// Ensure the file permissions are `0o600` (rw-------). If the permissions
+/// cannot be changed the error is propagated to the caller.
 async fn ensure_owner_only_permissions(file: &File) -> Result<()> {
     let metadata = file.metadata()?;
     let current_mode = metadata.permissions().mode() & 0o777;
@@ -315,12 +311,6 @@ async fn ensure_owner_only_permissions(file: &File) -> Result<()> {
         let file_clone = file.try_clone()?;
         tokio::task::spawn_blocking(move || file_clone.set_permissions(perms_clone)).await??;
     }
-    Ok(())
-}
-
-#[cfg(not(unix))]
-// POSIX-only permissions are unavailable; nothing to enforce.
-async fn ensure_owner_only_permissions(_file: &File) -> Result<()> {
     Ok(())
 }
 
@@ -422,15 +412,9 @@ fn lookup_history_entry(path: &Path, log_id: u64, offset: usize) -> Option<Histo
     None
 }
 
-#[cfg(unix)]
 fn log_identity(metadata: &std::fs::Metadata) -> Option<u64> {
     use std::os::unix::fs::MetadataExt;
     Some(metadata.ino())
-}
-
-#[cfg(not(unix))]
-fn log_identity(_metadata: &std::fs::Metadata) -> Option<u64> {
-    None
 }
 
 #[cfg(test)]

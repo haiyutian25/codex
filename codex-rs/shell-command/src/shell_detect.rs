@@ -51,7 +51,6 @@ pub fn detect_shell_type(shell_path: impl AsRef<std::path::Path>) -> Option<Shel
     }
 }
 
-#[cfg(unix)]
 fn get_user_shell_path() -> Option<PathBuf> {
     let uid = unsafe { libc::getuid() };
     use std::ffi::CStr;
@@ -110,11 +109,6 @@ fn get_user_shell_path() -> Option<PathBuf> {
         }
         buffer.resize(new_len, 0);
     }
-}
-
-#[cfg(not(unix))]
-fn get_user_shell_path() -> Option<PathBuf> {
-    None
 }
 
 fn file_exists(path: &std::path::Path) -> Option<PathBuf> {

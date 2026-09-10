@@ -171,12 +171,8 @@ async fn file_system_operations_can_reject_symlinks_in_any_path_component(
         follow_symlinks: false,
     };
     let uri = |path: &Path| PathUri::from_host_native_path(path);
-    #[cfg(target_os = "linux")]
     let strict_sandbox = workspace_write_sandbox(tmp_path);
-    #[cfg(target_os = "linux")]
     let sandboxes = [None, Some(&strict_sandbox)];
-    #[cfg(not(target_os = "linux"))]
-    let sandboxes: [Option<&FileSystemSandboxContext>; 1] = [None];
 
     for sandbox in sandboxes {
         assert!(

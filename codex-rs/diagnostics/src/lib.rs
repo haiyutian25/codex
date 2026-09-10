@@ -105,7 +105,6 @@ pub fn snapshot() -> DiagnosticsSnapshot {
     }
 }
 
-#[cfg(target_os = "linux")]
 fn process_snapshot() -> ProcessSnapshot {
     // SAFETY: querying the system page size does not access caller-owned memory.
     let page_size = u64::try_from(unsafe { libc::sysconf(libc::_SC_PAGESIZE) })
@@ -120,20 +119,6 @@ fn process_snapshot() -> ProcessSnapshot {
         resident_memory_bytes: resident_pages
             .zip(page_size)
             .map(|(pages, page_size)| pages.saturating_mul(page_size)),
-        physical_footprint_bytes: None,
-    }
-}
-
-#[cfg(not(target_os = "linux"))]
-fn process_snapshot() -> ProcessSnapshot {
-    empty_process_snapshot()
-}
-
-#[cfg(not(target_os = "linux"))]
-fn empty_process_snapshot() -> ProcessSnapshot {
-    ProcessSnapshot {
-        id: std::process::id(),
-        resident_memory_bytes: None,
         physical_footprint_bytes: None,
     }
 }

@@ -1181,7 +1181,7 @@ impl SandboxPolicy {
     }
 
     /// Returns a policy that can read the entire disk, but can only write to
-    /// the current working directory and the per-user tmp dir on macOS. It does
+    /// the current working directory and the per-user tmp dir. It does
     /// not allow network access.
     pub fn new_workspace_write_policy() -> Self {
         SandboxPolicy::WorkspaceWrite {

@@ -213,16 +213,11 @@ impl StdioServerLauncher for LocalStdioServerLauncher {
 
 // Local private implementation.
 
-#[cfg(unix)]
 const PROCESS_GROUP_TERM_GRACE_PERIOD: Duration = Duration::from_secs(2);
 
-#[cfg(unix)]
 struct LocalProcessTerminator {
     process_group_id: u32,
 }
-
-#[cfg(not(unix))]
-struct LocalProcessTerminator;
 
 #[derive(Clone)]
 pub(crate) struct StdioServerProcessHandle {
@@ -275,7 +270,6 @@ impl LocalStdioServerLauncher {
                 .env_clear()
                 .envs(&envs)
                 .args(&args);
-            #[cfg(unix)]
             command.process_group(0);
             command
         };
@@ -311,13 +305,7 @@ impl LocalStdioServerLauncher {
             }
         };
         let (transport, stderr, process_id) = spawn_transport(command)?;
-        #[cfg(unix)]
         let terminator = process_id.map(LocalProcessTerminator::new);
-        #[cfg(not(unix))]
-        let terminator = {
-            let _ = process_id;
-            None
-        };
         let process = StdioServerProcessHandle::local(program_name.clone(), terminator);
 
         if let Some(stderr) = stderr {
@@ -346,12 +334,10 @@ impl LocalStdioServerLauncher {
 }
 
 impl LocalProcessTerminator {
-    #[cfg(unix)]
     fn new(process_group_id: u32) -> Self {
         Self { process_group_id }
     }
 
-    #[cfg(unix)]
     fn terminate(&self) {
         let process_group_id = self.process_group_id;
         let should_escalate = match terminate_process_group(process_group_id) {
@@ -370,9 +356,6 @@ impl LocalProcessTerminator {
             });
         }
     }
-
-    #[cfg(not(unix))]
-    fn terminate(&self) {}
 }
 
 impl StdioServerProcessHandle {

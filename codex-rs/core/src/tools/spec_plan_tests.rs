@@ -1034,10 +1034,6 @@ async fn shell_zsh_fork_keeps_unified_exec_available() {
 
 #[tokio::test]
 async fn zsh_fork_unified_exec_hides_shell_parameter() {
-    if !codex_utils_pty::conpty_supported() {
-        return;
-    }
-
     let plan = probe(|turn| {
         set_features(
             turn,
@@ -1058,10 +1054,6 @@ async fn zsh_fork_unified_exec_hides_shell_parameter() {
 
 #[tokio::test]
 async fn zsh_fork_unified_exec_keeps_shell_parameter_when_remote_environment_available() {
-    if !codex_utils_pty::conpty_supported() {
-        return;
-    }
-
     let plan = probe(|turn| {
         set_features(
             turn,

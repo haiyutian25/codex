@@ -160,8 +160,6 @@ pub(crate) async fn prepare_exec_request(
             )
         },
     );
-    #[cfg(not(unix))]
-    let (program, args) = (program.into(), args.to_vec());
     let transform_request = SandboxDirectSpawnTransformRequest {
         workspace_roots,
         transform: SandboxTransformRequest {

@@ -397,15 +397,11 @@ fn readiness_rejects_non_executable_file() {
     );
 }
 
-#[cfg(unix)]
 fn make_executable(path: &Path) {
     use std::os::unix::fs::PermissionsExt;
     std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755))
         .expect("set executable bit");
 }
-
-#[cfg(not(unix))]
-fn make_executable(_path: &Path) {}
 
 #[test]
 fn guest_shell_rewrites_wrapped_command_program() {

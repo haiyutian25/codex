@@ -53,9 +53,6 @@ async fn wait_for_git_command_with_timeout_output(
     process_tree: KillGitProcessTreeOnDrop,
     timeout_duration: Duration,
 ) -> Option<Output> {
-    #[cfg(not(unix))]
-    let _ = process_tree;
-    #[cfg(unix)]
     let mut process_tree = process_tree;
 
     let result = timeout(timeout_duration, child.wait_with_output()).await;

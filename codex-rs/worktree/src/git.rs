@@ -38,17 +38,8 @@ pub(crate) fn git_path_from_bytes(bytes: &[u8]) -> Result<PathBuf> {
     if bytes.is_empty() {
         bail!("git returned an empty path");
     }
-    #[cfg(unix)]
-    {
-        use std::os::unix::ffi::OsStringExt;
-        Ok(PathBuf::from(std::ffi::OsString::from_vec(bytes.to_vec())))
-    }
-    #[cfg(not(unix))]
-    {
-        Ok(PathBuf::from(
-            std::str::from_utf8(bytes).context("git path is not valid UTF-8")?,
-        ))
-    }
+    use std::os::unix::ffi::OsStringExt;
+    Ok(PathBuf::from(std::ffi::OsString::from_vec(bytes.to_vec())))
 }
 
 fn base_git_command(cwd: &Path) -> Command {

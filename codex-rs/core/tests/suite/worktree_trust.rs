@@ -65,10 +65,7 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
                 fs::copy(real.join(".git"), checkout.join(".git"))?;
             }
             "symlink" => {
-                #[cfg(unix)]
                 std::os::unix::fs::symlink(real.join(".git"), checkout.join(".git"))?;
-                #[cfg(not(unix))]
-                continue;
             }
             "registered" => {}
             _ => unreachable!(),

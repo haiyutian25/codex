@@ -105,18 +105,9 @@ pub fn test_absolute_path(unix_path: &str) -> AbsolutePathBuf {
     test_absolute_path_with_windows(unix_path, /*windows_path*/ None)
 }
 
-#[cfg(unix)]
 #[allow(clippy::expect_used)]
 pub fn create_directory_symlink(source: &Path, link: &Path) {
     std::os::unix::fs::symlink(source, link).expect("create directory symlink");
-}
-
-#[cfg(not(unix))]
-#[allow(clippy::expect_used)]
-pub fn create_directory_symlink(source: &Path, link: &Path) {
-    // Creating directory symlinks may require elevated privileges on this platform.
-    std::os::windows::fs::symlink_dir(source, link)
-        .expect("create directory symlink; enable Developer Mode or run the test elevated");
 }
 
 pub trait TempDirExt {
@@ -210,7 +201,6 @@ allow_local_binding = true
     )
 }
 
-#[cfg(target_os = "linux")]
 fn default_test_overrides() -> ConfigOverrides {
     ConfigOverrides {
         codex_linux_sandbox_exe: Some(
@@ -218,11 +208,6 @@ fn default_test_overrides() -> ConfigOverrides {
         ),
         ..ConfigOverrides::default()
     }
-}
-
-#[cfg(not(target_os = "linux"))]
-fn default_test_overrides() -> ConfigOverrides {
-    ConfigOverrides::default()
 }
 
 #[cfg(target_os = "linux")]
@@ -588,35 +573,21 @@ macro_rules! skip_if_no_remote_env {
 #[macro_export]
 macro_rules! codex_linux_sandbox_exe_or_skip {
     () => {{
-        #[cfg(target_os = "linux")]
-        {
-            match $crate::find_codex_linux_sandbox_exe() {
-                Ok(path) => Some(path),
-                Err(err) => {
-                    eprintln!("codex-linux-sandbox binary not available, skipping test: {err}");
-                    return;
-                }
+        match $crate::find_codex_linux_sandbox_exe() {
+            Ok(path) => Some(path),
+            Err(err) => {
+                eprintln!("codex-linux-sandbox binary not available, skipping test: {err}");
+                return;
             }
-        }
-        #[cfg(not(target_os = "linux"))]
-        {
-            None
         }
     }};
     ($return_value:expr $(,)?) => {{
-        #[cfg(target_os = "linux")]
-        {
-            match $crate::find_codex_linux_sandbox_exe() {
-                Ok(path) => Some(path),
-                Err(err) => {
-                    eprintln!("codex-linux-sandbox binary not available, skipping test: {err}");
-                    return $return_value;
-                }
+        match $crate::find_codex_linux_sandbox_exe() {
+            Ok(path) => Some(path),
+            Err(err) => {
+                eprintln!("codex-linux-sandbox binary not available, skipping test: {err}");
+                return $return_value;
             }
-        }
-        #[cfg(not(target_os = "linux"))]
-        {
-            None
         }
     }};
 }

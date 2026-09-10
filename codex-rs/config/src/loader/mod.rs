@@ -1266,8 +1266,7 @@ fn credential_broker_trusted_config(
 }
 
 /// Canonicalize the path and convert it to a string to be used as a key in the
-/// projects trust map. On Windows, strips UNC, when possible, to try to ensure
-/// that different paths that point to the same location have the same key.
+/// projects trust map.
 pub fn project_trust_key(path: &Path) -> String {
     normalized_project_trust_keys(path)
         .into_iter()

@@ -1260,7 +1260,6 @@ async fn wait_for_unified_exec_end(
 async fn unified_exec_emits_terminal_interaction_for_write_stdin(
     stdin_approval: bool,
 ) -> Result<()> {
-    // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -1823,7 +1822,6 @@ async fn exec_command_clamps_model_requested_max_output_tokens_to_policy() -> Re
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn write_stdin_clamps_model_requested_max_output_tokens_to_policy() -> Result<()> {
-    // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -1907,7 +1905,6 @@ async fn write_stdin_clamps_model_requested_max_output_tokens_to_policy() -> Res
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_defaults_to_pipe() -> Result<()> {
-    // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -1970,7 +1967,6 @@ async fn unified_exec_defaults_to_pipe() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_can_enable_tty() -> Result<()> {
-    // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -2107,7 +2103,6 @@ async fn unified_exec_respects_early_exit_notifications() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn write_stdin_returns_exit_metadata_and_clears_session() -> Result<()> {
-    // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -2451,7 +2446,6 @@ async fn assert_write_stdin_ctrl_c_interrupts_non_tty_session(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_emits_end_event_when_session_dies_via_stdin() -> Result<()> {
-    // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -2722,7 +2716,6 @@ async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_reuses_session_via_stdin() -> Result<()> {
-    // TODO(anp): Remove after unified-exec interactive fixtures support Windows/ConPTY.
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;

@@ -217,9 +217,7 @@ async fn sandboxed_discovery_batches_roots_without_combining_different_permissio
         workspace_uri,
     );
 
-    #[cfg(target_os = "linux")]
     let fake_bwrap_directory = tempfile::tempdir()?;
-    #[cfg(target_os = "linux")]
     let (mut server, fake_bwrap) = {
         let fake_bin_dir = fake_bwrap_directory.path().to_path_buf();
         let fake_bwrap = write_fake_bwrap(&fake_bin_dir)?;
@@ -233,9 +231,6 @@ async fn sandboxed_discovery_batches_roots_without_combining_different_permissio
             fake_bwrap,
         )
     };
-    #[cfg(not(target_os = "linux"))]
-    let mut server = exec_server().await?;
-    initialize(&mut server).await?;
     let response = discover_roots(
         &mut server,
         vec![

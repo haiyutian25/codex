@@ -219,8 +219,7 @@ impl ProotReadiness {
         self == Self::Ready
     }
 
-    /// Telemetry tag value for the `status` dimension of proot readiness
-    /// metrics, mirroring the Windows sandbox metric-tag convention.
+    /// Telemetry tag value for the `status` dimension of proot readiness metrics.
     pub const fn as_metric_tag(self) -> &'static str {
         match self {
             Self::Ready => "ready",
@@ -257,13 +256,8 @@ fn is_existing_executable(path: &Path) -> bool {
     if !metadata.is_file() {
         return false;
     }
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        return metadata.permissions().mode() & 0o111 != 0;
-    }
-    #[cfg(not(unix))]
-    true
+    use std::os::unix::fs::PermissionsExt;
+    metadata.permissions().mode() & 0o111 != 0
 }
 
 #[derive(Debug)]
@@ -390,8 +384,7 @@ fn rewrite_guest_shell(mut command: Vec<String>, guest_shell: Option<&str>) -> V
     command
 }
 
-/// Joins a relative path onto a POSIX guest base using `/` separators even on
-/// Windows hosts (guest paths are interpreted inside Linux).
+/// Joins a relative path onto a POSIX guest base using `/` separators.
 fn join_posix(guest_base: &str, relative: &Path) -> String {
     let mut joined = guest_base.trim_end_matches('/').to_string();
     for component in relative.components() {
@@ -420,8 +413,7 @@ fn add_identity_bind(binds: &mut Vec<ProotBind>, mapper: &ProotPathMapper, root:
     binds.push(ProotBind::identity(host));
 }
 
-/// Whether the permission profile can be enforced inside a PRoot guest,
-/// mirroring `permission_profile_supports_windows_restricted_token_sandbox`.
+/// Whether the permission profile can be enforced inside a PRoot guest.
 ///
 /// Full-disk WRITE cannot be honored: the guest only sees the rootfs plus
 /// explicit binds, so writes outside them would silently fail. Full-disk READ
@@ -439,8 +431,7 @@ pub fn permission_profile_supports_proot_sandbox(
     }
 }
 
-/// Human-readable reason when the PRoot backend cannot enforce the profile,
-/// mirroring `unsupported_windows_restricted_token_sandbox_reason`.
+/// Human-readable reason when the PRoot backend cannot enforce the profile.
 pub fn unsupported_proot_sandbox_reason(
     permission_profile: &PermissionProfile,
 ) -> Option<String> {

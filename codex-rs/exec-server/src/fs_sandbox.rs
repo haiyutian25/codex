@@ -349,12 +349,9 @@ pub(crate) fn spawn_command(
         return Err(invalid_request("fs sandbox command was empty".to_string()));
     };
     let mut command = Command::new(program);
-    #[cfg(unix)]
     if let Some(arg0) = arg0 {
         command.arg0(arg0);
     }
-    #[cfg(not(unix))]
-    let _ = arg0;
     command.args(args);
     // TODO(anp): Keep PathUri through the filesystem helper launch boundary.
     let cwd = cwd.to_abs_path().map_err(io_error)?;
@@ -498,8 +495,7 @@ mod tests {
     }
 
 
-    // Requires a working platform sandbox backend; after the Windows/macOS
-    // backend removal only Linux provides one.
+    // Requires a working platform sandbox backend.
     #[cfg(target_os = "linux")]
     #[test]
     fn sandbox_exec_request_carries_helper_env() {

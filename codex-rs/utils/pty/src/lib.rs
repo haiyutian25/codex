@@ -32,8 +32,3 @@ pub use process::spawn_from_driver;
 pub type ExecCommandSession = ProcessHandle;
 /// Backwards-compatible alias for SpawnedProcess.
 pub type SpawnedPty = SpawnedProcess;
-/// Report whether ConPTY is available on this platform (always true now that
-/// the Windows ConPTY backend has been removed).
-pub fn conpty_supported() -> bool {
-    true
-}

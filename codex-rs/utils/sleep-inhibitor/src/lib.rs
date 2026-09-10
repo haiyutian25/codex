@@ -2,16 +2,9 @@
 //!
 //! Platform-specific behavior:
 //! - Linux: Spawns `systemd-inhibit` or `gnome-session-inhibit` while active.
-//! - Other platforms (including Android): No-op backend.
 
-#[cfg(not(target_os = "linux"))]
-mod dummy;
-#[cfg(target_os = "linux")]
 mod linux_inhibitor;
 
-#[cfg(not(target_os = "linux"))]
-use dummy as imp;
-#[cfg(target_os = "linux")]
 use linux_inhibitor as imp;
 
 /// Keeps the machine awake while a turn is in progress when enabled.

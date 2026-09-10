@@ -1063,22 +1063,11 @@ mod reader {
     }
 }
 
-#[cfg(unix)]
 fn create_file_with_permissions(path: &Path, permissions: &Permissions) -> io::Result<File> {
     let file = std::fs::OpenOptions::new()
         .write(true)
         .create_new(true)
         .mode(permissions.mode() & 0o7777)
-        .open(path)?;
-    file.set_permissions(permissions.clone())?;
-    Ok(file)
-}
-
-#[cfg(not(unix))]
-fn create_file_with_permissions(path: &Path, permissions: &Permissions) -> io::Result<File> {
-    let file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
         .open(path)?;
     file.set_permissions(permissions.clone())?;
     Ok(file)

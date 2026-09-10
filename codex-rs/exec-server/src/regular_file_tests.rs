@@ -28,7 +28,6 @@ async fn read_sensitive_file_rejects_directory() {
     );
 }
 
-#[cfg(any(unix, windows))]
 #[tokio::test]
 async fn read_sensitive_file_rejects_symlink() {
     let directory = TempDir::new().expect("temporary directory");

@@ -189,8 +189,7 @@ fn prepare_path_env_var_with_aliases(
 /// While we want to deploy the Codex CLI as a single executable for simplicity,
 /// we also want to expose some of its functionality as distinct CLIs, so we use
 /// the "arg0 trick" to determine which CLI to dispatch. This effectively allows
-/// us to simulate deploying multiple executables as a single binary on Mac and
-/// Linux (but not Windows).
+/// us to simulate deploying multiple executables as a single binary.
 ///
 /// When the current executable is invoked through the hard-link or alias named
 /// `codex-linux-sandbox` we *directly* execute
@@ -316,11 +315,8 @@ where
     }
 }
 
-/// Creates a temporary directory with either:
-///
-/// - UNIX: `apply_patch` symlink to the current executable
-/// - WINDOWS: `apply_patch.bat` batch script to invoke the current executable
-///   with the hidden `--codex-run-as-apply-patch` flag.
+/// Creates a temporary directory with an `apply_patch` symlink to the current
+/// executable.
 ///
 /// Returns the temporary directory guard and the PATH value that prepends the
 /// temporary directory so `apply_patch` can be on the PATH without requiring the
@@ -395,26 +391,8 @@ fn prepare_path_entry_for_codex_aliases(
 
     let paths = Arg0DispatchPaths {
         codex_self_exe: std::env::current_exe().ok(),
-        codex_linux_sandbox_exe: {
-            #[cfg(target_os = "linux")]
-            {
-                Some(path.join(CODEX_LINUX_SANDBOX_ARG0))
-            }
-            #[cfg(not(target_os = "linux"))]
-            {
-                None
-            }
-        },
-        main_execve_wrapper_exe: {
-            #[cfg(unix)]
-            {
-                Some(path.join(EXECVE_WRAPPER_ARG0))
-            }
-            #[cfg(not(unix))]
-            {
-                None
-            }
-        },
+        codex_linux_sandbox_exe: Some(path.join(CODEX_LINUX_SANDBOX_ARG0)),
+        main_execve_wrapper_exe: Some(path.join(EXECVE_WRAPPER_ARG0)),
     };
 
     Ok((

@@ -555,7 +555,7 @@ fn commands_for_intercepted_exec_policy(
     vec![join_program_and_argv(program, argv)]
 }
 
-// TODO(anp): Capture these Windows and Landlock settings from
+// TODO(anp): Capture these Landlock settings from
 // TurnEnvironment::sandbox_context when preparing this executor, preserving its snapshot.
 struct CoreShellCommandExecutor {
     command: Vec<String>,

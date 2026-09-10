@@ -336,12 +336,6 @@ impl LocalProcess {
                 let _ = notifications.try_notify(NETWORK_POLICY_DECISION_METHOD, &notification);
             }) as NetworkPolicyAuditObserver
         });
-        #[cfg(not(unix))]
-        if params.shell_snapshot.is_some() {
-            return Err(invalid_params(
-                "shell snapshots are unsupported on this platform".to_string(),
-            ));
-        }
         let prepared = prepare_exec_request(
             &params,
             child_env(&params),

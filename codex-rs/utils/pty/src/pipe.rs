@@ -27,7 +27,6 @@ use crate::process::exit_code_from_status;
 use libc;
 
 struct PipeChildTerminator {
-    #[cfg(unix)]
     process_group_id: u32,
 }
 
@@ -35,29 +34,13 @@ impl ChildTerminator for PipeChildTerminator {
     fn signal(&mut self, signal: ProcessSignal) -> io::Result<()> {
         match signal {
             ProcessSignal::Interrupt => {
-                #[cfg(unix)]
-                {
-                    crate::process_group::interrupt_process_group(self.process_group_id)
-                }
-
-                #[cfg(not(unix))]
-                {
-                    Err(crate::process::unsupported_signal(signal))
-                }
+                crate::process_group::interrupt_process_group(self.process_group_id)
             }
         }
     }
 
     fn kill(&mut self) -> io::Result<()> {
-        #[cfg(unix)]
-        {
-            crate::process_group::kill_process_group(self.process_group_id)
-        }
-
-        #[cfg(not(unix))]
-        {
-            Ok(())
-        }
+        crate::process_group::kill_process_group(self.process_group_id)
     }
 }
 
@@ -84,8 +67,6 @@ enum PipeStdinMode {
     Null,
 }
 
-/// On Windows, process-tree containment is best-effort because Tokio returns
-/// only after the root process starts, so job assignment cannot be atomic.
 async fn spawn_process_with_stdin_mode(
     program: &str,
     args: &[String],
@@ -99,19 +80,13 @@ async fn spawn_process_with_stdin_mode(
         anyhow::bail!("missing program for pipe spawn");
     }
 
-    #[cfg(not(unix))]
-    let _ = inherited_fds;
-
     let mut command = Command::new(program);
-    #[cfg(unix)]
     if let Some(arg0) = arg0 {
         command.arg0(arg0);
     }
     #[cfg(target_os = "linux")]
     let parent_pid = unsafe { libc::getpid() };
-    #[cfg(unix)]
     let inherited_fds = inherited_fds.to_vec();
-    #[cfg(unix)]
     unsafe {
         command.pre_exec(move || {
             crate::process_group::detach_from_tty()?;
@@ -121,8 +96,6 @@ async fn spawn_process_with_stdin_mode(
             Ok(())
         });
     }
-    #[cfg(not(unix))]
-    let _ = arg0;
     command.current_dir(cwd);
     command.env_clear();
     for (key, value) in env {

@@ -787,15 +787,6 @@ fn open_create_new_with_mode(path: &Path, mode: u32) -> Result<File> {
         .with_context(|| format!("failed to create {}", path.display()))
 }
 
-#[cfg(not(unix))]
-fn open_create_new_with_mode(path: &Path, _mode: u32) -> Result<File> {
-    OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(path)
-        .with_context(|| format!("failed to create {}", path.display()))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
