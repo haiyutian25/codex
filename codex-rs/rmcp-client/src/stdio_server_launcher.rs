@@ -443,8 +443,8 @@ impl Drop for StdioServerProcessHandleInner {
 /// child process and transports raw stdin/stdout/stderr bytes, so it does not
 /// need to know about MCP methods such as `initialize` or `tools/list`.
 ///
-/// Windows executor-backed servers retain the executor's normal descendant
-/// lifetime. MCP-specific containment requires negotiated process ownership:
+/// Executor-backed servers retain the executor's normal descendant lifetime.
+/// MCP-specific containment requires negotiated process ownership:
 /// caller-controlled process IDs cannot safely select a destructive policy,
 /// and a wrapper may exit while its descendants continue serving requests.
 #[derive(Clone)]

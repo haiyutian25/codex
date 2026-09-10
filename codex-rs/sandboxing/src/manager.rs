@@ -1,7 +1,3 @@
-#[cfg(target_os = "linux")]
-use crate::bwrap::WSL1_BWRAP_WARNING;
-#[cfg(target_os = "linux")]
-use crate::bwrap::is_wsl1;
 use crate::landlock::CODEX_LINUX_SANDBOX_ARG0;
 use crate::landlock::allow_network_for_proxy;
 use crate::landlock::create_linux_sandbox_command_args_for_permission_profile;
@@ -192,8 +188,6 @@ pub enum SandboxTransformError {
     MissingLinuxSandboxExecutable,
     EnvironmentNetworkProxy(String),
     ProotPreparation(String),
-    #[cfg(target_os = "linux")]
-    Wsl1UnsupportedForBubblewrap,
 }
 
 impl std::fmt::Display for SandboxTransformError {
@@ -218,8 +212,6 @@ impl std::fmt::Display for SandboxTransformError {
             Self::ProotPreparation(err) => {
                 write!(f, "failed to prepare PRoot sandbox: {err}")
             }
-            #[cfg(target_os = "linux")]
-            Self::Wsl1UnsupportedForBubblewrap => write!(f, "{WSL1_BWRAP_WARNING}"),
         }
     }
 }
@@ -232,8 +224,6 @@ impl std::error::Error for SandboxTransformError {
             Self::MissingLinuxSandboxExecutable => None,
             Self::EnvironmentNetworkProxy(_) => None,
             Self::ProotPreparation(_) => None,
-            #[cfg(target_os = "linux")]
-            Self::Wsl1UnsupportedForBubblewrap => None,
         }
     }
 }
@@ -327,15 +317,6 @@ impl SandboxManager {
                 let exe = codex_linux_sandbox_exe
                     .ok_or(SandboxTransformError::MissingLinuxSandboxExecutable)?;
                 let allow_proxy_network = allow_network_for_proxy(enforce_managed_network);
-                #[cfg(target_os = "linux")]
-                ensure_linux_bubblewrap_is_supported(
-                    &pending
-                        .effective_permission_profile
-                        .file_system_sandbox_policy(),
-                    use_legacy_landlock,
-                    allow_proxy_network,
-                    is_wsl1(),
-                )?;
                 let mut args = create_linux_sandbox_command_args_for_permission_profile(
                     os_argv_to_strings(argv),
                     pending.native_command_cwd.as_path(),
@@ -457,22 +438,6 @@ fn compatibility_workspace_write_policy(
         exclude_tmpdir_env_var: !tmpdir_writable,
         exclude_slash_tmp: !slash_tmp_writable,
     }
-}
-
-#[cfg(target_os = "linux")]
-fn ensure_linux_bubblewrap_is_supported(
-    file_system_sandbox_policy: &FileSystemSandboxPolicy,
-    use_legacy_landlock: bool,
-    allow_network_for_proxy: bool,
-    is_wsl1: bool,
-) -> Result<(), SandboxTransformError> {
-    let requires_bubblewrap = allow_network_for_proxy
-        || (!use_legacy_landlock && !file_system_sandbox_policy.has_full_disk_write_access());
-    if is_wsl1 && requires_bubblewrap {
-        return Err(SandboxTransformError::Wsl1UnsupportedForBubblewrap);
-    }
-
-    Ok(())
 }
 
 fn os_argv_to_strings(argv: Vec<OsString>) -> Vec<String> {

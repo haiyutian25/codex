@@ -189,7 +189,7 @@ fn read_file_bytes(path: &Path) -> Result<Vec<u8>> {
         return Ok(normalized);
     }
     if path.extension().is_some_and(|ext| ext == "ts") {
-        // Windows checkouts (and some generators) may produce CRLF; normalize so the
+        // Some checkouts and generators may produce CRLF; normalize so the
         // fixture test is platform-independent.
         let text = String::from_utf8(bytes)
             .with_context(|| format!("expected UTF-8 TypeScript in {}", path.display()))?;
@@ -215,7 +215,7 @@ fn canonicalize_json(value: &Value) -> Value {
             // only by `schema_fixtures_match_generated` to compare our *vendored* JSON schema
             // files against freshly generated output. Some parts of schema generation end up
             // with non-deterministic ordering across platforms (often due to map iteration order
-            // upstream), which can cause Windows CI failures even when the generated schema is
+            // upstream), which can cause CI failures even when the generated schema is
             // semantically equivalent.
             //
             // JSON Schema itself also contains a number of array-valued keywords whose ordering

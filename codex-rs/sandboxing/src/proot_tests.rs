@@ -15,7 +15,7 @@ use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::path::Path;
 
-/// Host-native absolute test path: POSIX on unix, `C:`-prefixed on Windows.
+/// Host-native absolute test path.
 /// PRoot itself only ever runs on POSIX hosts; these tests exercise the argv
 /// construction mechanics on whatever host compiles them.
 fn host_path(posix_like: &str) -> AbsolutePathBuf {
@@ -287,8 +287,7 @@ fn readiness_without_config_is_not_configured() {
     assert!(!ProotReadiness::NotConfigured.is_ready());
 }
 
-/// Telemetry tag mapping for every readiness state, mirroring the metric-tag
-/// convention used by the Windows sandbox metrics.
+/// Telemetry tag mapping for every readiness state.
 #[test]
 fn readiness_metric_tags_cover_all_states() {
     assert_eq!(ProotReadiness::Ready.as_metric_tag(), "ready");
