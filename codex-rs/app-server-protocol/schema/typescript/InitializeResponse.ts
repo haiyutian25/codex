@@ -9,12 +9,10 @@ export type InitializeResponse = { userAgent: string,
  */
 codexHome: AbsolutePathBuf,
 /**
- * Platform family for the running app-server target, for example
- * `"unix"` or `"windows"`.
+ * Platform family for the running app-server target, for example `"unix"`.
  */
 platformFamily: string,
 /**
- * Operating system for the running app-server target, for example
- * `"macos"`, `"linux"`, or `"windows"`.
+ * Operating system for the running app-server target, for example `"linux"`.
  */
 platformOs: string, };

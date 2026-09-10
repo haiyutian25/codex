@@ -3229,11 +3229,11 @@
           "description": "Absolute path to the server's $CODEX_HOME directory."
         },
         "platformFamily": {
-          "description": "Platform family for the running app-server target, for example `\"unix\"` or `\"windows\"`.",
+          "description": "Platform family for the running app-server target, for example `\"unix\"`.",
           "type": "string"
         },
         "platformOs": {
-          "description": "Operating system for the running app-server target, for example `\"macos\"`, `\"linux\"`, or `\"windows\"`.",
+          "description": "Operating system for the running app-server target, for example `\"linux\"`.",
           "type": "string"
         },
         "userAgent": {
@@ -8607,54 +8607,6 @@
                 "type": "null"
               }
             ]
-          },
-          "macos": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/v2/ComputerUseMacosConfig"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "windows": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/v2/ComputerUseWindowsConfig"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "ComputerUseMacosConfig": {
-        "properties": {
-          "bundle_ids": {
-            "additionalProperties": {
-              "$ref": "#/definitions/v2/AllowDenyRequirement"
-            },
-            "type": [
-              "object",
-              "null"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "ComputerUseMacosRequirements": {
-        "properties": {
-          "bundleIds": {
-            "additionalProperties": {
-              "$ref": "#/definitions/v2/AllowDenyRequirement"
-            },
-            "type": [
-              "object",
-              "null"
-            ]
           }
         },
         "type": "object"
@@ -8681,122 +8633,6 @@
               {
                 "type": "null"
               }
-            ]
-          },
-          "macos": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/v2/ComputerUseMacosRequirements"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "windows": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/v2/ComputerUseWindowsRequirements"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "ComputerUseWindowsConfig": {
-        "properties": {
-          "aumids": {
-            "additionalProperties": {
-              "$ref": "#/definitions/v2/AllowDenyRequirement"
-            },
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "exes": {
-            "items": {
-              "$ref": "#/definitions/v2/ComputerUseWindowsExeConfig"
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "ComputerUseWindowsExeConfig": {
-        "properties": {
-          "access": {
-            "$ref": "#/definitions/v2/AllowDenyRequirement"
-          },
-          "binary_name": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "product_name": {
-            "type": "string"
-          },
-          "publisher_name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "access",
-          "product_name",
-          "publisher_name"
-        ],
-        "type": "object"
-      },
-      "ComputerUseWindowsExeRequirement": {
-        "properties": {
-          "access": {
-            "$ref": "#/definitions/v2/AllowDenyRequirement"
-          },
-          "binaryName": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "productName": {
-            "type": "string"
-          },
-          "publisherName": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "access",
-          "productName",
-          "publisherName"
-        ],
-        "type": "object"
-      },
-      "ComputerUseWindowsRequirements": {
-        "properties": {
-          "aumids": {
-            "additionalProperties": {
-              "$ref": "#/definitions/v2/AllowDenyRequirement"
-            },
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "exes": {
-            "items": {
-              "$ref": "#/definitions/v2/ComputerUseWindowsExeRequirement"
-            },
-            "type": [
-              "array",
-              "null"
             ]
           }
         },
@@ -13537,12 +13373,6 @@
             "type": "array"
           },
           "managedDir": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "windowsManagedDir": {
             "type": [
               "string",
               "null"
