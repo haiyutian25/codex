@@ -195,7 +195,6 @@ async fn native_request_preserves_native_launch_fields() {
 
 // Executor-local proxy launch path; the removed Windows shared-ingress backend
 // was the only Windows route for this scenario.
-#[cfg(not(target_os = "windows"))]
 #[tokio::test]
 async fn native_request_handles_remote_proxy_config_for_platform() {
     let cwd: AbsolutePathBuf = std::env::current_dir()
@@ -275,7 +274,6 @@ async fn native_request_handles_remote_proxy_config_for_platform() {
         .expect("shut down executor proxy");
 }
 
-#[cfg(not(target_os = "windows"))]
 #[tokio::test]
 async fn disabled_remote_proxy_config_is_rejected_before_exporting_ports() {
     let cwd: AbsolutePathBuf = std::env::current_dir()

@@ -737,7 +737,6 @@ impl ProviderAuthCommandFixture {
         }
         std::fs::write(&tokens_file, token_file_contents)?;
 
-        #[cfg(unix)]
         let (command, args) = {
             let script_path = tempdir.path().join("print-token.sh");
             std::fs::write(
@@ -759,35 +758,6 @@ mv tokens.next tokens.txt
             }
             std::fs::set_permissions(&script_path, permissions)?;
             ("./print-token.sh".to_string(), Vec::new())
-        };
-
-        #[cfg(not(unix))]
-        let (command, args) = {
-            let script_path = tempdir.path().join("print-token.cmd");
-            std::fs::write(
-                &script_path,
-                r#"@echo off
-setlocal EnableExtensions DisableDelayedExpansion
-if exist fail-until-401 exit /b 1
-
-set "first_line="
-<tokens.txt set /p first_line=
-if not defined first_line exit /b 1
-
-echo(%first_line%
-more +1 tokens.txt > tokens.next
-move /y tokens.next tokens.txt >nul
-"#,
-            )?;
-            (
-                "cmd.exe".to_string(),
-                vec![
-                    "/D".to_string(),
-                    "/Q".to_string(),
-                    "/C".to_string(),
-                    ".\\print-token.cmd".to_string(),
-                ],
-            )
         };
 
         Ok(Self {

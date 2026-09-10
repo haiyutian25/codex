@@ -87,4 +87,3 @@ Implementation is split by concern:
 - `overrides.rs`: CLI dotted-path overrides → TOML “session flags” layer.
 - `merge.rs`: recursive TOML merge.
 - `fingerprint.rs`: stable per-layer hashing and per-key origins traversal.
-- `macos.rs`: managed preferences integration (macOS only).

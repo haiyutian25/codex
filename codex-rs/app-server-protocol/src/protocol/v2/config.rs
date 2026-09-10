@@ -36,7 +36,7 @@ pub enum ConfigLayerSource {
         file: AbsolutePathBuf,
     },
 
-    /// Managed preferences layer delivered by MDM (macOS only).
+    /// Managed preferences layer delivered by MDM.
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
     Mdm {
@@ -471,8 +471,6 @@ pub struct ComputerUseRequirements {
     pub allow_locked_computer_use: Option<bool>,
     pub allow_persistent_approval: Option<bool>,
     pub default_app_access: Option<AllowDenyRequirement>,
-    pub macos: Option<ComputerUseMacosRequirements>,
-    pub windows: Option<ComputerUseWindowsRequirements>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
@@ -518,31 +516,6 @@ pub enum BrowserUseAccessApprovalLifetime {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
-pub struct ComputerUseMacosRequirements {
-    pub bundle_ids: Option<BTreeMap<String, AllowDenyRequirement>>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct ComputerUseWindowsRequirements {
-    pub aumids: Option<BTreeMap<String, AllowDenyRequirement>>,
-    pub exes: Option<Vec<ComputerUseWindowsExeRequirement>>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct ComputerUseWindowsExeRequirement {
-    pub publisher_name: String,
-    pub product_name: String,
-    pub binary_name: Option<String>,
-    pub access: AllowDenyRequirement,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
 pub struct InAppBrowserRequirements {
     pub allow_external_browser_settings_import: Option<bool>,
 }
@@ -552,7 +525,6 @@ pub struct InAppBrowserRequirements {
 #[ts(export_to = "v2/")]
 pub struct ManagedHooksRequirements {
     pub managed_dir: Option<PathBuf>,
-    pub windows_managed_dir: Option<PathBuf>,
     #[serde(rename = "PreToolUse")]
     #[ts(rename = "PreToolUse")]
     pub pre_tool_use: Vec<ConfiguredHookMatcherGroup>,

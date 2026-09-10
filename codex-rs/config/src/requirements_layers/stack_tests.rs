@@ -1,8 +1,6 @@
 use super::super::RequirementsLayerEntry;
-use super::super::hooks::HookDirectoryField;
 use super::RequirementsCompositionError;
 use super::compose_requirements_for_hostname;
-use super::compose_requirements_for_hostname_and_hook_directory;
 use super::compose_requirements_with_hostname_resolver;
 use crate::ConfigRequirementsToml;
 use crate::ConfigRequirementsWithSources;
@@ -33,18 +31,6 @@ fn compose(
         compose_requirements_for_hostname(layers, /*hostname*/ None)?
             .map(ConfigRequirementsWithSources::into_toml),
     )
-}
-
-fn compose_with_hook_directory_field(
-    layers: Vec<RequirementsLayerEntry>,
-    hook_directory_field: HookDirectoryField,
-) -> Result<Option<ConfigRequirementsToml>, RequirementsCompositionError> {
-    Ok(compose_requirements_for_hostname_and_hook_directory(
-        layers,
-        /*hostname*/ None,
-        hook_directory_field,
-    )?
-    .map(ConfigRequirementsWithSources::into_toml))
 }
 
 fn expected_requirements(contents: impl AsRef<str>) -> ConfigRequirementsToml {
@@ -612,12 +598,6 @@ downloads = "allow"
 [computer_use]
 allow_locked_computer_use = true
 default_app_access = "allow"
-
-[computer_use.macos.bundle_ids]
-"com.apple.Safari" = "deny"
-
-[computer_use.windows.aumids]
-"Microsoft.Paint_8wekyb3d8bbwe!App" = "allow"
 "#,
         ),
         layer(
@@ -640,15 +620,6 @@ uploads = "deny"
 
 [computer_use]
 allow_persistent_approval = false
-
-[computer_use.macos.bundle_ids]
-"com.apple.Safari" = "allow"
-
-[[computer_use.windows.exes]]
-publisher_name = "CN=Google LLC"
-product_name = "Google Chrome"
-binary_name = "chrome.exe"
-access = "deny"
 "#,
         ),
     ])
@@ -679,18 +650,6 @@ uploads = "deny"
 allow_locked_computer_use = true
 allow_persistent_approval = false
 default_app_access = "allow"
-
-[computer_use.macos.bundle_ids]
-"com.apple.Safari" = "allow"
-
-[computer_use.windows.aumids]
-"Microsoft.Paint_8wekyb3d8bbwe!App" = "allow"
-
-[[computer_use.windows.exes]]
-publisher_name = "CN=Google LLC"
-product_name = "Google Chrome"
-binary_name = "chrome.exe"
-access = "deny"
 "#
         )
     );
@@ -888,7 +847,7 @@ decision = "prompt"
 
 #[test]
 fn hooks_append_groups_and_reject_conflicting_managed_dirs() {
-    let composed = compose_with_hook_directory_field(
+    let composed = compose(
         vec![
             layer(
                 "req_low",
@@ -920,9 +879,7 @@ type = "command"
 command = "high"
 "#,
             ),
-        ],
-        HookDirectoryField::ManagedDir,
-    )
+    ])
     .expect("compose requirements")
     .expect("requirements present");
 
@@ -950,7 +907,7 @@ command = "low"
         )
     );
 
-    let err = compose_with_hook_directory_field(
+    let err = compose(
         vec![
             layer(
                 "req_low",
@@ -968,177 +925,14 @@ managed_dir = "/managed/low"
 managed_dir = "/managed/high"
 "#,
             ),
-        ],
-        HookDirectoryField::ManagedDir,
-    )
+    ])
     .expect_err("conflicting managed dirs should fail closed");
     assert!(err.to_string().contains("hooks.managed_dir"));
     assert!(err.to_string().contains("High (req_high)"));
     assert!(err.to_string().contains("Low (req_low)"));
 }
 
-#[test]
-fn active_windows_managed_dir_conflicts_fail_closed() {
-    let err = compose_with_hook_directory_field(
-        vec![
-            layer(
-                "req_low",
-                "Low",
-                r#"
-[hooks]
-windows_managed_dir = 'C:\managed\low'
-"#,
-            ),
-            layer(
-                "req_high",
-                "High",
-                r#"
-[hooks]
-windows_managed_dir = 'C:\managed\high'
-"#,
-            ),
-        ],
-        HookDirectoryField::WindowsManagedDir,
-    )
-    .expect_err("conflicting windows managed dirs should fail closed");
 
-    assert!(err.to_string().contains("hooks.windows_managed_dir"));
-    assert!(err.to_string().contains("High (req_high)"));
-    assert!(err.to_string().contains("Low (req_low)"));
-}
-
-#[test]
-fn inactive_hook_dir_conflicts_do_not_fail_composition() {
-    let composed = compose_with_hook_directory_field(
-        vec![
-            layer(
-                "req_low",
-                "Low",
-                r#"
-[hooks]
-managed_dir = "/managed/hooks"
-windows_managed_dir = 'C:\managed\low'
-
-[[hooks.PreToolUse]]
-matcher = "Bash"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "low"
-"#,
-            ),
-            layer(
-                "req_high",
-                "High",
-                r#"
-[hooks]
-managed_dir = "/managed/hooks"
-windows_managed_dir = 'C:\managed\high'
-
-[[hooks.PreToolUse]]
-matcher = "Edit"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "high"
-"#,
-            ),
-        ],
-        HookDirectoryField::ManagedDir,
-    )
-    .expect("inactive windows managed dir conflict should not fail")
-    .expect("requirements present");
-
-    assert_eq!(
-        composed,
-        expected_requirements(
-            r#"
-[hooks]
-managed_dir = "/managed/hooks"
-windows_managed_dir = 'C:\managed\high'
-
-[[hooks.PreToolUse]]
-matcher = "Edit"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "high"
-
-[[hooks.PreToolUse]]
-matcher = "Bash"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "low"
-"#
-        )
-    );
-
-    let composed = compose_with_hook_directory_field(
-        vec![
-            layer(
-                "req_low",
-                "Low",
-                r#"
-[hooks]
-managed_dir = "/managed/low"
-windows_managed_dir = 'C:\managed\hooks'
-
-[[hooks.PreToolUse]]
-matcher = "Bash"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "low"
-"#,
-            ),
-            layer(
-                "req_high",
-                "High",
-                r#"
-[hooks]
-managed_dir = "/managed/high"
-windows_managed_dir = 'C:\managed\hooks'
-
-[[hooks.PreToolUse]]
-matcher = "Edit"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "high"
-"#,
-            ),
-        ],
-        HookDirectoryField::WindowsManagedDir,
-    )
-    .expect("inactive managed dir conflict should not fail")
-    .expect("requirements present");
-
-    assert_eq!(
-        composed,
-        expected_requirements(
-            r#"
-[hooks]
-managed_dir = "/managed/high"
-windows_managed_dir = 'C:\managed\hooks'
-
-[[hooks.PreToolUse]]
-matcher = "Edit"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "high"
-
-[[hooks.PreToolUse]]
-matcher = "Bash"
-
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "low"
-"#
-        )
-    );
-}
 
 #[test]
 fn permissions_deny_read_unions_while_profiles_use_regular_toml_merge() {

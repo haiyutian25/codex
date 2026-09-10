@@ -71,11 +71,9 @@ pub struct InitializeResponse {
     pub user_agent: String,
     /// Absolute path to the server's $CODEX_HOME directory.
     pub codex_home: AbsolutePathBuf,
-    /// Platform family for the running app-server target, for example
-    /// `"unix"` or `"windows"`.
+    /// Platform family for the running app-server target, for example `"unix"`.
     pub platform_family: String,
-    /// Operating system for the running app-server target, for example
-    /// `"macos"`, `"linux"`, or `"windows"`.
+    /// Operating system for the running app-server target, for example `"linux"`.
     pub platform_os: String,
 }
 

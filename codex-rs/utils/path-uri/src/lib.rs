@@ -83,13 +83,10 @@ impl PathUri {
     ///
     /// Paths without a valid URI representation are replaced by
     /// `file:///%00/bad/path/<base64>`, where `<base64>` is the URL-safe, unpadded
-    /// encoding of the original path (Unix bytes or Windows UTF-16LE). This
-    /// includes paths containing nulls, paths whose URI spelling would imply a
-    /// different convention, and, on Windows, unsupported prefix
-    /// kinds such as device and generic verbatim namespaces, non-Unicode path
-    /// or UNC components, and UNC server names that are not valid URL hosts.
+    /// encoding of the original path bytes. This includes paths containing
+    /// nulls and paths whose URI spelling would imply a different convention.
     /// The encoded null reserves a URI namespace that cannot collide with a
-    /// real path on Unix or Windows.
+    /// real path.
     pub fn from_abs_path(path: &AbsolutePathBuf) -> Self {
         if let Ok(url) = Url::from_file_path(path.as_path())
             && let Ok(uri) = Self::try_from(url)
@@ -99,19 +96,9 @@ impl PathUri {
             return uri;
         }
 
-        #[cfg(unix)]
         let path_bytes = {
             use std::os::unix::ffi::OsStrExt;
             path.as_path().as_os_str().as_bytes().to_vec()
-        };
-        #[cfg(windows)]
-        let path_bytes = {
-            use std::os::windows::ffi::OsStrExt;
-            path.as_path()
-                .as_os_str()
-                .encode_wide()
-                .flat_map(u16::to_le_bytes)
-                .collect::<Vec<_>>()
         };
         Self::from_opaque_path_bytes(&path_bytes)
     }
@@ -440,23 +427,11 @@ impl PathUri {
             ));
         }
         if let Some(path_bytes) = decode_bad_path_uri(&self.0) {
-            #[cfg(unix)]
             let decoded_path = {
                 use std::os::unix::ffi::OsStringExt;
                 Some(std::path::PathBuf::from(std::ffi::OsString::from_vec(
                     path_bytes,
                 )))
-            };
-            #[cfg(windows)]
-            let decoded_path = {
-                use std::os::windows::ffi::OsStringExt;
-                path_bytes.len().is_multiple_of(2).then(|| {
-                    let path_wide = path_bytes
-                        .chunks_exact(2)
-                        .map(|bytes| u16::from_le_bytes([bytes[0], bytes[1]]))
-                        .collect::<Vec<_>>();
-                    std::path::PathBuf::from(std::ffi::OsString::from_wide(&path_wide))
-                })
             };
             if let Some(decoded_path) = decoded_path
                 && let Ok(path) = AbsolutePathBuf::from_absolute_path_checked(decoded_path)

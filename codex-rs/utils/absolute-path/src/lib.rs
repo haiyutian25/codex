@@ -141,34 +141,7 @@ fn normalize_path_for_platform(path: &Path) -> Cow<'_, Path> {
     Cow::Borrowed(path)
 }
 
-/// Normalizes Windows drive and UNC namespace aliases on any host.
-pub fn normalize_windows_device_path(path: &str) -> Option<String> {
-    if let Some(unc) = path.strip_prefix(r"\\?\UNC\") {
-        return Some(format!(r"\\{unc}"));
-    }
-    if let Some(unc) = path.strip_prefix(r"\\.\UNC\") {
-        return Some(format!(r"\\{unc}"));
-    }
-    if let Some(path) = path.strip_prefix(r"\\?\")
-        && is_windows_drive_absolute_path(path)
-    {
-        return Some(path.to_string());
-    }
-    if let Some(path) = path.strip_prefix(r"\\.\")
-        && is_windows_drive_absolute_path(path)
-    {
-        return Some(path.to_string());
-    }
-    None
-}
 
-fn is_windows_drive_absolute_path(path: &str) -> bool {
-    let bytes = path.as_bytes();
-    bytes.len() >= 3
-        && bytes[0].is_ascii_alphabetic()
-        && bytes[1] == b':'
-        && matches!(bytes[2], b'\\' | b'/')
-}
 
 /// Canonicalize a path when possible, but preserve the logical absolute path
 /// whenever canonicalization would rewrite it through a nested symlink.
@@ -238,23 +211,9 @@ pub mod test_support {
     use std::path::Path;
     use std::path::PathBuf;
 
-    /// Creates a platform-absolute [`PathBuf`] from a Unix-style absolute test path.
-    ///
-    /// Test infrastructure: on Windows hosts `/tmp/example` maps to `C:\tmp\example`
-    /// so the shared test suites remain runnable for verification.
+    /// Creates an absolute [`PathBuf`] from a Unix-style absolute test path.
     pub fn test_path_buf(unix_path: &str) -> PathBuf {
-        if cfg!(windows) {
-            let mut path = PathBuf::from(r"C:\");
-            path.extend(
-                unix_path
-                    .trim_start_matches('/')
-                    .split('/')
-                    .filter(|segment| !segment.is_empty()),
-            );
-            path
-        } else {
-            PathBuf::from(unix_path)
-        }
+        PathBuf::from(unix_path)
     }
 
     /// Extension methods for converting paths into [`AbsolutePathBuf`] values in tests.
@@ -448,30 +407,6 @@ mod tests {
             .expect_err("relative path should fail");
 
         assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
-    }
-
-    #[test]
-    fn normalize_windows_device_path_strips_supported_verbatim_prefixes() {
-        assert_eq!(
-            normalize_windows_device_path(r"\\?\D:\c\x\worktrees\2508\swift-base"),
-            Some(r"D:\c\x\worktrees\2508\swift-base".to_string())
-        );
-        assert_eq!(
-            normalize_windows_device_path(r"\\.\D:\c\x\worktrees\2508\swift-base"),
-            Some(r"D:\c\x\worktrees\2508\swift-base".to_string())
-        );
-        assert_eq!(
-            normalize_windows_device_path(r"\\?\UNC\server\share\workspace"),
-            Some(r"\\server\share\workspace".to_string())
-        );
-        assert_eq!(
-            normalize_windows_device_path(r"\\.\UNC\server\share\workspace"),
-            Some(r"\\server\share\workspace".to_string())
-        );
-        assert_eq!(
-            normalize_windows_device_path(r"\\?\GLOBALROOT\Device"),
-            None
-        );
     }
 
     #[test]

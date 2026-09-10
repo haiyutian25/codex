@@ -356,10 +356,7 @@ fn from_path_preserves_foreign_absolute_path_for_uri_conversion() {
 
 #[test]
 fn renders_an_absolute_path_using_the_host_convention() {
-    #[cfg(unix)]
     let native_path = "/workspace/a file.rs";
-    #[cfg(windows)]
-    let native_path = r"C:\workspace\a file.rs";
     let path = AbsolutePathBuf::from_absolute_path_checked(native_path)
         .expect("native path should be absolute");
 

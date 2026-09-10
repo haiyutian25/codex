@@ -33,7 +33,6 @@ pub static CODEX_ALIASES_TEMP_DIR: Option<TestBinaryDispatchGuard> = {
     })
 };
 
-#[cfg(not(target_os = "windows"))]
 mod abort_tasks;
 mod additional_context;
 mod agent_execution;
@@ -41,7 +40,6 @@ mod agent_websocket;
 mod agents_md;
 mod apply_patch_cli;
 mod apply_patch_serialization;
-#[cfg(not(target_os = "windows"))]
 mod approvals;
 mod audio_truncation;
 mod auto_review;
@@ -62,26 +60,18 @@ mod cyber_access_program;
 mod cyber_exec_policy;
 mod deprecation_notice;
 mod exec_policy;
-#[cfg(not(target_os = "windows"))]
 mod extension_sandbox;
 mod fork_thread;
 mod git_enrichment;
 mod guardian_mcp_elicitation;
-#[cfg(not(target_os = "windows"))]
 mod guardian_review;
-#[cfg(not(target_os = "windows"))]
 mod guardian_review_cancellation;
-#[cfg(not(target_os = "windows"))]
 mod guardian_subagent_authorization;
-#[cfg(not(target_os = "windows"))]
 mod hooks;
-#[cfg(not(target_os = "windows"))]
 mod hooks_executor;
-#[cfg(not(target_os = "windows"))]
 mod hooks_mcp;
 mod image_rollout;
 mod injected_models_cache;
-#[cfg(not(target_os = "windows"))]
 mod interrupt_hooks;
 mod items;
 mod json_result;
@@ -118,9 +108,7 @@ mod realtime_initial_items;
 mod remote_env;
 mod remote_models;
 mod request_compression;
-#[cfg(not(target_os = "windows"))]
 mod request_permissions;
-#[cfg(not(target_os = "windows"))]
 mod request_plugin_install;
 mod request_user_input;
 mod responses_api_proxy_headers;

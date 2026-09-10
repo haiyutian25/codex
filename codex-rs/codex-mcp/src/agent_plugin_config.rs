@@ -155,11 +155,8 @@ fn normalize_agent_plugin_stdio_server(
     plugin_root: &Path,
     plugin_data_root: &Path,
 ) -> Result<JsonMap<String, JsonValue>, String> {
-    let has_windows_path_prefix = false;
-    let is_bare_command = !command.is_empty()
-        && !command.contains('/')
-        && !command.contains('\\')
-        && !has_windows_path_prefix;
+    let is_bare_command =
+        !command.is_empty() && !command.contains('/') && !command.contains('\\');
     let is_plugin_relative_command =
         command.starts_with("./") && is_portable_relative_path(&command);
     if !is_bare_command && !is_plugin_relative_command {

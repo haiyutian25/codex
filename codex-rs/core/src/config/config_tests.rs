@@ -1730,9 +1730,6 @@ sandbox_mode = "workspace-write"
 
 [sandbox_workspace_write]
 network_access = true
-
-[windows]
-sandbox = "elevated"
 "#,
     )?;
     let config = ConfigBuilder::without_managed_config_for_tests()
@@ -12259,9 +12256,6 @@ allow_login_shell = true
 
 [feedback]
 enabled = true
-
-[windows]
-sandbox_private_desktop = true
 "#,
     )?;
 

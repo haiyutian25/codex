@@ -1,57 +1,26 @@
 //! Hook events are append-only across requirements layers. The managed hook
-//! directory is different: only one directory is usable on a given platform, so
-//! conflicting values for the active platform fail closed. The inactive platform
-//! field is first-filled to allow the same layer stack to carry OS-specific
-//! directories.
+//! directory is different: only one directory is usable, so conflicting values
+//! fail closed.
 
 use crate::HookEventsToml;
 use crate::ManagedHooksRequirementsToml;
 use crate::RequirementSource;
 use crate::Sourced;
-use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use super::stack::composition_conflict;
 use super::stack::merge_output_source;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
-pub(super) enum HookDirectoryField {
-    #[default]
-    ManagedDir,
-    WindowsManagedDir,
-}
+const MANAGED_DIR_FIELD_NAME: &str = "hooks.managed_dir";
 
-impl HookDirectoryField {
-    pub(super) fn current_platform() -> Self {
-        Self::ManagedDir
-    }
-
-    fn field_name(self) -> &'static str {
-        match self {
-            Self::ManagedDir => "hooks.managed_dir",
-            Self::WindowsManagedDir => "hooks.windows_managed_dir",
-        }
-    }
-
-    fn inactive(self) -> Self {
-        match self {
-            Self::ManagedDir => Self::WindowsManagedDir,
-            Self::WindowsManagedDir => Self::ManagedDir,
-        }
-    }
-}
-
+#[derive(Default)]
 pub(super) struct HookMergeState {
-    directory_field: HookDirectoryField,
-    dir_sources: BTreeMap<HookDirectoryField, RequirementSource>,
+    dir_source: Option<RequirementSource>,
 }
 
 impl HookMergeState {
-    pub(super) fn new(directory_field: HookDirectoryField) -> Self {
-        Self {
-            directory_field,
-            dir_sources: BTreeMap::new(),
-        }
+    pub(super) fn new() -> Self {
+        Self::default()
     }
 
     pub(super) fn merge(
@@ -64,37 +33,18 @@ impl HookMergeState {
             return Ok(());
         };
         let Some(existing) = target.as_mut() else {
-            self.track_singleton_source(
-                HookDirectoryField::ManagedDir,
-                &incoming.managed_dir,
-                source,
-            );
-            self.track_singleton_source(
-                HookDirectoryField::WindowsManagedDir,
-                &incoming.windows_managed_dir,
-                source,
-            );
+            if incoming.managed_dir.is_some() {
+                self.dir_source = Some(source.clone());
+            }
             *target = Some(Sourced::new(incoming, source.clone()));
             return Ok(());
         };
 
-        let active_field = self.directory_field;
-        let inactive_field = active_field.inactive();
-        let incoming_active_dir = take_hook_dir(&mut incoming, active_field);
-        let incoming_inactive_dir = take_hook_dir(&mut incoming, inactive_field);
-        let mut changed = false;
-        changed |= self.merge_active_singleton(
-            active_field,
-            hook_dir_mut(&mut existing.value, active_field),
-            incoming_active_dir,
+        let mut changed = self.merge_managed_dir(
+            &mut existing.value.managed_dir,
+            incoming.managed_dir.take(),
             source,
         )?;
-        changed |= self.fill_singleton(
-            inactive_field,
-            hook_dir_mut(&mut existing.value, inactive_field),
-            incoming_inactive_dir,
-            source,
-        );
         changed |= append_hook_events(&mut existing.value.hooks, incoming.hooks);
         if changed {
             merge_output_source(&mut existing.source, source);
@@ -102,22 +52,8 @@ impl HookMergeState {
         Ok(())
     }
 
-    fn track_singleton_source(
+    fn merge_managed_dir(
         &mut self,
-        field: HookDirectoryField,
-        value: &Option<PathBuf>,
-        source: &RequirementSource,
-    ) {
-        if value.is_some() {
-            self.dir_sources
-                .entry(field)
-                .or_insert_with(|| source.clone());
-        }
-    }
-
-    fn merge_active_singleton(
-        &mut self,
-        field: HookDirectoryField,
         existing: &mut Option<PathBuf>,
         incoming: Option<PathBuf>,
         incoming_source: &RequirementSource,
@@ -129,12 +65,11 @@ impl HookMergeState {
         match existing {
             Some(existing_value) if existing_value != &incoming => {
                 let existing_source = self
-                    .dir_sources
-                    .get(&field)
-                    .cloned()
+                    .dir_source
+                    .clone()
                     .unwrap_or_else(|| incoming_source.clone());
                 Err(composition_conflict(
-                    field.field_name().to_string(),
+                    MANAGED_DIR_FIELD_NAME.to_string(),
                     existing_source,
                     incoming_source.clone(),
                     format!(
@@ -147,52 +82,11 @@ impl HookMergeState {
             Some(_) => Ok(false),
             None => {
                 *existing = Some(incoming);
-                self.dir_sources
-                    .entry(field)
-                    .or_insert_with(|| incoming_source.clone());
+                self.dir_source
+                    .get_or_insert_with(|| incoming_source.clone());
                 Ok(true)
             }
         }
-    }
-
-    fn fill_singleton(
-        &mut self,
-        field: HookDirectoryField,
-        existing: &mut Option<PathBuf>,
-        incoming: Option<PathBuf>,
-        incoming_source: &RequirementSource,
-    ) -> bool {
-        if existing.is_none()
-            && let Some(incoming) = incoming
-        {
-            *existing = Some(incoming);
-            self.dir_sources
-                .entry(field)
-                .or_insert_with(|| incoming_source.clone());
-            true
-        } else {
-            false
-        }
-    }
-}
-
-fn take_hook_dir(
-    hooks: &mut ManagedHooksRequirementsToml,
-    field: HookDirectoryField,
-) -> Option<PathBuf> {
-    match field {
-        HookDirectoryField::ManagedDir => hooks.managed_dir.take(),
-        HookDirectoryField::WindowsManagedDir => hooks.windows_managed_dir.take(),
-    }
-}
-
-fn hook_dir_mut(
-    hooks: &mut ManagedHooksRequirementsToml,
-    field: HookDirectoryField,
-) -> &mut Option<PathBuf> {
-    match field {
-        HookDirectoryField::ManagedDir => &mut hooks.managed_dir,
-        HookDirectoryField::WindowsManagedDir => &mut hooks.windows_managed_dir,
     }
 }
 

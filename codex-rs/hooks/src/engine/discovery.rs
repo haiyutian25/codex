@@ -297,7 +297,7 @@ fn managed_hooks_source_path(
     managed_hooks: &ManagedHooksRequirementsToml,
     requirement_source: Option<&RequirementSource>,
 ) -> AbsolutePathBuf {
-    if let Some(source_path) = managed_hooks.managed_dir_for_current_platform()
+    if let Some(source_path) = managed_hooks.managed_dir.as_deref()
         && source_path.is_absolute()
         && let Ok(source_path) = AbsolutePathBuf::from_absolute_path(source_path)
     {

@@ -78,7 +78,6 @@ fn test_absolute_path() -> AbsolutePathBuf {
 fn managed_hooks_requirements_default_interrupt_to_empty() {
     let value = json!({
         "managedDir": null,
-        "windowsManagedDir": null,
         "PreToolUse": [],
         "PermissionRequest": [],
         "PostToolUse": [],

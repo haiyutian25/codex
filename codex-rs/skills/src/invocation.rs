@@ -67,10 +67,10 @@ fn tokenize_command(command: &str) -> Vec<String> {
 }
 
 fn script_run_token(tokens: &[String]) -> Option<&str> {
-    const RUNNERS: [&str; 10] = [
-        "python", "python3", "bash", "zsh", "sh", "node", "deno", "ruby", "perl", "pwsh",
+    const RUNNERS: [&str; 9] = [
+        "python", "python3", "bash", "zsh", "sh", "node", "deno", "ruby", "perl",
     ];
-    const SCRIPT_EXTENSIONS: [&str; 7] = [".py", ".sh", ".js", ".ts", ".rb", ".pl", ".ps1"];
+    const SCRIPT_EXTENSIONS: [&str; 6] = [".py", ".sh", ".js", ".ts", ".rb", ".pl"];
 
     let runner_token = tokens.first()?;
     let runner = command_basename(runner_token).to_ascii_lowercase();

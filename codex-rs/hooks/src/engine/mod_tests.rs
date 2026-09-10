@@ -131,7 +131,6 @@ fn managed_hooks_for_current_platform(
     let managed_dir = managed_dir.as_ref().to_path_buf();
     ManagedHooksRequirementsToml {
         managed_dir: Some(managed_dir),
-        windows_managed_dir: None,
         hooks,
     }
 }

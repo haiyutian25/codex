@@ -1811,9 +1811,6 @@ mod tests {
     use crate::AllowDenyRequirementToml;
     use crate::BrowserUseAccessApprovalLifetimeToml;
     use crate::BrowserUseOriginPolicyToml;
-    use crate::ComputerUseMacosRequirementsToml;
-    use crate::ComputerUseWindowsExeRequirementToml;
-    use crate::ComputerUseWindowsRequirementsToml;
     use crate::HookEventsToml;
     use crate::McpServerCommandMatcher;
     use crate::McpServerIdentity;
@@ -1873,7 +1870,7 @@ mod tests {
             (&[], Some("sqlite_home")),
             (&["feedback"], Some("feedback.enabled")),
             (&["feedback", "other"], None),
-            (&["windows", "sandbox"], None),
+            (&["unknown_requirement", "field"], None),
         ];
 
         for (segments, expected) in cases {
@@ -2170,18 +2167,6 @@ mod tests {
                 allow_locked_computer_use = false
                 allow_persistent_approval = false
                 default_app_access = "deny"
-
-                [computer_use.macos.bundle_ids]
-                "com.apple.Safari" = "allow"
-
-                [computer_use.windows.aumids]
-                "Microsoft.Paint_8wekyb3d8bbwe!App" = "allow"
-
-                [[computer_use.windows.exes]]
-                publisher_name = "CN=Google LLC, O=Google LLC, L=Mountain View, S=California, C=US"
-                product_name = "Google Chrome"
-                binary_name = "chrome.exe"
-                access = "deny"
             "#,
         )?;
 
@@ -2223,26 +2208,6 @@ mod tests {
                 allow_locked_computer_use: Some(false),
                 allow_persistent_approval: Some(false),
                 default_app_access: Some(AllowDenyRequirementToml::Deny),
-                macos: Some(ComputerUseMacosRequirementsToml {
-                    bundle_ids: Some(BTreeMap::from([(
-                        "com.apple.Safari".to_string(),
-                        AllowDenyRequirementToml::Allow,
-                    )])),
-                }),
-                windows: Some(ComputerUseWindowsRequirementsToml {
-                    aumids: Some(BTreeMap::from([(
-                        "Microsoft.Paint_8wekyb3d8bbwe!App".to_string(),
-                        AllowDenyRequirementToml::Allow,
-                    )])),
-                    exes: Some(vec![ComputerUseWindowsExeRequirementToml {
-                        publisher_name:
-                            "CN=Google LLC, O=Google LLC, L=Mountain View, S=California, C=US"
-                                .to_string(),
-                        product_name: "Google Chrome".to_string(),
-                        binary_name: Some("chrome.exe".to_string()),
-                        access: AllowDenyRequirementToml::Deny,
-                    }]),
-                }),
             })
         );
         assert!(!requirements.is_empty());
@@ -2327,18 +2292,6 @@ mod tests {
             (
                 "default app access",
                 "[computer_use]\ndefault_app_access = \"deny\"",
-            ),
-            (
-                "macOS bundle identifier",
-                "[computer_use.macos.bundle_ids]\n\"com.example.App\" = \"deny\"",
-            ),
-            (
-                "Windows AUMID",
-                "[computer_use.windows.aumids]\n\"Example.App_123!Main\" = \"deny\"",
-            ),
-            (
-                "Windows executable",
-                "[[computer_use.windows.exes]]\npublisher_name = \"CN=Example Corp\"\nproduct_name = \"Example App\"\naccess = \"deny\"",
             ),
         ] {
             let requirements: ConfigRequirementsToml = from_str(requirements_toml)?;
@@ -2431,8 +2384,6 @@ mod tests {
             allow_locked_computer_use: Some(false),
             allow_persistent_approval: Some(false),
             default_app_access: None,
-            macos: None,
-            windows: None,
         };
         let auto_review = AutoReviewRequirementsToml {
             required_on_models: Some(vec!["managed-model".to_string()]),
@@ -3721,7 +3672,6 @@ allowed_approvals_reviewers = ["user"]
     fn deserialize_managed_hooks_requirements() -> Result<()> {
         let toml_str = r#"
 managed_dir = "/enterprise/hooks"
-windows_managed_dir = 'C:\enterprise\hooks'
 
 [[PreToolUse]]
 matcher = "^Bash$"
@@ -3819,7 +3769,6 @@ command = "python3 /enterprise/hooks/pre.py"
         let err = managed_hooks
             .set(ManagedHooksRequirementsToml {
                 managed_dir: Some(std::path::PathBuf::from("/other/hooks")),
-                windows_managed_dir: None,
                 hooks: HookEventsToml::default(),
             })
             .expect_err("managed hooks should reject drift");

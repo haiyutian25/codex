@@ -7,8 +7,6 @@ use crate::fs_helper::FsHelperOpenResponse;
 use crate::fs_helper::FsHelperPayload;
 use crate::fs_helper::FsHelperRequest;
 use crate::fs_helper::FsHelperResponse;
-#[cfg(windows)]
-use crate::fs_sandbox::drain_helper_stderr;
 use crate::fs_sandbox::io_error;
 use crate::fs_sandbox::spawn_command;
 use crate::fs_sandbox::wait_for_helper_output;

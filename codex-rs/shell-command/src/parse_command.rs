@@ -1792,7 +1792,6 @@ fn parse_find_query_and_path(tail: &[String]) -> (Option<String>, Option<String>
 }
 
 fn parse_shell_lc_commands(original: &[String]) -> Option<Vec<ParsedCommand>> {
-    // Only handle bash/zsh here; PowerShell is stripped separately without bash parsing.
     let (_, script) = extract_bash_command(original)?;
     Some(parse_shell_script(script))
 }
@@ -2268,31 +2267,8 @@ fn summarize_main_tokens(main_cmd: &[String]) -> ParsedCommand {
                 path,
             }
         }
-        Some((head, tail)) if head == "cat" || head.eq_ignore_ascii_case("Get-Content") => {
-            let path = if head == "cat" {
-                single_non_flag_operand(tail, &[])
-            } else {
-                // Intentionally miss complex reads: conservative presentation should not
-                // require implementing PowerShell's full expression and argument grammar.
-                if tail.iter().all(|argument| {
-                    !argument.starts_with('-')
-                        || ["-Raw", "-Path", "-LiteralPath"]
-                            .iter()
-                            .any(|flag| argument.eq_ignore_ascii_case(flag))
-                }) {
-                    single_non_flag_operand(tail, &[])
-                } else {
-                    None
-                }
-                .filter(|path| {
-                    !path.is_empty()
-                        && !path.starts_with('-')
-                        && path.chars().all(|character| {
-                            character.is_alphanumeric()
-                                || matches!(character, ' ' | '/' | '\\' | '.' | '-' | '_' | ':')
-                        })
-                })
-            };
+        Some((head, tail)) if head == "cat" => {
+            let path = single_non_flag_operand(tail, &[]);
             if let Some(path) = path {
                 let name = short_display_path(&path);
                 ParsedCommand::Read {

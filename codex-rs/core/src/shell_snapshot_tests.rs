@@ -67,7 +67,6 @@ impl Drop for BlockingStdinPipe {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
 fn assert_posix_snapshot_sections(snapshot: &str) {
     assert!(snapshot.contains("# Snapshot file"));
     assert!(snapshot.contains("aliases "));

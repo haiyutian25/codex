@@ -98,8 +98,8 @@ fn path_convention_splits_absolute_relative_and_bare_path_text() {
         ),
         (
             PathConvention::Posix,
-            r"tools\pwsh.exe",
-            vec![r"tools\pwsh.exe"],
+            r"tools\helper",
+            vec![r"tools\helper"],
         ),
     ] {
         assert_eq!(convention.path_segments(path).collect::<Vec<_>>(), expected);

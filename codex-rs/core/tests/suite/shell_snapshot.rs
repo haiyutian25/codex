@@ -417,7 +417,6 @@ async fn linux_unified_exec_uses_shell_snapshot() -> Result<()> {
     Ok(())
 }
 
-#[cfg_attr(target_os = "windows", ignore)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_snapshot_preserves_shell_environment_policy_set() -> Result<()> {
     let builder = test_codex().with_config(|config| {
@@ -466,7 +465,6 @@ async fn unified_exec_snapshot_preserves_shell_environment_policy_set() -> Resul
     Ok(())
 }
 
-#[cfg_attr(target_os = "windows", ignore)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_snapshot_still_intercepts_apply_patch() -> Result<()> {
     let builder = test_codex().with_config(|config| {
@@ -572,7 +570,6 @@ async fn unified_exec_snapshot_still_intercepts_apply_patch() -> Result<()> {
     Ok(())
 }
 
-#[cfg_attr(target_os = "windows", ignore)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn shell_snapshot_deleted_after_shutdown_with_skills() -> Result<()> {
     let builder = test_codex().with_config(|config| {

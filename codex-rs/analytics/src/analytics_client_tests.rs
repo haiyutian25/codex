@@ -305,7 +305,7 @@ fn sample_app_server_client_metadata() -> CodexAppServerClientMetadata {
 fn sample_runtime_metadata() -> CodexRuntimeMetadata {
     CodexRuntimeMetadata {
         codex_rs_version: "0.1.0".to_string(),
-        runtime_os: "macos".to_string(),
+        runtime_os: "linux".to_string(),
         runtime_os_version: "15.3.1".to_string(),
         runtime_arch: "aarch64".to_string(),
     }
@@ -1526,7 +1526,7 @@ fn compaction_event_serializes_expected_shape() {
                 },
                 "runtime": {
                     "codex_rs_version": "0.1.0",
-                    "runtime_os": "macos",
+                    "runtime_os": "linux",
                     "runtime_os_version": "15.3.1",
                     "runtime_arch": "aarch64"
                 },
@@ -1653,7 +1653,7 @@ fn thread_initialized_event_serializes_expected_shape() {
             },
             runtime: CodexRuntimeMetadata {
                 codex_rs_version: "0.1.0".to_string(),
-                runtime_os: "macos".to_string(),
+                runtime_os: "linux".to_string(),
                 runtime_os_version: "15.3.1".to_string(),
                 runtime_arch: "aarch64".to_string(),
             },
@@ -1686,7 +1686,7 @@ fn thread_initialized_event_serializes_expected_shape() {
                 },
                 "runtime": {
                     "codex_rs_version": "0.1.0",
-                    "runtime_os": "macos",
+                    "runtime_os": "linux",
                     "runtime_os_version": "15.3.1",
                     "runtime_arch": "aarch64"
                 },
@@ -1727,7 +1727,7 @@ fn command_execution_event_serializes_expected_shape() {
                 },
                 runtime: CodexRuntimeMetadata {
                     codex_rs_version: "0.99.0".to_string(),
-                    runtime_os: "macos".to_string(),
+                    runtime_os: "linux".to_string(),
                     runtime_os_version: "15.3.1".to_string(),
                     runtime_arch: "aarch64".to_string(),
                 },
@@ -1784,7 +1784,7 @@ fn command_execution_event_serializes_expected_shape() {
                 },
                 "runtime": {
                     "codex_rs_version": "0.99.0",
-                    "runtime_os": "macos",
+                    "runtime_os": "linux",
                     "runtime_os_version": "15.3.1",
                     "runtime_arch": "aarch64"
                 },
@@ -1836,7 +1836,7 @@ fn review_event_serializes_expected_shape() {
             },
             runtime: CodexRuntimeMetadata {
                 codex_rs_version: "0.99.0".to_string(),
-                runtime_os: "macos".to_string(),
+                runtime_os: "linux".to_string(),
                 runtime_os_version: "15.3.1".to_string(),
                 runtime_arch: "aarch64".to_string(),
             },
@@ -1874,7 +1874,7 @@ fn review_event_serializes_expected_shape() {
                 },
                 "runtime": {
                     "codex_rs_version": "0.99.0",
-                    "runtime_os": "macos",
+                    "runtime_os": "linux",
                     "runtime_os_version": "15.3.1",
                     "runtime_arch": "aarch64"
                 },
@@ -4732,7 +4732,7 @@ fn turn_event_serializes_expected_shape() {
                 },
                 "runtime": {
                     "codex_rs_version": "0.1.0",
-                    "runtime_os": "macos",
+                    "runtime_os": "linux",
                     "runtime_os_version": "15.3.1",
                     "runtime_arch": "aarch64"
                 },
@@ -5086,7 +5086,7 @@ async fn turn_lifecycle_emits_turn_event() {
         payload["event_params"]["runtime"],
         json!({
             "codex_rs_version": "0.1.0",
-            "runtime_os": "macos",
+            "runtime_os": "linux",
             "runtime_os_version": "15.3.1",
             "runtime_arch": "aarch64",
         })

@@ -252,7 +252,6 @@ command = "python3 /enterprise/place/pre.py"
         parsed,
         ManagedHooksRequirementsToml {
             managed_dir: Some(std::path::PathBuf::from("/enterprise/place")),
-            windows_managed_dir: None,
             hooks: HookEventsToml {
                 pre_tool_use: vec![MatcherGroup {
                     matcher: Some("^Bash$".to_string()),
