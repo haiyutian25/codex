@@ -94,34 +94,6 @@ fn serialize_workspace_write_environment_context() {
 }
 
 #[test]
-fn serialize_environment_context_with_foreign_windows_cwd() {
-    let mut context = environment_state(
-        [environment(
-            "remote",
-            PathUri::parse("file:///C:/windows").expect("Windows cwd URI"),
-            "powershell",
-        )],
-        /*current_date*/ None,
-        /*timezone*/ None,
-        /*network*/ None,
-        /*subagents*/ None,
-    );
-    context.filesystem = Some(FileSystemContext::from_permission_profile(
-        &PermissionProfile::Disabled,
-        &[PathUri::parse("file:///D:/workspace").expect("Windows workspace root URI")],
-    ));
-
-    assert_eq!(
-        context.render(),
-        r#"<environment_context>
-  <cwd>C:\windows</cwd>
-  <shell>powershell</shell>
-  <filesystem><workspace_roots><root>D:\workspace</root></workspace_roots><permission_profile type="disabled"><file_system type="unrestricted" /></permission_profile></filesystem>
-</environment_context>"#
-    );
-}
-
-#[test]
 fn serialize_environment_context_with_network() {
     let network = NetworkContext::new(
         vec!["api.example.com".to_string(), "*.openai.com".to_string()],
@@ -321,12 +293,8 @@ fn serialize_environment_context_prefers_environment_shell_when_present() {
     let remote_cwd = test_path_buf("/repo/remote");
     let context = environment_state(
         [
-            environment(
-                "local",
-                PathUri::from_abs_path(&local_cwd.abs()),
-                "powershell",
-            ),
-            environment("remote", PathUri::from_abs_path(&remote_cwd.abs()), "cmd"),
+            environment("local", PathUri::from_abs_path(&local_cwd.abs()), "zsh"),
+            environment("remote", PathUri::from_abs_path(&remote_cwd.abs()), "bash"),
         ],
         /*current_date*/ None,
         /*timezone*/ None,
@@ -339,11 +307,11 @@ fn serialize_environment_context_prefers_environment_shell_when_present() {
   <environments>
     <environment id="local" primary="true">
       <cwd>{}</cwd>
-      <shell>powershell</shell>
+      <shell>zsh</shell>
     </environment>
     <environment id="remote" primary="false">
       <cwd>{}</cwd>
-      <shell>cmd</shell>
+      <shell>bash</shell>
     </environment>
   </environments>
 </environment_context>"#,

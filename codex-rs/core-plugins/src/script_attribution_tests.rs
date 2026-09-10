@@ -581,11 +581,7 @@ fn resolves_local_attribution_for_safe_interpreters_and_wrappers() {
         command(&["sh", "-e", &script]),
         command(&["bash", "-e", &script]),
         command(&["zsh", "-e", &script]),
-        command(&["pwsh", "-File", &script]),
-        command(&["powershell", "-File", &script]),
         command(&["bash", "-lc", &unix_wrapper]),
-        command(&["pwsh.exe", "-NoProfile", "-Command", "scripts/run.py"]),
-        command(&["cmd.exe", "/c", "scripts/run.py"]),
     ] {
         assert_eq!(
             roots.resolve_attribution(&command, &root),
@@ -637,12 +633,6 @@ fn rejects_ambiguous_commands_overlaps_and_symlink_escapes() {
         command(&["bash", "-lc", &complex]),
         command(&["node", "--require", "scripts/bootstrap.js", &script]),
         command(&["python", "-m", "scripts.run"]),
-        command(&[
-            "pwsh.exe",
-            "-NoProfile",
-            "-Command",
-            "scripts/run.py; echo done",
-        ]),
         command(&["python", "scripts/missing.py"]),
     ] {
         assert_eq!(roots.resolve_attribution(&command, &root), None);

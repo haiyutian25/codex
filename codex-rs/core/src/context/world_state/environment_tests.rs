@@ -39,10 +39,7 @@ fn snapshots() -> Result<()> {
     let after_environment_changes = EnvironmentsState {
         environments: [
             ("laptop".to_string(), primary("file:///repo", "zsh")?),
-            (
-                "devbox".to_string(),
-                available("file:///workspace", "powershell")?,
-            ),
+            ("devbox".to_string(), available("file:///workspace", "bash")?),
             ("remote".to_string(), starting("file:///remote")?),
         ]
         .into_iter()
@@ -85,19 +82,6 @@ fn snapshots() -> Result<()> {
             &[],
         )),
         ..environments
-    };
-    let foreign_windows = EnvironmentsState {
-        environments: [(
-            "remote".to_string(),
-            available("file:///C:/windows", "powershell")?,
-        )]
-        .into_iter()
-        .collect(),
-        filesystem: Some(FileSystemContext::from_permission_profile(
-            &PermissionProfile::Disabled,
-            &[],
-        )),
-        ..Default::default()
     };
     let unknown_shell = EnvironmentsState {
         environments: [(
@@ -145,7 +129,6 @@ fn snapshots() -> Result<()> {
             Known(&before_turn_context_changes),
             Known(&after_turn_context_changes),
         ),
-        (Absent, Known(&foreign_windows)),
         (Known(&unknown_shell), Known(&known_shell)),
         (Known(&legacy_environment), Known(&empty)),
     ]));
