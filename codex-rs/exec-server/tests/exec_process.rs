@@ -109,18 +109,6 @@ async fn create_process_context(use_remote: bool) -> Result<ProcessContext> {
 #[test_case(false, false, false, false, "sh"; "local_sh_pipe")]
 #[test_case(false, false, false, true, "bash"; "local_bash_env")]
 #[test_case(true, false, false, true, "bash"; "remote_bash_env")]
-#[cfg_attr(
-    target_os = "macos",
-    test_case(false, false, false, false, "zsh"; "local_zsh_pipe")
-)]
-#[cfg_attr(
-    target_os = "macos",
-    test_case(false, false, false, true, "zsh"; "local_zshenv")
-)]
-#[cfg_attr(
-    target_os = "macos",
-    test_case(true, false, false, true, "zsh"; "remote_zshenv")
-)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.
 #[serial_test::serial(remote_exec_server)]
@@ -355,8 +343,6 @@ async fn shell_snapshot_v2_remote_managed_proxy_uses_prepared_execution_context(
 #[test_case(true, true, "bash", 1; "remote_tty_recovery")]
 #[test_case(false, false, "bash", 3; "local_retry_budget_exhausted")]
 #[test_case(true, false, "bash", 3; "remote_retry_budget_exhausted")]
-#[cfg_attr(target_os = "macos", test_case(false, false, "zsh", 1; "local_zsh_recovery"))]
-#[cfg_attr(target_os = "macos", test_case(true, false, "zsh", 1; "remote_zsh_recovery"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial_test::serial(remote_exec_server)]
 async fn shell_snapshot_v2_capture_failure_falls_back_and_retries(
@@ -1092,8 +1078,8 @@ async fn assert_exec_process_write_then_read(use_remote: bool) -> Result<()> {
             process_id: process_id.clone().into(),
             argv: vec![
                 // Use `/bin/sh` instead of Python so this stdin round-trip test
-                // stays portable across Bazel and non-macOS runners where
-                // `/usr/bin/python3` is not guaranteed to exist.
+                // stays portable across Bazel runners where `/usr/bin/python3`
+                // is not guaranteed to exist.
                 "/bin/sh".to_string(),
                 "-c".to_string(),
                 "IFS= read line; printf 'from-stdin:%s\\n' \"$line\"".to_string(),

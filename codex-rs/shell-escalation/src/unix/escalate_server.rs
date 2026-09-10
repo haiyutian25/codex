@@ -1057,8 +1057,8 @@ mod tests {
         let handshake_client = unsafe { AsyncDatagramSocket::from_raw_fd(dup_socket_fd) }?;
         let (server_stream, client_stream) = AsyncSocket::pair()?;
         // Keep one local reference to the server end alive until the worker has
-        // responded once. Without that guard, macOS can observe EOF on the
-        // client side before the transferred fd is fully servicing the stream.
+        // responded once. Without that guard, some platforms can observe EOF on
+        // the client side before the transferred fd is fully servicing the stream.
         let server_stream_guard = server_stream.into_inner();
         let dup_server_stream_fd = unsafe { libc::dup(server_stream_guard.as_raw_fd()) };
         assert!(

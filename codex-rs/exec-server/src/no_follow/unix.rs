@@ -28,12 +28,7 @@ fn directory_access_flags() -> OFlags {
     OFlags::PATH
 }
 
-#[cfg(target_vendor = "apple")]
-fn directory_access_flags() -> OFlags {
-    OFlags::from_bits_retain(libc::O_SEARCH as u32)
-}
-
-#[cfg(not(any(target_os = "linux", target_os = "android", target_vendor = "apple")))]
+#[cfg(not(any(target_os = "linux", target_os = "android")))]
 fn directory_access_flags() -> OFlags {
     OFlags::RDONLY
 }
@@ -234,12 +229,7 @@ fn file_metadata(metadata: Stat, created_at_ms: i64) -> io::Result<FileMetadata>
     })
 }
 
-#[cfg(target_vendor = "apple")]
-fn created_at_ms(metadata: &Stat) -> i64 {
-    unix_time_ms(metadata.st_birthtime, metadata.st_birthtime_nsec)
-}
-
-#[cfg(not(any(target_vendor = "apple", target_os = "linux")))]
+#[cfg(not(target_os = "linux"))]
 fn created_at_ms(_metadata: &Stat) -> i64 {
     0
 }

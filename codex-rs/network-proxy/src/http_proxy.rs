@@ -144,7 +144,7 @@ pub(crate) fn http_proxy_service(
 
     // This proxy listener only needs HTTP/1 proxy semantics. Using Rama's auto builder
     // forces every accepted socket through the HTTP version sniffing pre-read path before proxy
-    // request parsing, which can stall some local clients on macOS before CONNECT/absolute-form
+    // request parsing, which can stall some local clients before CONNECT/absolute-form
     // handling runs at all.
     let http_service = HttpServer::http1().service(
         (

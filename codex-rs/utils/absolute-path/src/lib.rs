@@ -146,7 +146,7 @@ fn normalize_path_for_platform(path: &Path) -> Cow<'_, Path> {
 /// Canonicalize a path when possible, but preserve the logical absolute path
 /// whenever canonicalization would rewrite it through a nested symlink.
 ///
-/// Top-level system aliases such as macOS `/var -> /private/var` still remain
+/// Top-level system aliases such as `/var -> /private/var` still remain
 /// canonicalized so existing runtime expectations around those paths stay
 /// stable. If the full path cannot be canonicalized, this returns the logical
 /// absolute path; use [`canonicalize_existing_preserving_symlinks`] for paths

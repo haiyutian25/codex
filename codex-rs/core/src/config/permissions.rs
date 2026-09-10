@@ -335,23 +335,21 @@ pub fn compile_permission_profile(
                 missing_filesystem_entries_warning(profile_name),
             );
         } else {
-            if cfg!(not(target_os = "macos")) {
-                for pattern in unsupported_read_write_glob_paths(filesystem) {
-                    push_warning(
-                        startup_warnings,
-                        format!(
-                            "Filesystem glob `{pattern}` uses `read` or `write` access, which is not fully supported by this platform's sandboxing. Use an exact path or trailing `/**` subtree rule instead. `deny` globs are supported."
-                        ),
-                    );
-                }
-                for pattern in unbounded_unreadable_globstar_paths(filesystem) {
-                    push_warning(
-                        startup_warnings,
-                        format!(
-                            "Filesystem deny-read glob `{pattern}` uses `**`. Non-macOS sandboxing does not support unbounded `**` natively; set `glob_scan_max_depth` in this filesystem profile to cap Linux glob expansion and silence this warning, or enumerate explicit depths such as `*.env`, `*/*.env`, and `*/*/*.env`."
-                        ),
-                    );
-                }
+            for pattern in unsupported_read_write_glob_paths(filesystem) {
+                push_warning(
+                    startup_warnings,
+                    format!(
+                        "Filesystem glob `{pattern}` uses `read` or `write` access, which is not fully supported by this platform's sandboxing. Use an exact path or trailing `/**` subtree rule instead. `deny` globs are supported."
+                    ),
+                );
+            }
+            for pattern in unbounded_unreadable_globstar_paths(filesystem) {
+                push_warning(
+                    startup_warnings,
+                    format!(
+                        "Filesystem deny-read glob `{pattern}` uses `**`. Sandboxing does not support unbounded `**` natively; set `glob_scan_max_depth` in this filesystem profile to cap Linux glob expansion and silence this warning, or enumerate explicit depths such as `*.env`, `*/*.env`, and `*/*/*.env`."
+                    ),
+                );
             }
             for (path, permission) in &filesystem.entries {
                 file_system_sandbox_policy

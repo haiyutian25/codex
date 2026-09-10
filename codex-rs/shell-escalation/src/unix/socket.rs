@@ -267,7 +267,7 @@ impl AsyncSocket {
 
     pub fn pair() -> std::io::Result<(AsyncSocket, AsyncSocket)> {
         // `socket2::Socket::pair()` also applies "common flags" (including
-        // `SO_NOSIGPIPE` on Apple platforms), which can fail for AF_UNIX sockets.
+        // `SO_NOSIGPIPE` on some platforms), which can fail for AF_UNIX sockets.
         // Use `pair_raw()` to avoid those side effects, then restore `CLOEXEC`
         // explicitly on both endpoints.
         let (server, client) = Socket::pair_raw(Domain::UNIX, Type::STREAM, None)?;
@@ -381,7 +381,7 @@ impl AsyncDatagramSocket {
 
     pub fn pair() -> std::io::Result<(Self, Self)> {
         // `socket2::Socket::pair()` also applies "common flags" (including
-        // `SO_NOSIGPIPE` on Apple platforms), which can fail for AF_UNIX sockets.
+        // `SO_NOSIGPIPE` on some platforms), which can fail for AF_UNIX sockets.
         // Use `pair_raw()` to avoid those side effects, then restore `CLOEXEC`
         // explicitly on both endpoints.
         let (server, client) = Socket::pair_raw(Domain::UNIX, Type::DGRAM, None)?;

@@ -23,7 +23,7 @@ async fn no_follow_rejects_leaf_and_ancestor_links_for_every_patch_operation() -
             "*** Update File: source.txt\n*** Move to: linked/new/nested.txt\n@@\n-original\n+changed".to_string(),
         ] {
             let temp = tempfile::tempdir()?;
-            // macOS's temporary directory can itself contain a /var symlink.
+            // Some temporary directories can themselves contain a /var symlink.
             let root = temp.path().canonicalize()?;
             let work = root.join("work");
             let outside = root.join("outside");

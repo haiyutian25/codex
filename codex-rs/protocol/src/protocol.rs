@@ -1231,8 +1231,8 @@ impl SandboxPolicy {
                 // Start from explicitly configured writable roots.
                 let mut roots: Vec<AbsolutePathBuf> = writable_roots.clone();
 
-                // Always include defaults: cwd, /tmp (if present on Unix), and
-                // on macOS, the per-user TMPDIR unless explicitly excluded.
+                // Always include defaults: cwd, /tmp (if present on Unix), and the
+                // per-user TMPDIR unless explicitly excluded.
                 // TODO(mbolin): cwd param should be AbsolutePathBuf.
                 let cwd_absolute = AbsolutePathBuf::from_absolute_path(cwd);
                 match cwd_absolute {
@@ -1261,8 +1261,8 @@ impl SandboxPolicy {
                     }
                 }
 
-                // Include $TMPDIR unless explicitly excluded. On macOS, TMPDIR
-                // is per-user, so writes to TMPDIR should not be readable by
+                // Include $TMPDIR unless explicitly excluded. TMPDIR is
+                // per-user, so writes to TMPDIR should not be readable by
                 // other users on the system.
                 //
                 // By comparison, TMPDIR is not guaranteed to be defined, but

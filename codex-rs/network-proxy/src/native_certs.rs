@@ -42,32 +42,30 @@ fn platform_cert_dirs() -> impl Iterator<Item = std::path::PathBuf> {
         .map(std::path::Path::to_path_buf)
 }
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "linux"))]
+#[cfg(all(unix, target_os = "linux"))]
 const PLATFORM_CERTIFICATE_DIRS: &[&str] = &[
     "/etc/ssl/certs",
     "/etc/pki/tls/certs",
     "/etc/security/certificates",
 ];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "freebsd"))]
+#[cfg(all(unix, target_os = "freebsd"))]
 const PLATFORM_CERTIFICATE_DIRS: &[&str] = &["/etc/ssl/certs", "/usr/local/share/certs"];
 
 #[cfg(all(
     unix,
-    not(target_os = "macos"),
     any(target_os = "illumos", target_os = "solaris")
 ))]
 const PLATFORM_CERTIFICATE_DIRS: &[&str] = &["/etc/certs/CA"];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "netbsd"))]
+#[cfg(all(unix, target_os = "netbsd"))]
 const PLATFORM_CERTIFICATE_DIRS: &[&str] = &["/etc/openssl/certs"];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "aix"))]
+#[cfg(all(unix, target_os = "aix"))]
 const PLATFORM_CERTIFICATE_DIRS: &[&str] = &["/var/ssl/certs"];
 
 #[cfg(all(
     unix,
-    not(target_os = "macos"),
     not(any(
         target_os = "linux",
         target_os = "freebsd",
@@ -79,7 +77,7 @@ const PLATFORM_CERTIFICATE_DIRS: &[&str] = &["/var/ssl/certs"];
 ))]
 const PLATFORM_CERTIFICATE_DIRS: &[&str] = &["/etc/ssl/certs"];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "linux"))]
+#[cfg(all(unix, target_os = "linux"))]
 const PLATFORM_CERTIFICATE_FILE_NAMES: &[&str] = &[
     "/etc/ssl/certs/ca-certificates.crt",
     "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",
@@ -91,35 +89,34 @@ const PLATFORM_CERTIFICATE_FILE_NAMES: &[&str] = &[
     "/etc/ssl/certs/cacert.pem",
 ];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "freebsd"))]
+#[cfg(all(unix, target_os = "freebsd"))]
 const PLATFORM_CERTIFICATE_FILE_NAMES: &[&str] = &["/usr/local/etc/ssl/cert.pem"];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "dragonfly"))]
+#[cfg(all(unix, target_os = "dragonfly"))]
 const PLATFORM_CERTIFICATE_FILE_NAMES: &[&str] = &["/usr/local/share/certs/ca-root-nss.crt"];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "netbsd"))]
+#[cfg(all(unix, target_os = "netbsd"))]
 const PLATFORM_CERTIFICATE_FILE_NAMES: &[&str] = &["/etc/openssl/certs/ca-certificates.crt"];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "openbsd"))]
+#[cfg(all(unix, target_os = "openbsd"))]
 const PLATFORM_CERTIFICATE_FILE_NAMES: &[&str] = &["/etc/ssl/cert.pem"];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "solaris"))]
+#[cfg(all(unix, target_os = "solaris"))]
 const PLATFORM_CERTIFICATE_FILE_NAMES: &[&str] = &["/etc/certs/ca-certificates.crt"];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "illumos"))]
+#[cfg(all(unix, target_os = "illumos"))]
 const PLATFORM_CERTIFICATE_FILE_NAMES: &[&str] =
     &["/etc/ssl/cacert.pem", "/etc/certs/ca-certificates.crt"];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "android"))]
+#[cfg(all(unix, target_os = "android"))]
 const PLATFORM_CERTIFICATE_FILE_NAMES: &[&str] =
     &["/data/data/com.termux/files/usr/etc/tls/cert.pem"];
 
-#[cfg(all(unix, not(target_os = "macos"), target_os = "haiku"))]
+#[cfg(all(unix, target_os = "haiku"))]
 const PLATFORM_CERTIFICATE_FILE_NAMES: &[&str] = &["/boot/system/data/ssl/CARootCertificates.pem"];
 
 #[cfg(all(
     unix,
-    not(target_os = "macos"),
     not(any(
         target_os = "linux",
         target_os = "freebsd",

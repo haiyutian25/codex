@@ -120,7 +120,7 @@ fn receive_file_descriptor(
             _ => None,
         })
         .ok_or_else(|| io::Error::other("missing transferred file descriptor"))?;
-    // macOS cannot set this atomically, so the fd is briefly inheritable.
+    // Non-Linux platforms cannot set this atomically, so the fd is briefly inheritable.
     // Shell and filesystem helper launches close inherited fds to limit that race.
     #[cfg(not(target_os = "linux"))]
     rustix::io::fcntl_setfd(&descriptor, rustix::io::FdFlags::CLOEXEC)?;
