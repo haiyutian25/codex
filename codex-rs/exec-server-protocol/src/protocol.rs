@@ -98,7 +98,6 @@ pub struct EnvironmentInfo {
     #[serde(default)]
     pub cwd: Option<PathUri>,
     /// Executor-local default directories for resolving `:tmpdir`, when reported.
-    /// On Windows, a command's `TEMP` or `TMP` overrides take precedence.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub temporary_directories: Option<Vec<PathUri>>,
     /// Executor-native temporary directory for child-visible sidecars.
@@ -165,19 +164,14 @@ impl EnvironmentInfo {
     fn local_temporary_directories_with_cwd(cwd: Option<&std::path::Path>) -> Vec<PathUri> {
         let temporary_directory_env_vars: &[&str] = &["TMPDIR"];
         let normalize_temp_path = |path: std::ffi::OsString| {
-            PathUri::from_host_native_path(&path).ok().or_else(|| {
-                if cfg!(unix) {
-                    PathUri::from_host_native_path(cwd.as_ref()?.join(path)).ok()
-                } else {
-                    None
-                }
-            })
+            PathUri::from_host_native_path(&path)
+                .ok()
+                .or_else(|| PathUri::from_host_native_path(cwd.as_ref()?.join(path)).ok())
         };
         let mut temporary_directories = Vec::new();
         for name in temporary_directory_env_vars {
             if let Some(path) = std::env::var_os(name)
                 .filter(|path| !path.is_empty())
-                .filter(|path| cfg!(unix) || std::path::Path::new(path).is_absolute())
                 .and_then(&normalize_temp_path)
                 && !temporary_directories.contains(&path)
             {
@@ -192,13 +186,9 @@ impl EnvironmentInfo {
         let cwd = std::env::current_dir().ok();
         let temporary_directories = Self::local_temporary_directories_with_cwd(cwd.as_deref());
         let normalize_temp_path = |path: std::ffi::OsString| {
-            PathUri::from_host_native_path(&path).ok().or_else(|| {
-                if cfg!(unix) {
-                    PathUri::from_host_native_path(cwd.as_ref()?.join(path)).ok()
-                } else {
-                    None
-                }
-            })
+            PathUri::from_host_native_path(&path)
+                .ok()
+                .or_else(|| PathUri::from_host_native_path(cwd.as_ref()?.join(path)).ok())
         };
         let temp_dir = normalize_temp_path(std::env::temp_dir().into_os_string());
 
@@ -213,7 +203,7 @@ impl EnvironmentInfo {
                 environment_config_read: true,
                 http_header_env_vars: true,
                 sandboxed_file_streaming: true,
-                shell_snapshot_v2: cfg!(unix),
+                shell_snapshot_v2: true,
             },
         }
     }
@@ -223,10 +213,10 @@ impl EnvironmentInfo {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ShellInfo {
-    /// Stable shell name, for example `zsh`, `bash`, `powershell`, `sh`, or `cmd`.
+    /// Stable shell name, for example `zsh`, `bash`, or `sh`.
     pub name: String,
-    /// Target-native shell executable path or command name. Fallbacks such as `cmd.exe` need not
-    /// be absolute, so this is not a [`PathUri`].
+    /// Target-native shell executable path or command name. Fallback names need not be absolute,
+    /// so this is not a [`PathUri`].
     pub path: String,
 }
 
@@ -998,9 +988,9 @@ mod tests {
     #[test]
     fn environment_info_preserves_executor_temporary_directories() {
         let expected = serde_json::json!({
-            "shell": { "name": "powershell", "path": "powershell.exe" },
+            "shell": { "name": "zsh", "path": "/bin/zsh" },
             "cwd": null,
-            "temporaryDirectories": ["file:///C:/Temp", "file:///D:/Temp"],
+            "temporaryDirectories": ["file:///tmp", "file:///var/tmp"],
             "capabilities": {
                 "networkProxyLaunch": false,
                 "capabilityDiscoverySandbox": false,
@@ -1027,15 +1017,10 @@ mod tests {
             .iter()
             .filter_map(std::env::var_os)
             .filter(|path| !path.is_empty())
-            .filter(|path| cfg!(unix) || std::path::Path::new(path).is_absolute())
             .filter_map(|path| {
-                PathUri::from_host_native_path(&path).ok().or_else(|| {
-                    if cfg!(unix) {
-                        PathUri::from_host_native_path(cwd.join(path)).ok()
-                    } else {
-                        None
-                    }
-                })
+                PathUri::from_host_native_path(&path)
+                    .ok()
+                    .or_else(|| PathUri::from_host_native_path(cwd.join(path)).ok())
             })
             .collect::<Vec<_>>();
         expected.dedup();
