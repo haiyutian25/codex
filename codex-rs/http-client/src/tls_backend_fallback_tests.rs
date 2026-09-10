@@ -4,7 +4,6 @@ use pretty_assertions::assert_eq;
 
 use super::MAX_CACHED_RUSTLS_DESTINATIONS;
 use super::RustlsClientCache;
-use super::SCHANNEL_PROTOCOL_VERSION_ERROR;
 use super::has_retryable_tls_error;
 use crate::HttpClientBuilder;
 use crate::OutboundProxyRoute;
@@ -12,21 +11,11 @@ use crate::OutboundProxyRoute;
 #[test]
 fn recognizes_platform_specific_tls_protocol_negotiation_failures() {
     let errors = [
-        ("client error (Connect): bad protocol version", true),
-        ("BAD PROTOCOL VERSION", true),
         (
             "error:0A00042E:SSL routines:ssl3_read_bytes:tlsv1 alert protocol version",
             true,
         ),
         ("TLSV1 ALERT PROTOCOL VERSION", true),
-        (
-            "The function requested is not supported. (os error -2146893054)",
-            true,
-        ),
-        ("Schannel protocol error 0x80090302", true),
-        ("SCHANNEL PROTOCOL ERROR 0X80090302", true),
-        ("certificate validation failed: bad protocol version", false),
-        ("bad protocol version: certificate has expired", false),
         (
             "certificate validation failed: tlsv1 alert protocol version",
             false,
@@ -35,11 +24,6 @@ fn recognizes_platform_specific_tls_protocol_negotiation_failures() {
             "tlsv1 alert protocol version: certificate has expired",
             false,
         ),
-        (
-            "certificate validation failed (os error -2146893054)",
-            false,
-        ),
-        ("certificate validation failed: 0x80090302", false),
         ("unknown issuer", false),
         ("self-signed certificate", false),
         ("hostname mismatch", false),
@@ -49,11 +33,6 @@ fn recognizes_platform_specific_tls_protocol_negotiation_failures() {
         ("tls handshake failed", false),
         ("unsupported protocol", false),
         ("wrong version number", false),
-        ("The function requested is not supported.", false),
-        (
-            "The client and server cannot communicate. (os error -2146893007)",
-            false,
-        ),
         ("operation timed out", false),
         ("407 Proxy Authentication Required", false),
     ];
@@ -65,26 +44,9 @@ fn recognizes_platform_specific_tls_protocol_negotiation_failures() {
 }
 
 #[test]
-fn recognizes_schannel_protocol_version_error_codes() {
-    let protocol_error = io::Error::from_raw_os_error(SCHANNEL_PROTOCOL_VERSION_ERROR);
-    let another_schannel_error = io::Error::from_raw_os_error(/*code*/ -2_146_893_007);
-
-    assert_eq!(
-        (
-            has_retryable_tls_error(&protocol_error),
-            has_retryable_tls_error(&another_schannel_error),
-        ),
-        (true, false)
-    );
-}
-
-#[test]
 fn certificate_errors_in_an_error_source_never_enable_fallback() {
     for message in [
-        "certificate verification failed: bad protocol version",
         "certificate verification failed: tlsv1 alert protocol version",
-        "certificate verification failed (os error -2146893054)",
-        "certificate verification failed: 0x80090302",
     ] {
         let error = io::Error::other(io::Error::other(message));
 

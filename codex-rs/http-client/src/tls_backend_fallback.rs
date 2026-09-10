@@ -13,8 +13,6 @@ use crate::HttpClient;
 use crate::OutboundProxyRoute;
 
 const MAX_CACHED_RUSTLS_DESTINATIONS: usize = 16;
-// Schannel maps TLS alert 70 (protocol_version) to SEC_E_UNSUPPORTED_FUNCTION.
-const SCHANNEL_PROTOCOL_VERSION_ERROR: i32 = 0x8009_0302_u32 as i32;
 
 #[derive(Clone, Default)]
 pub(crate) struct RustlsClientCache {
@@ -128,21 +126,9 @@ fn has_retryable_tls_error(error: &(dyn Error + 'static)) -> bool {
             return false;
         }
 
-        // macOS Secure Transport reports the protocol alert as "bad protocol version".
-        let is_macos_protocol_version_error = message.contains("bad protocol version");
         // Linux OpenSSL reports the peer's "tlsv1 alert protocol version".
-        let is_linux_protocol_version_error = message.contains("tlsv1 alert protocol version");
-        // Windows Schannel may expose the protocol alert as a raw or formatted OS error.
-        let is_schannel_protocol_version_error = error
-            .downcast_ref::<std::io::Error>()
-            .and_then(std::io::Error::raw_os_error)
-            == Some(SCHANNEL_PROTOCOL_VERSION_ERROR)
-            || message.contains("(os error -2146893054)")
-            || message.contains("0x80090302");
-        if is_macos_protocol_version_error
-            || is_linux_protocol_version_error
-            || is_schannel_protocol_version_error
-        {
+        let is_protocol_version_error = message.contains("tlsv1 alert protocol version");
+        if is_protocol_version_error {
             recognized_negotiation_failure = true;
         }
         source = error.source();

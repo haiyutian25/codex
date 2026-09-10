@@ -150,9 +150,8 @@ impl ExecRequest {
     }
 }
 
-/// Readiness probe for the PRoot backend, mirroring the Windows sandbox
-/// readiness surface. Host apps call this before the first turn to decide
-/// whether sandboxed guest execution is available (executable + rootfs).
+/// Readiness probe for the PRoot backend. Host apps call this before the first
+/// turn to decide whether sandboxed guest execution is available (executable + rootfs).
 ///
 /// Each probe is recorded to telemetry as `codex.proot.readiness` with a
 /// `status` tag (ready / not_configured / missing_executable / missing_rootfs).

@@ -804,7 +804,6 @@ async fn apply_patch_cli_delete_directory_reports_verification_error() -> Result
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn apply_patch_cli_rejects_path_traversal_outside_workspace() -> Result<()> {
-    // TODO(anp): Remove after apply_patch path handling supports target-native Windows paths.
     skip_if_no_network!(Ok(()));
 
     let harness = apply_patch_harness().await?;

@@ -329,7 +329,7 @@ async fn windows_executor_skill_read_rejects_disabled_sandbox_on_any_orchestrato
             mcp_resources: None,
         })
         .await
-        .expect_err("disabled Windows sandbox must fail closed");
+        .expect_err("disabled sandbox must fail closed");
 
     assert_eq!(
         error.message,

@@ -36,8 +36,6 @@ use mcp_test_support::create_final_assistant_message_sse_response;
 use mcp_test_support::create_mock_responses_server;
 use mcp_test_support::format_with_current_shell;
 
-// Windows CI can spend tens of seconds in session startup before the first
-// mock model request is sent.
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
 
 /// Test that an explicitly escalated exec command triggers MCP elicitation and

@@ -383,8 +383,8 @@ impl From<BuildRouteAwareHttpClientError> for io::Error {
 ///
 /// Unavailable platform resolution falls back to environment proxies and then direct. Errors after
 /// a route is selected are returned without trying another route. Ordered PAC candidates are
-/// currently collapsed to one route on both Windows and macOS; later proxy or `DIRECT` candidates
-/// are not retried after a connection failure.
+/// collapsed to one route; later proxy or `DIRECT` candidates are not retried after a connection
+/// failure.
 fn build_reqwest_client_for_route(
     builder: reqwest::ClientBuilder,
     request_url: &str,
