@@ -42,8 +42,7 @@ impl UnifiedExecShellMode {
         shell_zsh_path: Option<&PathBuf>,
         main_execve_wrapper_exe: Option<&PathBuf>,
     ) -> Self {
-        if cfg!(unix)
-            && features.enabled(Feature::ShellTool)
+        if features.enabled(Feature::ShellTool)
             && features.enabled(Feature::UnifiedExec)
             && features.enabled(Feature::ShellZshFork)
             && features.enabled(Feature::UnifiedExecZshFork)

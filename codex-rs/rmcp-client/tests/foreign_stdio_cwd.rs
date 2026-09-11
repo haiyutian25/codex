@@ -33,7 +33,7 @@ impl ExecBackend for RecordingExecBackend {
 
 #[tokio::test]
 async fn executor_stdio_forwards_foreign_absolute_cwd_as_path_uri() {
-    let cwd = r"C:\Users\openai\share";
+    let cwd = "/C:/Users/openai/share";
     let expected_cwd: PathUri = "file:///C:/Users/openai/share"
         .parse()
         .expect("expected cwd should be a path URI");

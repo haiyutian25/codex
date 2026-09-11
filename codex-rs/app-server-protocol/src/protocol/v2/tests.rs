@@ -119,9 +119,8 @@ fn thread_background_terminals_list_response_round_trips_foreign_paths() {
         ("file:///home/alice/repo", "/home/alice/repo"),
         (
             "file:///C:/Users/Alice%20Smith/repo",
-            r"C:\Users\Alice Smith\repo",
+            "/C:/Users/Alice Smith/repo",
         ),
-        ("file://server/share/repo", r"\\server\share\repo"),
     ] {
         let response = ThreadBackgroundTerminalsListResponse {
             data: vec![ThreadBackgroundTerminal {
@@ -777,37 +776,6 @@ fn permissions_request_approval_uses_request_permission_profile() {
 }
 
 #[test]
-fn permissions_request_approval_rejects_macos_permissions() {
-    let err = serde_json::from_value::<PermissionsRequestApprovalParams>(json!({
-        "threadId": "thr_123",
-        "turnId": "turn_123",
-        "itemId": "call_123",
-        "startedAtMs": 1,
-        "cwd": absolute_path_string("repo"),
-        "reason": "Select a workspace root",
-        "permissions": {
-            "network": null,
-            "fileSystem": null,
-            "macos": {
-                "preferences": "read_only",
-                "automations": "none",
-                "launchServices": false,
-                "accessibility": false,
-                "calendar": false,
-                "reminders": false,
-                "contacts": "none",
-            },
-        },
-    }))
-    .expect_err("permissions request should reject macos permissions");
-
-    assert!(
-        err.to_string().contains("unknown field `macos`"),
-        "unexpected error: {err}"
-    );
-}
-
-#[test]
 fn additional_file_system_permissions_preserves_canonical_entries() {
     let core_permissions = CoreFileSystemPermissions {
         entries: vec![
@@ -858,7 +826,7 @@ fn additional_file_system_permissions_preserves_canonical_entries() {
         core_permissions
     );
 
-    for path in [r"C:\workspace\read-only", r"\\server\share\read-only"] {
+    for path in ["/C:/workspace/read-only", "/server/share/read-only"] {
         let path = LegacyAppPathString::from_string(path);
         let core_permissions = CoreFileSystemPermissions::from_read_write_path_uris(
             Some(vec![
@@ -877,7 +845,7 @@ fn additional_file_system_permissions_preserves_canonical_entries() {
     }
     assert!(
         CoreFileSystemPermissions::try_from(AdditionalFileSystemPermissions {
-            read: Some(vec![LegacyAppPathString::from_string(r"\\localhost\share")]),
+            read: Some(vec![LegacyAppPathString::from_string("/localhost/share")]),
             write: None,
             glob_scan_max_depth: None,
             entries: None,
@@ -960,7 +928,7 @@ fn legacy_current_working_directory_special_path_deserializes_as_project_roots()
 }
 
 #[test]
-fn permissions_request_approval_response_uses_granted_permission_profile_without_macos() {
+fn permissions_request_approval_response_uses_granted_permission_profile() {
     let read_only_path = absolute_path_string("tmp/read-only");
     let read_write_path = absolute_path_string("tmp/read-write");
     let response = serde_json::from_value::<PermissionsRequestApprovalResponse>(json!({
@@ -2804,9 +2772,8 @@ fn guardian_stdin_review_action_round_trips_native_and_foreign_paths() {
         ("file:///home/alice/repo", "/home/alice/repo"),
         (
             "file:///C:/Users/Alice%20Smith/repo",
-            r"C:\Users\Alice Smith\repo",
+            "/C:/Users/Alice Smith/repo",
         ),
-        ("file://server/share/repo", r"\\server\share\repo"),
     ] {
         let core_action = CoreGuardianAssessmentAction::WriteStdin {
             approval_id: "stdin-approval".into(),
@@ -4567,7 +4534,7 @@ fn thread_lifecycle_responses_default_missing_optional_fields() {
     );
 
     let foreign_source: LegacyAppPathString =
-        serde_json::from_value(json!(r"C:\workspace\AGENTS.md")).expect("foreign source");
+        serde_json::from_value(json!("/C:/workspace/AGENTS.md")).expect("foreign source");
     let mut response_with_foreign_source = response;
     response_with_foreign_source["instructionSources"] = json!([foreign_source.as_str()]);
     let start: ThreadStartResponse = serde_json::from_value(response_with_foreign_source.clone())

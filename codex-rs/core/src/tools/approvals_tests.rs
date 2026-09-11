@@ -91,7 +91,7 @@ fn guardian_cwd_preserves_drive_shaped_local_posix_path() {
 
 #[test]
 fn guardian_cwd_rejects_foreign_remote_path() {
-    let cwd = PathUri::parse("file:///C:/workspace").expect("valid Windows path URI");
+    let cwd = PathUri::parse("file:///C:/workspace").expect("valid foreign path URI");
 
     assert!(guardian_cwd(codex_exec_server::REMOTE_ENVIRONMENT_ID, cwd).is_err());
 }

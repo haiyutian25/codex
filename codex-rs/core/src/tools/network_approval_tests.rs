@@ -506,7 +506,7 @@ async fn active_call_preserves_triggering_command_context() {
         call_id: "call-1".to_string(),
         tool_name: tool_name.to_string(),
         command: vec!["curl".to_string(), "https://example.com".to_string()],
-        cwd: PathUri::parse("file:///C:/repo").expect("valid Windows path URI"),
+        cwd: PathUri::parse("file:///C:/repo").expect("valid foreign path URI"),
         sandbox_permissions: SandboxPermissions::UseDefault,
         additional_permissions: None,
         justification: Some("fetch release metadata".to_string()),

@@ -320,9 +320,9 @@ impl TurnDiffTracker {
         self.rendered_diff_count
             .set(self.rendered_diff_count.get() + 1);
 
-        // Git diff paths always use `/`, even when the displayed target path is Windows-native.
-        let left_display = self.display_path(left_path).replace('\\', "/");
-        let right_display = self.display_path(right_path).replace('\\', "/");
+        // Git diff paths always use `/`.
+        let left_display = self.display_path(left_path);
+        let right_display = self.display_path(right_path);
         let left_oid = left_content.map_or_else(
             || ZERO_OID.to_string(),
             |content| git_blob_oid(content.as_bytes()),

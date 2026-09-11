@@ -1249,7 +1249,7 @@ async fn build_guardian_prompt_items_keeps_other_requests_generic() -> anyhow::R
 
 #[test]
 fn guardian_approval_request_to_json_renders_network_access_trigger() -> serde_json::Result<()> {
-    let cwd = PathUri::parse("file:///C:/repo").expect("valid Windows path URI");
+    let cwd = PathUri::parse("file:///C:/repo").expect("valid foreign path URI");
     let action = GuardianApprovalRequest::NetworkAccess {
         id: "network-1".to_string(),
         turn_id: "turn-1".to_string(),
@@ -1281,7 +1281,7 @@ fn guardian_approval_request_to_json_renders_network_access_trigger() -> serde_j
                 "callId": "call-1",
                 "toolName": "shell",
                 "command": ["curl", "https://example.com"],
-                "cwd": "C:\\repo",
+                "cwd": "/C:/repo",
                 "sandboxPermissions": "use_default",
                 "justification": "Fetch the release metadata.",
             },
@@ -1367,7 +1367,7 @@ fn guardian_write_stdin_preserves_input_and_foreign_cwd() -> serde_json::Result<
     let action = GuardianApprovalRequest::WriteStdin {
         id: "terminal-open".to_string(),
         approval_id: "terminal-write".to_string(),
-        environment_id: "windows-executor".to_string(),
+        environment_id: "remote-executor".to_string(),
         process_id: 1000,
         input: input.to_string(),
         cwd: cwd.clone(),
@@ -1378,10 +1378,10 @@ fn guardian_write_stdin_preserves_input_and_foreign_cwd() -> serde_json::Result<
         guardian_approval_request_to_json(&action)?,
         serde_json::json!({
             "tool": "write_stdin",
-            "environment_id": "windows-executor",
+            "environment_id": "remote-executor",
             "session_id": 1000,
             "chars": input,
-            "cwd": r"C:\workspace",
+            "cwd": "/C:/workspace",
             "sandbox_permissions": "require_escalated",
             "tty": true,
         }),

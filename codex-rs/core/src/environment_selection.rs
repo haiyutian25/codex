@@ -649,7 +649,7 @@ impl ThreadEnvironments {
             (
                 Some(local_shell),
                 Some(EnvironmentInfo::local_temporary_directories()),
-                cfg!(unix),
+                true,
             )
         };
         let task = shell_snapshot

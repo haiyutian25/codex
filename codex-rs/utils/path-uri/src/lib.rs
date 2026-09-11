@@ -162,8 +162,8 @@ impl PathUri {
 
     /// Renders this URI using the native path syntax inferred from its shape.
     ///
-    /// This is independent of the current host: a Windows URI renders with
-    /// Windows separators on every host. If the convention cannot be inferred
+    /// This is independent of the current host: URIs render with POSIX `/`
+    /// separators on every host. If the convention cannot be inferred
     /// or the URI cannot be represented using that convention, the canonical
     /// URI string is returned instead.
     pub fn inferred_native_path_string(&self) -> String {
@@ -196,8 +196,8 @@ impl PathUri {
 
     /// Returns the lexical parent without crossing the inferred native path root.
     ///
-    /// POSIX `/`, Windows drive roots, Windows UNC share roots, and opaque fallback
-    /// URIs created by [`Self::from_abs_path`] have no parent.
+    /// The POSIX root `/` and opaque fallback URIs created by
+    /// [`Self::from_abs_path`] have no parent.
     pub fn parent(&self) -> Option<Self> {
         if decode_bad_path_uri(&self.0).is_some() {
             return None;
@@ -230,11 +230,11 @@ impl PathUri {
     /// Returns true when this URI is lexically equal to or below `base`.
     ///
     /// Containment is computed using URI authority and path-segment boundaries,
-    /// without consulting the host filesystem. Windows path segments are
-    /// compared ASCII-case-insensitively; POSIX path segments remain case-sensitive.
-    /// Percent-encoded native path separators fail closed because native path
-    /// conversion may interpret them as segment boundaries. Opaque fallback
-    /// URIs created by [`Self::from_abs_path`] only contain themselves.
+    /// without consulting the host filesystem. Path segments are compared
+    /// case-sensitively. Percent-encoded native path separators fail closed
+    /// because native path conversion may interpret them as segment boundaries.
+    /// Opaque fallback URIs created by [`Self::from_abs_path`] only contain
+    /// themselves.
     pub fn starts_with(&self, base: &Self) -> bool {
         if self == base {
             return true;
@@ -327,17 +327,13 @@ impl PathUri {
 
     /// Lexically resolves native absolute or relative path text against this URI.
     ///
-    /// Path text is interpreted using the POSIX or Windows convention inferred
-    /// from the base URI. An absolute path replaces the base URI's path, while a
-    /// relative path is appended lexically. Windows root-relative paths retain
-    /// the base drive or UNC share. Same-drive relative paths are appended to
-    /// the base, while other-drive relative paths are rejected because their
-    /// current directory belongs to the executor.
+    /// Path text is interpreted using the POSIX convention inferred from the
+    /// base URI. An absolute path replaces the base URI's path, while a
+    /// relative path is appended lexically.
     /// Empty and `.` segments are ignored, while `..` removes one segment
-    /// without escaping the POSIX root, Windows drive, or UNC share. Literal
-    /// `%`, `?`, and `#` characters are percent-encoded as filename text. Paths
-    /// containing a null character are rejected because they cannot be safely
-    /// converted to native paths.
+    /// without escaping the POSIX root. Literal `%`, `?`, and `#` characters
+    /// are percent-encoded as filename text. Paths containing a null character
+    /// are rejected because they cannot be safely converted to native paths.
     /// Opaque fallback URIs created by [`Self::from_abs_path`] reject non-empty
     /// joins. Home-directory expansion also requires executor-native context
     /// and is intentionally not performed.
@@ -415,8 +411,8 @@ impl PathUri {
     /// The URI's inferred path convention must match the current host. Conversion should succeed
     /// when the URI was created from an [`AbsolutePathBuf`] on the current host, including fallback
     /// URIs created by [`Self::from_abs_path`]. Foreign conventions are rejected rather than being
-    /// projected onto a syntactically valid but unrelated host path. Encoded Windows path
-    /// separators are rejected before native conversion can reinterpret URI segment boundaries.
+    /// projected onto a syntactically valid but unrelated host path. Encoded path separators are
+    /// rejected before native conversion can reinterpret URI segment boundaries.
     pub fn to_abs_path(&self) -> io::Result<AbsolutePathBuf> {
         if self.infer_path_convention() != Some(PathConvention::native()) {
             return Err(io::Error::new(

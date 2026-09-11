@@ -632,15 +632,10 @@ impl FileSystemSandboxPolicy {
 
     pub fn has_denied_read_restrictions(&self) -> bool {
         matches!(self.kind, FileSystemSandboxKind::Restricted)
-            && self.entries.iter().any(|entry| {
-                entry.access == FileSystemAccessMode::Deny
-                    && !matches!(
-                        &entry.path,
-                        FileSystemPath::Special {
-                            value: FileSystemSpecialPath::SlashTmp,
-                        } if !cfg!(unix)
-                    )
-            })
+            && self
+                .entries
+                .iter()
+                .any(|entry| entry.access == FileSystemAccessMode::Deny)
     }
 
     pub fn from_legacy_sandbox_policy_preserving_deny_entries(
@@ -721,7 +716,6 @@ impl FileSystemSandboxPolicy {
                     FileSystemPath::GlobPattern { .. } => true,
                     FileSystemPath::Special { value } => match value {
                         FileSystemSpecialPath::Root => entry.access == FileSystemAccessMode::Deny,
-                        FileSystemSpecialPath::SlashTmp if !cfg!(unix) => false,
                         FileSystemSpecialPath::Minimal | FileSystemSpecialPath::Unknown { .. } => {
                             false
                         }
@@ -1565,7 +1559,7 @@ impl FileSystemSandboxPolicy {
                 } else if unbridgeable_root_write
                     || !writable_roots.is_empty()
                     || tmpdir_writable
-                    || (cfg!(unix) && slash_tmp_writable)
+                    || slash_tmp_writable
                 {
                     return Err(io::Error::new(
                         io::ErrorKind::InvalidInput,
@@ -1926,9 +1920,6 @@ fn resolve_file_system_special_path(
             }
         }
         FileSystemSpecialPath::SlashTmp => {
-            if !cfg!(unix) {
-                return None;
-            }
             #[allow(clippy::expect_used)]
             let slash_tmp = AbsolutePathBuf::from_absolute_path("/tmp").expect("/tmp is absolute");
             if !slash_tmp.as_path().is_dir() {

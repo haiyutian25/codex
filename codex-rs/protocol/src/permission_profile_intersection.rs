@@ -327,14 +327,12 @@ fn normalize_policy(
             FileSystemPath::Special {
                 value: FileSystemSpecialPath::SlashTmp,
             } => {
-                if cfg!(unix) {
-                    entry.path = physical_path(
-                        &AbsolutePathBuf::from_absolute_path_checked("/tmp").map_err(|error| {
-                            PermissionIntersectionError::UnsupportedPath(error.to_string())
-                        })?,
-                    )?
-                    .into();
-                }
+                entry.path = physical_path(
+                    &AbsolutePathBuf::from_absolute_path_checked("/tmp").map_err(|error| {
+                        PermissionIntersectionError::UnsupportedPath(error.to_string())
+                    })?,
+                )?
+                .into();
             }
             FileSystemPath::Special {
                 value: FileSystemSpecialPath::Minimal,

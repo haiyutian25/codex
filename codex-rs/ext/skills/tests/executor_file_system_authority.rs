@@ -301,7 +301,7 @@ async fn skill_loading_and_reads_use_the_supplied_executor_file_system() {
 }
 
 #[tokio::test]
-async fn windows_executor_skill_read_rejects_disabled_sandbox_on_any_orchestrator() {
+async fn foreign_executor_skill_read_rejects_disabled_sandbox_on_any_orchestrator() {
     let provider = ExecutorSkillProvider::new_with_restriction_product(
         Arc::new(EnvironmentManager::default_for_tests()),
         /*restriction_product*/ None,
@@ -313,15 +313,15 @@ async fn windows_executor_skill_read_rejects_disabled_sandbox_on_any_orchestrato
         ),
     );
     let resource = SkillResourceId::environment(
-        "skill://windows-root/C:/skill/SKILL.md",
+        "skill://foreign-root/C:/skill/SKILL.md",
         "local",
-        PathUri::parse("file:///C:/skill/SKILL.md").expect("Windows resource URI"),
+        PathUri::parse("file:///C:/skill/SKILL.md").expect("foreign resource URI"),
     );
     let error = provider
         .read(SkillReadRequest {
             _lifetime: PhantomData,
-            authority: SkillAuthority::new(SkillSourceKind::Executor, "windows-root"),
-            package: SkillPackageId("skill://windows-root/C:/skill".into()),
+            authority: SkillAuthority::new(SkillSourceKind::Executor, "foreign-root"),
+            package: SkillPackageId("skill://foreign-root/C:/skill".into()),
             resource,
             resolved_executor_roots: Vec::new(),
             sandbox: Some(sandbox),

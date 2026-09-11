@@ -66,8 +66,7 @@ fn completed_sub_agent_activity_is_not_a_tool_runtime_event() -> anyhow::Result<
 
 #[test]
 fn exec_command_trace_payloads_use_inferred_native_cwd() -> anyhow::Result<()> {
-    // Convention inference depends on the URI spelling, not the test host, so exercise both
-    // Windows and POSIX paths on every platform.
+    // Convention inference depends on the URI spelling, not the test host.
     let begin = EventMsg::ExecCommandBegin(ExecCommandBeginEvent {
         call_id: "call-begin".to_string(),
         plugin_id: Some("sample@openai-curated".to_string()),
@@ -116,7 +115,7 @@ fn exec_command_trace_payloads_use_inferred_native_cwd() -> anyhow::Result<()> {
             "turn_id": "turn-1",
             "started_at_ms": 1234,
             "command": ["pwd"],
-            "cwd": r"C:\windows",
+            "cwd": "/C:/windows",
             "parsed_cmd": [],
             "source": "agent"
         })

@@ -268,7 +268,7 @@ async fn plugin_root_resolution_uses_supplied_executor_file_system() {
 
 #[tokio::test]
 async fn plugin_root_resolution_accepts_foreign_executor_file_uri() {
-    let plugin_root = PathUri::parse("file:///C:/plugins/foo").expect("Windows plugin root URI");
+    let plugin_root = PathUri::parse("file:///C:/plugins/foo").expect("foreign plugin root URI");
     let manifest_path = plugin_root
         .join(".codex-plugin/plugin.json")
         .expect("manifest URI");

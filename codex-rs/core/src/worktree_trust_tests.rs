@@ -77,8 +77,8 @@ async fn resolve_root_git_project_for_trust_preserves_canonical_checkout_case() 
     fs::copy(checkout.join(".git"), attacker.join(".git")).unwrap();
     let registered_uri = PathUri::from_abs_path(&checkout.abs());
     let attacker_uri = PathUri::from_abs_path(&attacker.abs());
-    // Simulate a case-sensitive Windows executor on every test host. General
-    // PathUri equality treats these distinct filesystem identities as equal.
+    // Exercise a case-sensitive executor on every test host. These spellings
+    // denote distinct filesystem identities and must not be conflated.
     for (canonical_attacker, expected) in [
         ("file:///C:/real", Some(repo.abs())),
         ("file:///C:/REAL", None),

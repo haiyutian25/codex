@@ -150,16 +150,16 @@ index {ZERO_OID}..{right_oid}
 #[test]
 fn displays_foreign_paths_relative_to_their_environment_root() {
     let tracker = TurnDiffTracker::with_environment_display_roots([(
-        "windows".to_string(),
-        PathUri::parse("file:///C:/workspace/project").expect("valid Windows display root"),
+        "remote".to_string(),
+        PathUri::parse("file:///C:/workspace/project").expect("valid remote display root"),
     )]);
     let path = TrackedPath::new(
-        "windows",
+        "remote",
         &PathUri::parse("file:///C:/workspace/project/src/main.rs")
-            .expect("valid Windows file path"),
+            .expect("valid remote file path"),
     );
 
-    assert_eq!(tracker.display_path(&path), r"src\main.rs");
+    assert_eq!(tracker.display_path(&path), "src/main.rs");
 }
 
 #[tokio::test]

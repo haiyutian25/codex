@@ -1968,7 +1968,7 @@ async fn apply_patch_turn_diff_emits_portable_paths_for_remote_cwd() -> Result<(
     let patch = format!("*** Begin Patch\n*** Add File: {file}\n+hello\n*** End Patch");
     mount_apply_patch(&harness, call_id, &patch, "ok").await;
 
-    submit_without_wait(&harness, "emit diff for a foreign Windows cwd").await?;
+    submit_without_wait(&harness, "emit diff for a foreign cwd").await?;
 
     let mut last_diff = None;
     wait_for_event(&codex, |event| match event {

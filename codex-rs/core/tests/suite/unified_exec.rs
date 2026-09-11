@@ -3350,7 +3350,7 @@ async fn unified_exec_runs_on_all_platforms() -> Result<()> {
     let outputs = collect_tool_outputs(&bodies)?;
     let output = outputs.get(call_id).expect("missing output");
 
-    // TODO: Weaker match because windows produces control characters
+    // TODO: Weaker match because the output may contain control characters
     assert_regex_match(".*hello crossplat.*", &output.output);
 
     Ok(())

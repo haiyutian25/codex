@@ -2300,10 +2300,7 @@ async fn host_catalog_compacts_shared_paths_under_budget_pressure() -> TestResul
         )
         .await;
     assert_eq!(snapshot.outcome().errors, Vec::new());
-    assert_eq!(
-        snapshot.outcome().skills.len(),
-        12 + usize::from(cfg!(unix))
-    );
+    assert_eq!(snapshot.outcome().skills.len(), 13);
 
     let mut builder = ExtensionRegistryBuilder::new();
     install(&mut builder, skills_extension_config);

@@ -244,11 +244,11 @@ async fn model_visible_environment_context_preserves_foreign_workspace_roots() -
         .find(|text| text.contains("<environment_context>"))
         .expect("model-visible environment context");
     assert!(
-        environment_context.contains("<workspace_roots><root>C:\\workspace</root>"),
+        environment_context.contains("<workspace_roots><root>/C:/workspace</root>"),
         "foreign workspace root should remain visible to the model: {environment_context}"
     );
     assert!(
-        environment_context.contains("<entry access=\"write\"><path>C:\\workspace</path>"),
+        environment_context.contains("<entry access=\"write\"><path>/C:/workspace</path>"),
         "foreign workspace root should retain its permissions: {environment_context}"
     );
 

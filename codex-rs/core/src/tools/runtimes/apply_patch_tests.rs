@@ -318,7 +318,7 @@ async fn file_system_sandbox_context_respects_sandbox_request() {
         None
     );
 
-    let cwd = PathUri::parse("file:///C:/workspace").expect("Windows workspace URI");
+    let cwd = PathUri::parse("file:///C:/workspace").expect("foreign workspace URI");
     let permissions = PermissionProfile::workspace_write();
     let attempt = SandboxAttempt {
         sandbox_requested: true,

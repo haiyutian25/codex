@@ -240,7 +240,7 @@ fn recognizes_windows_executor_plugin_cache_root() {
     let script = PathUri::parse(
         "file:///C:/Users/user/.codex/plugins/cache/openai-primary-runtime/presentations/0.1.29/skills/presentations/container_tools/mark_artifact_operation_started.mjs",
     )
-    .expect("Windows script URI");
+    .expect("foreign script URI");
 
     assert!(executor_plugin_root_matches(&script, &attribution));
 }

@@ -1247,8 +1247,8 @@ impl SandboxPolicy {
                     }
                 }
 
-                // Include /tmp on Unix unless explicitly excluded.
-                if cfg!(unix) && !exclude_slash_tmp {
+                // Include /tmp unless explicitly excluded.
+                if !exclude_slash_tmp {
                     match AbsolutePathBuf::from_absolute_path("/tmp") {
                         Ok(slash_tmp) => {
                             if slash_tmp.as_path().is_dir() {

@@ -34,11 +34,7 @@ fn unified_exec_shell_mode_respects_feature_and_policy_gates() {
         Some(&shell),
         Some(&exe),
     );
-    if cfg!(unix) {
-        assert!(matches!(mode, UnifiedExecShellMode::ZshFork(_)));
-    } else {
-        assert_eq!(mode, UnifiedExecShellMode::Direct);
-    }
+    assert!(matches!(mode, UnifiedExecShellMode::ZshFork(_)));
 
     features.disable(Feature::ShellZshFork);
     assert_eq!(

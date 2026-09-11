@@ -402,9 +402,9 @@ fn project_provenance(path: AbsolutePathBuf, cwd: AbsolutePathBuf) -> Instructio
 #[test]
 fn foreign_agents_md_uses_environment_native_paths() {
     let (cwd, rendered_cwd) = (
-            PathUri::parse("file:///C:/codex%20runtime").expect("Windows cwd URI"),
-            r"C:\codex runtime",
-        );
+        PathUri::parse("file:///C:/codex%20runtime").expect("foreign cwd URI"),
+        "/C:/codex runtime",
+    );
     let source_path = cwd.join("AGENTS.md").expect("AGENTS.md URI");
     let loaded = LoadedAgentsMd {
         user_instructions: None,
@@ -434,11 +434,11 @@ remote instructions
 #[test]
 fn multi_environment_agents_md_renders_mixed_path_conventions() {
     let posix_cwd = PathUri::parse("file:///srv/project").expect("POSIX cwd URI");
-    let windows_cwd = PathUri::parse("file:///C:/workspace").expect("Windows cwd URI");
+    let foreign_cwd = PathUri::parse("file:///C:/workspace").expect("foreign cwd URI");
     let posix_source = posix_cwd.join("AGENTS.md").expect("POSIX AGENTS.md URI");
-    let windows_source = windows_cwd
+    let foreign_source = foreign_cwd
         .join("AGENTS.md")
-        .expect("Windows AGENTS.md URI");
+        .expect("foreign AGENTS.md URI");
     let loaded = LoadedAgentsMd {
         user_instructions: None,
         entries: vec![
@@ -451,11 +451,11 @@ fn multi_environment_agents_md_renders_mixed_path_conventions() {
                 },
             },
             InstructionEntry {
-                contents: "Windows instructions".to_string(),
+                contents: "foreign instructions".to_string(),
                 provenance: InstructionProvenance::Project {
-                    source_path: windows_source.clone(),
-                    environment_id: "windows".to_string(),
-                    cwd: windows_cwd,
+                    source_path: foreign_source.clone(),
+                    environment_id: "remote".to_string(),
+                    cwd: foreign_cwd,
                 },
             },
         ],
@@ -470,14 +470,14 @@ for `posix` with root /srv/project
 
 POSIX instructions
 
-for `windows` with root C:\workspace
+for `remote` with root /C:/workspace
 
-Windows instructions
+foreign instructions
 </INSTRUCTIONS>"#
     );
     assert_eq!(
         loaded.sources().collect::<Vec<_>>(),
-        vec![posix_source, windows_source]
+        vec![posix_source, foreign_source]
     );
 }
 

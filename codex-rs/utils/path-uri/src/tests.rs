@@ -49,22 +49,18 @@ fn file_uri_round_trips_an_absolute_path() {
 #[cfg(unix)]
 #[test]
 fn non_native_uri_io_conversion_is_invalid_input() {
-    let uris = ["file://server/share/file.txt", "file:///C:/workspace"];
+    let uri = PathUri::parse("file://server/share/file.txt").expect("valid file URI");
+    let error = uri
+        .to_abs_path()
+        .expect_err("URI should not be host-native");
 
-    for uri in uris {
-        let uri = PathUri::parse(uri).expect("valid file URI");
-        let error = uri
-            .to_abs_path()
-            .expect_err("URI should not be host-native");
-
-        assert_eq!(
-            (error.kind(), error.to_string()),
-            (
-                io::ErrorKind::InvalidInput,
-                format!("'{uri}' is invalid on '{}'", std::env::consts::OS),
-            )
-        );
-    }
+    assert_eq!(
+        (error.kind(), error.to_string()),
+        (
+            io::ErrorKind::InvalidInput,
+            format!("'{uri}' is invalid on '{}'", std::env::consts::OS),
+        )
+    );
 }
 
 #[test]

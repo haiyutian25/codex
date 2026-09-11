@@ -10064,7 +10064,7 @@ async fn turn_context_item_stores_local_cwd() {
         .primary()
         .expect("primary environment")
         .clone();
-    let cwd = PathUri::parse("file:///C:/windows").expect("Windows cwd URI");
+    let cwd = PathUri::parse("file:///C:/windows").expect("foreign cwd URI");
     let environment_config = environment.config().clone();
     turn_context.environments.environments[0] = TurnEnvironmentState::Ready(TurnEnvironment::new(
         TurnEnvironmentSelection {

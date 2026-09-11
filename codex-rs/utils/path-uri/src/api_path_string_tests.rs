@@ -343,15 +343,13 @@ fn foreign_absolute_syntax_deserializes_without_host_interpretation() {
 }
 
 #[test]
-fn from_path_preserves_foreign_absolute_path_for_uri_conversion() {
-    let (foreign_path, expected_uri) =
-        (r"C:\Users\openai\share", "file:///C:/Users/openai/share");
+fn from_path_does_not_convert_windows_syntax_to_a_path_uri() {
+    let foreign_path = r"C:\Users\openai\share";
 
-    let converted = LegacyAppPathString::from_path(std::path::Path::new(foreign_path))
-        .to_inferred_path_uri();
-    if let Some(path) = converted {
-        assert_eq!(path, PathUri::parse(expected_uri).expect("valid expected URI"));
-    }
+    assert_eq!(
+        LegacyAppPathString::from_path(std::path::Path::new(foreign_path)).to_inferred_path_uri(),
+        None
+    );
 }
 
 #[test]

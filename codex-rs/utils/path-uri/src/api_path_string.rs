@@ -60,10 +60,10 @@ impl LegacyAppPathString {
     /// Renders a path URI using the requested native path convention.
     ///
     /// Rendering fails when the URI shape does not match the convention, such
-    /// as a POSIX path rendered as Windows or a UNC path rendered as POSIX. It
-    /// also fails when an opaque fallback does not encode an absolute path for
-    /// the convention. Non-UTF-8 segments are rendered lossily, and encoded
-    /// separators are emitted as native path text.
+    /// as a URI with a UNC authority rendered as POSIX. It also fails when an
+    /// opaque fallback does not encode an absolute path for the convention.
+    /// Non-UTF-8 segments are rendered lossily, and encoded separators are
+    /// emitted as native path text.
     pub fn from_path_uri(
         path: &PathUri,
         convention: PathConvention,

@@ -263,14 +263,7 @@ fn granted_file_system_entry_within_request(
     granted_entry: &FileSystemSandboxEntry,
     cwd: &Path,
 ) -> bool {
-    if !granted_entry.access.can_read()
-        || matches!(
-            &granted_entry.path,
-            FileSystemPath::Special {
-                value: FileSystemSpecialPath::SlashTmp,
-            } if !cfg!(unix)
-        )
-    {
+    if !granted_entry.access.can_read() {
         return false;
     }
 
@@ -425,14 +418,10 @@ fn resolve_permission_path(path: &FileSystemPath, cwd: &Path) -> Option<Absolute
                     AbsolutePathBuf::from_absolute_path(PathBuf::from(tmpdir)).ok()
                 }
             }
-            FileSystemSpecialPath::SlashTmp if cfg!(unix) => {
-                AbsolutePathBuf::from_absolute_path("/tmp")
-                    .ok()
-                    .filter(|path| path.as_path().is_dir())
-            }
-            FileSystemSpecialPath::SlashTmp
-            | FileSystemSpecialPath::Minimal
-            | FileSystemSpecialPath::Unknown { .. } => None,
+            FileSystemSpecialPath::SlashTmp => AbsolutePathBuf::from_absolute_path("/tmp")
+                .ok()
+                .filter(|path| path.as_path().is_dir()),
+            FileSystemSpecialPath::Minimal | FileSystemSpecialPath::Unknown { .. } => None,
         },
     }
 }
