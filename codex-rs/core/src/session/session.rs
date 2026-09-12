@@ -91,7 +91,6 @@ pub(crate) struct SessionConfiguration {
     pub(super) permission_profile_state: PermissionProfileState,
     pub(super) allow_login_shell: bool,
     pub(super) shell_environment_policy: ShellEnvironmentPolicy,
-    pub(super) use_legacy_landlock: bool,
 
     /// Legacy thread cwd used when a turn does not select an environment.
     pub(super) legacy_fallback_cwd: AbsolutePathBuf,
@@ -139,7 +138,6 @@ impl SessionConfiguration {
             workspace_roots: Vec::new(),
             permission_profile: self.permission_profile_state.snapshot(),
             shell_environment_policy: self.shell_environment_policy.clone(),
-            use_legacy_landlock: self.use_legacy_landlock,
             exec_policy: None,
             mcp_policy: None,
             network_policy: None,

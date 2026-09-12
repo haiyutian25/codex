@@ -4,8 +4,6 @@ use codex_network_proxy::NetworkMode;
 use codex_protocol::exec_output::ExecToolCallOutput;
 use tracing::warn;
 
-#[cfg(unix)]
-const EXIT_CODE_SIGNAL_BASE: i32 = 128;
 const OUTPUT_SNIPPET_MAX_CHARS: usize = 512;
 
 const SANDBOX_DENIED_KEYWORDS: [(FileSystemSandboxViolationReason, &str); 7] = [
@@ -46,7 +44,6 @@ pub enum SandboxViolationEvent {
 /// Enforcement backend that observed a sandbox violation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SandboxViolationBackend {
-    LinuxSandbox,
     ManagedNetworkProxy,
     Proot,
 }
@@ -54,7 +51,6 @@ pub enum SandboxViolationBackend {
 impl SandboxViolationBackend {
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::LinuxSandbox => "linux_sandbox",
             Self::ManagedNetworkProxy => "managed_network_proxy",
             Self::Proot => "proot",
         }
@@ -78,7 +74,6 @@ pub enum FileSystemSandboxViolationReason {
     ReadOnlyFileSystem,
     PolicyDenied,
     FailedToWriteFile,
-    SignalSyscall,
 }
 
 impl FileSystemSandboxViolationReason {
@@ -89,7 +84,6 @@ impl FileSystemSandboxViolationReason {
             Self::ReadOnlyFileSystem => "read_only_file_system",
             Self::PolicyDenied => "policy_denied",
             Self::FailedToWriteFile => "failed_to_write_file",
-            Self::SignalSyscall => "sigsys",
         }
     }
 }
@@ -138,7 +132,6 @@ fn classify_filesystem_sandbox_violation(
     }
     let backend = match sandbox_type {
         SandboxType::None => return None,
-        SandboxType::LinuxSeccomp => SandboxViolationBackend::LinuxSandbox,
         SandboxType::Proot => SandboxViolationBackend::Proot,
     };
 
@@ -153,27 +146,6 @@ fn classify_filesystem_sandbox_violation(
 
     if QUICK_REJECT_EXIT_CODES.contains(&exec_output.exit_code) {
         return None;
-    }
-
-    #[cfg(unix)]
-    {
-        if sandbox_type == SandboxType::LinuxSeccomp
-            && exec_output.exit_code == EXIT_CODE_SIGNAL_BASE + libc::SIGSYS
-        {
-            return Some(FileSystemSandboxViolation {
-                backend,
-                reason: FileSystemSandboxViolationReason::SignalSyscall,
-                path: None,
-                output_snippet: [
-                    &exec_output.stderr.text,
-                    &exec_output.stdout.text,
-                    &exec_output.aggregated_output.text,
-                ]
-                .into_iter()
-                .find(|section| !section.trim().is_empty())
-                .map_or_else(String::new, |section| output_snippet(section)),
-            });
-        }
     }
 
     None

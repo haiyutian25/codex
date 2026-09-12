@@ -9,7 +9,6 @@ use codex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1;
 use codex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
 use codex_exec_server::CODEX_FS_HELPER_ARG1;
 use codex_install_context::InstallContext;
-use codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
 use codex_utils_home_dir::find_codex_home;
 #[cfg(unix)]
 use std::os::unix::fs::symlink;
@@ -30,7 +29,6 @@ pub struct Arg0DispatchPaths {
     /// a test harness, where `current_exe()` can point at the harness binary
     /// instead of the real Codex CLI.
     pub codex_self_exe: Option<PathBuf>,
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
     pub main_execve_wrapper_exe: Option<PathBuf>,
 }
 
@@ -90,10 +88,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
         }
     }
 
-    if exe_name == CODEX_LINUX_SANDBOX_ARG0 {
-        // Safety: [`run_main`] never returns.
-        codex_linux_sandbox::run_main();
-    } else if exe_name == APPLY_PATCH_ARG0 || exe_name == MISSPELLED_APPLY_PATCH_ARG0 {
+    if exe_name == APPLY_PATCH_ARG0 || exe_name == MISSPELLED_APPLY_PATCH_ARG0 {
         codex_apply_patch::main();
     }
 
@@ -191,17 +186,12 @@ fn prepare_path_env_var_with_aliases(
 /// the "arg0 trick" to determine which CLI to dispatch. This effectively allows
 /// us to simulate deploying multiple executables as a single binary.
 ///
-/// When the current executable is invoked through the hard-link or alias named
-/// `codex-linux-sandbox` we *directly* execute
-/// [`codex_linux_sandbox::run_main`] (which never returns). Otherwise we:
+/// Otherwise we:
 ///
 /// 1.  Load `.env` values from `~/.codex/.env` before creating any threads.
 /// 2.  Spawn a main runtime thread with a controlled stack size.
 /// 3.  Construct a Tokio multi-thread runtime.
-/// 4.  Capture the current executable path and derive the
-///     `codex-linux-sandbox` helper path (falling back to the current
-///     executable if needed) so children can re-invoke the sandbox when running
-///     on Linux.
+/// 4.  Capture the current executable path so children can re-invoke it.
 /// 5.  Execute the provided async `main_fn` inside that runtime, forwarding any
 ///     error. Note that `main_fn` receives [`Arg0DispatchPaths`], which
 ///     contains the helper executable paths needed to construct
@@ -251,11 +241,6 @@ where
 {
     let paths = Arg0DispatchPaths {
         codex_self_exe: current_exe.clone(),
-        codex_linux_sandbox_exe: if cfg!(target_os = "linux") {
-            linux_sandbox_exe_path(path_entry_guard.as_ref(), current_exe)
-        } else {
-            None
-        },
         main_execve_wrapper_exe: path_entry_guard
             .as_ref()
             .and_then(|path_entry| path_entry.paths().main_execve_wrapper_exe.clone()),
@@ -266,18 +251,6 @@ where
     // runtime paths above can point at aliases inside that directory.
     drop(path_entry_guard);
     result
-}
-
-fn linux_sandbox_exe_path(
-    path_entry_guard: Option<&Arg0PathEntryGuard>,
-    current_exe: Option<PathBuf>,
-) -> Option<PathBuf> {
-    // Prefer the `codex-linux-sandbox` alias when available so callers can
-    // re-exec through a path whose basename still triggers arg0 dispatch on
-    // bubblewrap builds that do not support `--argv0`.
-    path_entry_guard
-        .and_then(|path_entry| path_entry.paths().codex_linux_sandbox_exe.clone())
-        .or(current_exe)
 }
 
 fn build_runtime() -> anyhow::Result<tokio::runtime::Runtime> {
@@ -375,13 +348,7 @@ fn prepare_path_entry_for_codex_aliases(
     lock_file.try_lock()?;
 
     #[cfg(unix)]
-    for filename in &[
-        APPLY_PATCH_ARG0,
-        MISSPELLED_APPLY_PATCH_ARG0,
-        #[cfg(target_os = "linux")]
-        CODEX_LINUX_SANDBOX_ARG0,
-        EXECVE_WRAPPER_ARG0,
-    ] {
+    for filename in &[APPLY_PATCH_ARG0, MISSPELLED_APPLY_PATCH_ARG0, EXECVE_WRAPPER_ARG0] {
         let exe = std::env::current_exe()?;
         let link = path.join(filename);
         symlink(&exe, &link)?;
@@ -391,7 +358,6 @@ fn prepare_path_entry_for_codex_aliases(
 
     let paths = Arg0DispatchPaths {
         codex_self_exe: std::env::current_exe().ok(),
-        codex_linux_sandbox_exe: Some(path.join(CODEX_LINUX_SANDBOX_ARG0)),
         main_execve_wrapper_exe: Some(path.join(EXECVE_WRAPPER_ARG0)),
     };
 
@@ -478,7 +444,6 @@ mod tests {
     use super::Arg0PathEntryGuard;
     use super::LOCK_FILENAME;
     use super::janitor_cleanup;
-    use super::linux_sandbox_exe_path;
     #[cfg(unix)]
     use super::run_main_with_arg0_guard;
     #[cfg(unix)]
@@ -541,28 +506,6 @@ mod tests {
             install_context,
             path_dir,
         })
-    }
-
-    #[test]
-    fn linux_sandbox_exe_path_prefers_codex_linux_sandbox_alias() -> std::io::Result<()> {
-        let temp_dir = TempDir::new()?;
-        let lock_file = create_lock(temp_dir.path())?;
-        let alias_path = temp_dir.path().join("codex-linux-sandbox");
-        let path_entry = Arg0PathEntryGuard::new(
-            temp_dir,
-            lock_file,
-            Arg0DispatchPaths {
-                codex_self_exe: Some(PathBuf::from("/usr/bin/codex")),
-                codex_linux_sandbox_exe: Some(alias_path.clone()),
-                main_execve_wrapper_exe: None,
-            },
-        );
-
-        assert_eq!(
-            linux_sandbox_exe_path(Some(&path_entry), Some(PathBuf::from("/usr/bin/codex"))),
-            Some(alias_path),
-        );
-        Ok(())
     }
 
     #[test]
@@ -634,7 +577,6 @@ mod tests {
             lock_file,
             Arg0DispatchPaths {
                 codex_self_exe: Some(PathBuf::from("/usr/bin/codex")),
-                codex_linux_sandbox_exe: Some(alias_path.clone()),
                 main_execve_wrapper_exe: Some(alias_path),
             },
         );
@@ -644,8 +586,7 @@ mod tests {
             Some(PathBuf::from("/usr/bin/codex")),
             |paths| async move {
                 let alias_path = paths
-                    .codex_linux_sandbox_exe
-                    .or(paths.main_execve_wrapper_exe)
+                    .main_execve_wrapper_exe
                     .expect("unix dispatch should create at least one alias path");
                 ensure!(
                     alias_path.exists(),

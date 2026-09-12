@@ -901,14 +901,6 @@ pub struct Config {
     /// file: it must be set in code via [`ConfigOverrides`].
     pub codex_self_exe: Option<PathBuf>,
 
-    /// Path to the `codex-linux-sandbox` executable. This must be set if
-    /// [`codex_sandboxing::SandboxType::LinuxSeccomp`] is used. Note that this
-    /// cannot be set in the config file: it must be set in code via
-    /// [`ConfigOverrides`].
-    ///
-    /// When this program is invoked, arg0 will be set to `codex-linux-sandbox`.
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
-
     /// Resolved PRoot sandbox backend configuration (`[proot]` section).
     /// Present only when enabled and fully specified (executable + rootfs).
     pub proot: Option<codex_sandboxing::ProotConfig>,
@@ -1710,8 +1702,6 @@ impl Config {
             approvals_reviewer: self.approvals_reviewer,
             environment_cwds: HashMap::new(),
             server_permission_profiles: HashMap::new(),
-            codex_linux_sandbox_exe: self.codex_linux_sandbox_exe.clone(),
-            use_legacy_landlock: self.features.use_legacy_landlock(),
             apps_enabled: self.features.enabled(Feature::Apps),
             prefix_mcp_tool_names: self.prefix_mcp_tool_names(),
             non_prefixed_mcp_tool_servers: if self
@@ -1863,7 +1853,7 @@ impl Config {
     /// designed to use [AskForApproval::Never] exclusively.
     ///
     /// Further, [ConfigOverrides] contains some options that are not supported
-    /// in [ConfigToml], such as `cwd`, `codex_self_exe`, `codex_linux_sandbox_exe`, and
+    /// in [ConfigToml], such as `cwd`, `codex_self_exe`, and
     /// `main_execve_wrapper_exe`.
     pub async fn load_with_cli_overrides_and_harness_overrides(
         cli_overrides: Vec<(String, TomlValue)>,
@@ -2513,7 +2503,6 @@ pub struct ConfigOverrides {
     pub model_provider: Option<String>,
     pub service_tier: Option<Option<String>>,
     pub codex_self_exe: Option<PathBuf>,
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
     pub main_execve_wrapper_exe: Option<PathBuf>,
     pub default_zsh_path: Option<AbsolutePathBuf>,
     pub base_instructions: Option<String>,
@@ -3156,7 +3145,6 @@ impl Config {
             model_provider,
             service_tier: service_tier_override,
             codex_self_exe,
-            codex_linux_sandbox_exe,
             main_execve_wrapper_exe,
             default_zsh_path,
             base_instructions,
@@ -4113,7 +4101,6 @@ impl Config {
             bypass_hook_trust,
             file_opener: cfg.file_opener.unwrap_or(UriBasedFileOpener::VsCode),
             codex_self_exe,
-            codex_linux_sandbox_exe,
             proot,
             main_execve_wrapper_exe,
             zsh_path,

@@ -29,7 +29,7 @@ fn make_exec_output(
 fn sandbox_detection_requires_keywords() {
     let output = make_exec_output(/*exit_code*/ 1, "", "", "");
     assert!(!is_likely_sandbox_denied(
-        SandboxType::LinuxSeccomp,
+        SandboxType::Proot,
         &output
     ));
 }
@@ -37,14 +37,14 @@ fn sandbox_detection_requires_keywords() {
 #[test]
 fn sandbox_detection_identifies_keyword_in_stderr() {
     let output = make_exec_output(/*exit_code*/ 1, "", "Operation not permitted", "");
-    assert!(is_likely_sandbox_denied(SandboxType::LinuxSeccomp, &output));
+    assert!(is_likely_sandbox_denied(SandboxType::Proot, &output));
 }
 
 #[test]
 fn sandbox_detection_respects_quick_reject_exit_codes() {
     let output = make_exec_output(/*exit_code*/ 127, "", "command not found", "");
     assert!(!is_likely_sandbox_denied(
-        SandboxType::LinuxSeccomp,
+        SandboxType::Proot,
         &output
     ));
 }
@@ -75,7 +75,7 @@ fn sandbox_detection_uses_aggregated_output() {
         "cargo failed: Read-only file system when writing target",
     );
     assert!(is_likely_sandbox_denied(
-        SandboxType::LinuxSeccomp,
+        SandboxType::Proot,
         &output
     ));
 }
@@ -90,7 +90,7 @@ fn sandbox_detection_ignores_network_policy_text_with_zero_exit_code() {
     );
 
     assert!(!is_likely_sandbox_denied(
-        SandboxType::LinuxSeccomp,
+        SandboxType::Proot,
         &output
     ));
 }
@@ -342,9 +342,7 @@ async fn process_exec_tool_call_preserves_full_buffer_capture_policy() -> Result
         },
         &permission_profile,
         &cwd,
-        &None,
         /*proot*/ None,
-        /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
     )
     .await?;
@@ -411,21 +409,11 @@ fn build_exec_request_defaults_sandbox_workspace_roots_to_cwd() -> Result<()> {
         },
         &PermissionProfile::Disabled,
         &cwd,
-        &None,
         /*proot*/ None,
-        /*use_legacy_landlock*/ false,
     )?;
 
     assert_eq!(exec_request.sandbox_workspace_roots, vec![cwd]);
     Ok(())
-}
-
-#[cfg(unix)]
-#[test]
-fn sandbox_detection_flags_sigsys_exit_code() {
-    let exit_code = EXIT_CODE_SIGNAL_BASE + libc::SIGSYS;
-    let output = make_exec_output(exit_code, "", "", "");
-    assert!(is_likely_sandbox_denied(SandboxType::LinuxSeccomp, &output));
 }
 
 #[cfg(unix)]
@@ -523,9 +511,7 @@ async fn process_exec_tool_call_respects_cancellation_token() -> Result<()> {
             params,
             &PermissionProfile::Disabled,
             &cwd,
-            &None,
             /*proot*/ None,
-            /*use_legacy_landlock*/ false,
             /*stdout_stream*/ None,
         ),
     )
@@ -602,9 +588,7 @@ while :; do sleep 1; done"#
             params,
             &PermissionProfile::Disabled,
             &cwd,
-            &None,
             /*proot*/ None,
-            /*use_legacy_landlock*/ false,
             /*stdout_stream*/ None,
         ),
     )

@@ -326,7 +326,6 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
             workspace_roots: owner_workspace_roots,
             permission_profile: PermissionProfileSnapshot::legacy(child_permissions),
             shell_environment_policy: Default::default(),
-            use_legacy_landlock: test.config.features.use_legacy_landlock(),
             exec_policy: None,
             mcp_policy: None,
             network_policy: None,

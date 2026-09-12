@@ -242,7 +242,6 @@ async fn workspace_roots_allow_file_and_command_writes_in_secondary_root(
                         workspace_roots_profile(),
                     ),
                     shell_environment_policy: Default::default(),
-                    use_legacy_landlock: test.config.features.use_legacy_landlock(),
                     exec_policy: None,
                     mcp_policy: None,
                     network_policy: None,

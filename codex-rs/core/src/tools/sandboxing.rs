@@ -392,12 +392,10 @@ pub(crate) struct SandboxAttempt<'a> {
     pub(crate) manager: &'a SandboxManager,
     pub(crate) sandbox_cwd: &'a PathUri,
     pub(crate) workspace_roots: &'a [PathUri],
-    pub codex_linux_sandbox_exe: Option<&'a std::path::PathBuf>,
     /// PRoot backend configuration when the host app ships a Linux guest rootfs.
     pub proot: Option<&'a codex_sandboxing::ProotConfig>,
     // TODO(anp): Reconcile these attempt settings with TurnEnvironment::sandbox_context
     // so process execution and patch writes honor the selected environment's backend.
-    pub use_legacy_landlock: bool,
     pub network_denial_cancellation_token: Option<CancellationToken>,
     pub(crate) network_proxy: Option<&'a NetworkProxy>,
 }
@@ -444,11 +442,7 @@ impl<'a> SandboxAttempt<'a> {
                 environment_id,
                 network,
                 sandbox_policy_cwd: self.sandbox_cwd,
-                codex_linux_sandbox_exe: self
-                    .codex_linux_sandbox_exe
-                    .map(std::path::PathBuf::as_path),
                 proot: self.proot,
-                use_legacy_landlock: self.use_legacy_landlock,
             })
             .map_err(CodexErr::from)?;
         let workspace_roots = self
@@ -480,9 +474,7 @@ impl<'a> SandboxAttempt<'a> {
                 environment_id: None,
                 network: None,
                 sandbox_policy_cwd: self.sandbox_cwd,
-                codex_linux_sandbox_exe: None,
                 proot: None,
-                use_legacy_landlock: self.use_legacy_landlock,
             })
             .map_err(CodexErr::from)?;
         let mut exec_request = crate::sandboxing::ExecRequest::from_sandbox_exec_request(
@@ -497,7 +489,6 @@ impl<'a> SandboxAttempt<'a> {
                 cwd: Some(exec_request.sandbox_policy_cwd.clone()),
                 workspace_roots: self.workspace_roots.to_vec(),
                 temporary_directories: None,
-                use_legacy_landlock: self.use_legacy_landlock,
             });
             exec_request.exec_server_enforce_managed_network = self.enforce_managed_network;
         }

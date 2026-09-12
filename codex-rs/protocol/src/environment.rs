@@ -32,7 +32,6 @@ pub struct EnvironmentConfig {
     /// Controls which environment variables shell commands may inherit.
     pub shell_environment_policy: ShellEnvironmentPolicy,
     /// Whether Linux sandbox processes use the legacy Landlock backend.
-    pub use_legacy_landlock: bool,
     /// Additional managed command restrictions for this environment attachment.
     pub exec_policy: Option<RequirementsExecPolicy>,
     /// Additional managed MCP restrictions for this environment attachment.
@@ -51,7 +50,6 @@ impl std::fmt::Debug for EnvironmentConfig {
             .field("workspace_roots", &self.workspace_roots)
             .field("permission_profile", &self.permission_profile)
             .field("shell_environment_policy", &"<redacted>")
-            .field("use_legacy_landlock", &self.use_legacy_landlock)
             .field("exec_policy", &self.exec_policy)
             .field("mcp_policy", &self.mcp_policy)
             .field("network_policy", &self.network_policy)

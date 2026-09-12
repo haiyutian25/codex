@@ -91,9 +91,7 @@ impl ToolOrchestrator {
             manager: attempt.manager,
             sandbox_cwd: attempt.sandbox_cwd,
             workspace_roots: attempt.workspace_roots,
-            codex_linux_sandbox_exe: attempt.codex_linux_sandbox_exe,
             proot: attempt.proot,
-            use_legacy_landlock: attempt.use_legacy_landlock,
             network_denial_cancellation_token: network_approval
                 .as_ref()
                 .map(ActiveNetworkApproval::cancellation_token),
@@ -294,9 +292,7 @@ impl ToolOrchestrator {
             manager: &self.sandbox,
             sandbox_cwd: &sandbox_policy_cwd,
             workspace_roots,
-            codex_linux_sandbox_exe: turn_ctx.config.codex_linux_sandbox_exe.as_ref(),
             proot: turn_ctx.config.proot.as_ref(),
-            use_legacy_landlock: sandbox_config.use_legacy_landlock,
             network_denial_cancellation_token: None,
             network_proxy: None,
         };
@@ -453,11 +449,6 @@ impl ToolOrchestrator {
                 } else {
                     SandboxType::None
                 };
-                let retry_codex_linux_sandbox_exe = if unsandboxed_allowed {
-                    None
-                } else {
-                    turn_ctx.config.codex_linux_sandbox_exe.as_ref()
-                };
                 let retry_proot = if unsandboxed_allowed {
                     None
                 } else {
@@ -472,9 +463,7 @@ impl ToolOrchestrator {
                     manager: &self.sandbox,
                     sandbox_cwd: &sandbox_policy_cwd,
                     workspace_roots,
-                    codex_linux_sandbox_exe: retry_codex_linux_sandbox_exe,
                     proot: retry_proot,
-                    use_legacy_landlock: sandbox_config.use_legacy_landlock,
                     network_denial_cancellation_token: None,
                     network_proxy: None,
                 };

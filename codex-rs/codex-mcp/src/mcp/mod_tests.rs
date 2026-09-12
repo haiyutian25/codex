@@ -34,8 +34,6 @@ pub(crate) fn test_mcp_config(codex_home: PathBuf) -> McpConfig {
         approvals_reviewer: codex_config::types::ApprovalsReviewer::default(),
         environment_cwds: HashMap::new(),
         server_permission_profiles: HashMap::new(),
-        codex_linux_sandbox_exe: None,
-        use_legacy_landlock: false,
         apps_enabled: false,
         prefix_mcp_tool_names: true,
         non_prefixed_mcp_tool_servers: Vec::new(),

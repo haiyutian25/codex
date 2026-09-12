@@ -118,9 +118,7 @@ async fn explicit_escalation_prepares_exec_without_managed_network() -> anyhow::
         manager: &manager,
         sandbox_cwd: &sandbox_policy_cwd,
         workspace_roots: std::slice::from_ref(&sandbox_policy_cwd),
-        codex_linux_sandbox_exe: None,
         proot: None,
-        use_legacy_landlock: false,
         network_denial_cancellation_token: None,
         network_proxy: None,
     };

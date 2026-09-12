@@ -1052,7 +1052,6 @@ async fn spawn_internal_session_preserves_parent_lineage_without_forking_history
             workspace_roots: reviewer_environment.workspace_roots.clone(),
             permission_profile: config.permissions.permission_profile_state().snapshot(),
             shell_environment_policy: Default::default(),
-            use_legacy_landlock: config.features.use_legacy_landlock(),
             exec_policy: Some(codex_execpolicy::RequirementsExecPolicy::new(
                 codex_execpolicy::Policy::empty(),
             )),

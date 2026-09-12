@@ -1,6 +1,3 @@
-use crate::landlock::CODEX_LINUX_SANDBOX_ARG0;
-use crate::landlock::allow_network_for_proxy;
-use crate::landlock::create_linux_sandbox_command_args_for_permission_profile;
 use crate::policy_transforms::effective_permission_profile;
 use crate::policy_transforms::should_require_platform_sandbox;
 use codex_network_proxy::ManagedNetworkSandboxContext;
@@ -20,7 +17,6 @@ use std::path::Path;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SandboxType {
     None,
-    LinuxSeccomp,
     /// PRoot guest backend for Android apps shipping a Linux rootfs.
     Proot,
 }
@@ -29,7 +25,6 @@ impl SandboxType {
     pub fn as_metric_tag(self) -> &'static str {
         match self {
             SandboxType::None => "none",
-            SandboxType::LinuxSeccomp => "seccomp",
             SandboxType::Proot => "proot",
         }
     }
@@ -43,14 +38,8 @@ pub enum SandboxablePreference {
 }
 
 pub fn get_platform_sandbox(proot_enabled: bool) -> Option<SandboxType> {
-    if cfg!(target_os = "linux") {
-        Some(SandboxType::LinuxSeccomp)
-    } else if cfg!(target_os = "android") {
-        if proot_enabled {
-            Some(SandboxType::Proot)
-        } else {
-            None
-        }
+    if cfg!(target_os = "android") && proot_enabled {
+        Some(SandboxType::Proot)
     } else {
         None
     }
@@ -117,12 +106,10 @@ pub struct SandboxTransformRequest<'a> {
     // to make shared ownership explicit across runtime/sandbox plumbing.
     pub network: Option<&'a NetworkProxy>,
     pub sandbox_policy_cwd: &'a PathUri,
-    pub codex_linux_sandbox_exe: Option<&'a Path>,
     /// PRoot backend configuration; required when `sandbox` is [`SandboxType::Proot`].
     pub proot: Option<&'a crate::proot::ProotConfig>,
     // TODO(anp): Reconcile these backend inputs with the supplied sandbox context
     // (TurnEnvironment::sandbox_context for turns) so selection shares its authority.
-    pub use_legacy_landlock: bool,
 }
 
 /// Bundled arguments for a sandbox transformation whose result will be spawned
@@ -137,7 +124,6 @@ pub struct SandboxDirectSpawnTransformRequest<'a> {
 
 // TODO(anp): Revisit this preparation type once this module's PathUri migration is complete.
 struct PendingSandboxedExecRequest {
-    native_command_cwd: AbsolutePathBuf,
     native_sandbox_policy_cwd: AbsolutePathBuf,
     effective_permission_profile: PermissionProfile,
 }
@@ -150,7 +136,9 @@ impl PendingSandboxedExecRequest {
         managed_mitm_ca_trust_bundle_path: Option<&AbsolutePathBuf>,
     ) -> Result<Self, SandboxTransformError> {
         // TODO(anp): Move PathUri conversion into the platform sandbox implementations.
-        let native_command_cwd = command_cwd.to_abs_path().map_err(|source| {
+        // Validate that the command cwd is native to this host; the prepared value
+        // is no longer consumed by any platform sandbox backend.
+        command_cwd.to_abs_path().map_err(|source| {
             SandboxTransformError::InvalidCommandCwd {
                 cwd: command_cwd.clone(),
                 source,
@@ -168,7 +156,6 @@ impl PendingSandboxedExecRequest {
             native_sandbox_policy_cwd.as_path(),
         );
         Ok(Self {
-            native_command_cwd,
             native_sandbox_policy_cwd,
             effective_permission_profile,
         })
@@ -185,7 +172,6 @@ pub enum SandboxTransformError {
         cwd: PathUri,
         source: io::Error,
     },
-    MissingLinuxSandboxExecutable,
     EnvironmentNetworkProxy(String),
     ProotPreparation(String),
 }
@@ -203,9 +189,6 @@ impl std::fmt::Display for SandboxTransformError {
                 f,
                 "sandbox policy cwd URI `{cwd}` is not valid on this host: {source}"
             ),
-            Self::MissingLinuxSandboxExecutable => {
-                write!(f, "missing codex-linux-sandbox executable path")
-            }
             Self::EnvironmentNetworkProxy(err) => {
                 write!(f, "failed to prepare environment network proxy: {err}")
             }
@@ -221,7 +204,6 @@ impl std::error::Error for SandboxTransformError {
         match self {
             Self::InvalidCommandCwd { source, .. }
             | Self::InvalidSandboxPolicyCwd { source, .. } => Some(source),
-            Self::MissingLinuxSandboxExecutable => None,
             Self::EnvironmentNetworkProxy(_) => None,
             Self::ProotPreparation(_) => None,
         }
@@ -287,13 +269,11 @@ impl SandboxManager {
             mut command,
             permissions,
             sandbox,
-            enforce_managed_network,
+            enforce_managed_network: _,
             environment_id,
             network,
             sandbox_policy_cwd,
-            codex_linux_sandbox_exe,
             proot,
-            use_legacy_landlock,
         } = request;
         let additional_permissions = command.additional_permissions.take();
         let managed_mitm_ca_trust_bundle_path =
@@ -312,28 +292,6 @@ impl SandboxManager {
 
         let (argv, arg0_override, pending_sandboxed_request) = match sandbox {
             SandboxType::None => (os_argv_to_strings(argv), None, None),
-            SandboxType::LinuxSeccomp => {
-                let pending = pending_sandboxed_request?;
-                let exe = codex_linux_sandbox_exe
-                    .ok_or(SandboxTransformError::MissingLinuxSandboxExecutable)?;
-                let allow_proxy_network = allow_network_for_proxy(enforce_managed_network);
-                let mut args = create_linux_sandbox_command_args_for_permission_profile(
-                    os_argv_to_strings(argv),
-                    pending.native_command_cwd.as_path(),
-                    &pending.effective_permission_profile,
-                    pending.native_sandbox_policy_cwd.as_path(),
-                    use_legacy_landlock,
-                    allow_proxy_network,
-                );
-                let mut full_command = Vec::with_capacity(1 + args.len());
-                full_command.push(os_string_to_command_component(exe.as_os_str().to_owned()));
-                full_command.append(&mut args);
-                (
-                    full_command,
-                    Some(linux_sandbox_arg0_override(exe)),
-                    Some(pending),
-                )
-            }
             SandboxType::Proot => {
                 use crate::proot::CreateProotCommandArgsParams;
                 use crate::proot::create_proot_command_args;
@@ -450,14 +408,6 @@ fn os_string_to_command_component(value: OsString) -> String {
     value
         .into_string()
         .unwrap_or_else(|value| value.to_string_lossy().into_owned())
-}
-
-fn linux_sandbox_arg0_override(exe: &Path) -> String {
-    if exe.file_name().and_then(|name| name.to_str()) == Some(CODEX_LINUX_SANDBOX_ARG0) {
-        os_string_to_command_component(exe.as_os_str().to_owned())
-    } else {
-        CODEX_LINUX_SANDBOX_ARG0.to_string()
-    }
 }
 
 #[cfg(test)]

@@ -788,7 +788,6 @@ async fn environment_mcp_policy_filters_runtime_config_and_model_tools(
                     fixture.config.permissions.permission_profile().clone(),
                 ),
                 shell_environment_policy: Default::default(),
-                use_legacy_landlock: fixture.config.features.use_legacy_landlock(),
                 exec_policy: None,
                 mcp_policy: Some(mcp_policy),
                 network_policy: None,
@@ -1757,7 +1756,6 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
                         owner_permission_profile.clone(),
                     ),
                     shell_environment_policy: Default::default(),
-                    use_legacy_landlock: fixture.config.features.use_legacy_landlock(),
                     exec_policy: None,
                     mcp_policy: None,
                     network_policy: None,
@@ -1882,9 +1880,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
         SandboxState {
             permission_profile: owner_permission_profile
                 .materialize_project_roots_with_path_uris(&owner_workspace_roots),
-            codex_linux_sandbox_exe: fixture.config.codex_linux_sandbox_exe.clone(),
             sandbox_cwd: PathUri::from_abs_path(&fixture.config.cwd),
-            use_legacy_landlock: false,
         }
     );
 

@@ -537,7 +537,6 @@ mod tests {
                 config: EnvironmentConfigState::Ready(EnvironmentConfig {
                     allow_login_shell: true,
                     workspace_roots: Vec::new(),
-                    use_legacy_landlock: false,
                     permission_profile: PermissionProfileSnapshot::legacy(
                         PermissionProfile::read_only(),
                     ),

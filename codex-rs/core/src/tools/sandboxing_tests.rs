@@ -224,9 +224,7 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
         manager: &manager,
         sandbox_cwd: &cwd_uri,
         workspace_roots: std::slice::from_ref(&cwd_uri),
-        codex_linux_sandbox_exe: None,
         proot: None,
-        use_legacy_landlock: false,
         network_denial_cancellation_token: None,
         network_proxy: None,
     };
@@ -268,7 +266,6 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
             cwd: Some(cwd_uri.clone()),
             workspace_roots: vec![cwd_uri.clone()],
             temporary_directories: None,
-            use_legacy_landlock: false,
         })
     );
     assert!(request.exec_server_enforce_managed_network);

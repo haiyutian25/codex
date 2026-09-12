@@ -1971,7 +1971,6 @@ async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()
                     test.config.permissions.permission_profile().clone()
                 }),
                 shell_environment_policy: test.config.permissions.shell_environment_policy.clone(),
-                use_legacy_landlock: test.config.features.use_legacy_landlock(),
                 exec_policy: None,
                 mcp_policy: None,
                 network_policy: Some(EnvironmentNetworkPolicy::from_config(

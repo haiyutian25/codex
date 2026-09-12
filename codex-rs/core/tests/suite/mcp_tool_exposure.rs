@@ -492,7 +492,6 @@ async fn root_reconciliation_reuses_pending_apps_startup() -> Result<()> {
                     test.config.permissions.permission_profile().clone(),
                 ),
                 shell_environment_policy: Default::default(),
-                use_legacy_landlock: test.config.features.use_legacy_landlock(),
                 exec_policy: None,
                 mcp_policy: None,
                 network_policy: None,

@@ -116,7 +116,6 @@ impl TurnEnvironment {
         &self,
         additional_permissions: Option<AdditionalPermissionProfile>,
     ) -> FileSystemSandboxContext {
-        let config = self.config();
         // Grant-adjusted permissions take precedence over the environment's baseline;
         // paths and sandbox backend settings remain environment-owned.
         let permissions = effective_permission_profile(
@@ -128,7 +127,6 @@ impl TurnEnvironment {
             cwd: Some(self.cwd().clone()),
             workspace_roots: self.workspace_roots().to_vec(),
             temporary_directories: self.temporary_directories.clone(),
-            use_legacy_landlock: config.use_legacy_landlock,
         }
     }
 

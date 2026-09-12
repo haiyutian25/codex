@@ -154,7 +154,6 @@ async fn read_only_permissions_preserve_parent_environments_and_denied_reads() -
         workspace_roots: environment.workspace_roots.clone(),
         permission_profile: PermissionProfileSnapshot::legacy(parent_profile.clone()),
         shell_environment_policy: Default::default(),
-        use_legacy_landlock: parent_config.features.use_legacy_landlock(),
         exec_policy: None,
         mcp_policy: None,
         network_policy: None,

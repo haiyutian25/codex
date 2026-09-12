@@ -718,7 +718,6 @@ impl Session {
             permission_profile_state: session_permission_profile_state_from_config(&config)?,
             allow_login_shell: config.permissions.allow_login_shell,
             shell_environment_policy: config.permissions.shell_environment_policy.clone(),
-            use_legacy_landlock: config.features.use_legacy_landlock(),
             legacy_fallback_cwd: config.cwd.clone(),
             codex_home: config.codex_home.clone(),
             thread_name: None,

@@ -303,7 +303,6 @@ pub struct ExecResponse {
 pub enum ProcessSandboxType {
     /// The process was explicitly started without a platform sandbox.
     None,
-    LinuxSeccomp,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -361,7 +361,6 @@ async fn skill_mcp_dependency_oauth_uses_configured_http_client() -> Result<()> 
         workspace_roots: environments.environments[0].workspace_roots.clone(),
         permission_profile: PermissionProfileSnapshot::legacy(PermissionProfile::Disabled),
         shell_environment_policy: Default::default(),
-        use_legacy_landlock: fixture.config.features.use_legacy_landlock(),
         exec_policy: None,
         mcp_policy: Some(EnvironmentMcpPolicy {
             servers: Some(BTreeMap::from([(

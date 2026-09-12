@@ -933,7 +933,6 @@ mod tests {
         EnvironmentConfig {
             allow_login_shell: true,
             workspace_roots: Vec::new(),
-            use_legacy_landlock: false,
             permission_profile: PermissionProfileSnapshot::legacy(PermissionProfile::read_only()),
             shell_environment_policy: Default::default(),
             exec_policy: None,
@@ -963,7 +962,6 @@ mod tests {
     fn test_runtime_paths() -> ExecServerRuntimePaths {
         ExecServerRuntimePaths::new(
             std::env::current_exe().expect("current exe"),
-            /*codex_linux_sandbox_exe*/ None,
         )
         .expect("runtime paths")
     }
@@ -1109,7 +1107,6 @@ url = "ws://127.0.0.1:8765"
         let expected_config = EnvironmentConfig {
             allow_login_shell: false,
             workspace_roots: Vec::new(),
-            use_legacy_landlock: false,
             permission_profile: PermissionProfileSnapshot::active_with_profile_workspace_roots(
                 PermissionProfile::read_only(),
                 ActivePermissionProfile::read_only(),
@@ -1359,7 +1356,6 @@ url = "ws://127.0.0.1:8765"
         let expected_config = EnvironmentConfig {
             allow_login_shell: false,
             workspace_roots: Vec::new(),
-            use_legacy_landlock: false,
             permission_profile: PermissionProfileSnapshot::active_with_profile_workspace_roots(
                 PermissionProfile::read_only(),
                 ActivePermissionProfile::read_only(),
@@ -1715,7 +1711,6 @@ url = "ws://127.0.0.1:8765"
         let child_config = EnvironmentConfig {
             allow_login_shell: false,
             workspace_roots: Vec::new(),
-            use_legacy_landlock: false,
             permission_profile: PermissionProfileSnapshot::active_with_profile_workspace_roots(
                 PermissionProfile::read_only(),
                 ActivePermissionProfile::read_only(),
@@ -1777,7 +1772,6 @@ url = "ws://127.0.0.1:8765"
         let parent_owner_config = EnvironmentConfig {
             allow_login_shell: false,
             workspace_roots: selection.workspace_roots.clone(),
-            use_legacy_landlock: false,
             permission_profile: PermissionProfileSnapshot::legacy(PermissionProfile::read_only()),
             shell_environment_policy: Default::default(),
             exec_policy: None,

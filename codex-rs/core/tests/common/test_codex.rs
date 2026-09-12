@@ -593,14 +593,8 @@ impl TestCodexBuilder {
             .exec_server_url
             .clone()
             .or_else(|| test_env.exec_server_url.clone());
-        let codex_linux_sandbox_exe = Some(
-            crate::find_codex_linux_sandbox_exe()
-                .context("should find binary for codex-linux-sandbox")?,
-        );
-        let local_runtime_paths = codex_exec_server::ExecServerRuntimePaths::new(
-            std::env::current_exe()?,
-            codex_linux_sandbox_exe,
-        )?;
+        let local_runtime_paths =
+            codex_exec_server::ExecServerRuntimePaths::new(std::env::current_exe()?)?;
         let environment_manager = Arc::new(if include_local_environment {
             codex_exec_server::EnvironmentManager::create_for_tests_with_local(
                 exec_server_url,

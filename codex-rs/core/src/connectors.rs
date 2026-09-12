@@ -163,10 +163,8 @@ pub async fn list_accessible_connectors_from_mcp_tools_with_options_and_status(
     // TODO: Wire callers that already own an EnvironmentManager into
     // list_accessible_connectors_from_mcp_tools_with_environment_manager instead
     // of constructing a temporary manager here.
-    let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
-        config.codex_self_exe.clone(),
-        config.codex_linux_sandbox_exe.clone(),
-    )?;
+    let local_runtime_paths =
+        ExecServerRuntimePaths::from_optional_paths(config.codex_self_exe.clone())?;
     let environment_manager = EnvironmentManager::from_codex_home(
         config.codex_home.clone(),
         Some(local_runtime_paths),

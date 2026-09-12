@@ -993,7 +993,7 @@ async fn assert_exec_process_retains_output_after_exit_until_streams_close(
     use_remote: bool,
 ) -> Result<()> {
     let context = create_process_context(use_remote).await?;
-    let (helper_binary, _) = current_test_binary_helper_paths()?;
+    let helper_binary = current_test_binary_helper_paths()?;
     let release_dir = TempDir::new()?;
     let release_path = release_dir.path().join("release-delayed-output");
     let process_id = "proc-output-after-exit".to_string();

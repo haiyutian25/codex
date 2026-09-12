@@ -334,8 +334,6 @@ pub struct FileSystemSandboxContext {
     /// Executor-local default directories used to resolve `:tmpdir` policy entries.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub temporary_directories: Option<Vec<PathUri>>,
-    #[serde(default)]
-    pub use_legacy_landlock: bool,
 }
 
 impl FileSystemSandboxContext {
@@ -374,7 +372,6 @@ impl FileSystemSandboxContext {
             cwd,
             workspace_roots,
             temporary_directories: None,
-            use_legacy_landlock: false,
         }
     }
 

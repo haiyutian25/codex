@@ -2,13 +2,10 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-#[cfg(target_os = "linux")]
-use codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
 use codex_network_proxy::NetworkProxyConfig;
 use codex_network_proxy::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
 use codex_network_proxy::RemoteNetworkProxyConfig;
 use codex_network_proxy::RemoteNetworkProxyLaunchConfig;
-use codex_protocol::models::PermissionProfile;
 use codex_utils_absolute_path::AbsolutePathBuf;
 use codex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
@@ -17,141 +14,8 @@ use tokio::io::AsyncWriteExt;
 use tokio::time::timeout;
 
 use super::prepare_exec_request;
-#[cfg(unix)]
-use crate::CODEX_ARG0_EXEC_HELPER_ARG1;
 use crate::ExecParams;
-use crate::ExecServerRuntimePaths;
-use crate::FileSystemSandboxContext;
 use crate::ProcessId;
-
-#[cfg(unix)]
-#[tokio::test]
-async fn sandbox_request_wraps_native_argv_on_executor() {
-    let cwd: AbsolutePathBuf = std::env::current_dir()
-        .expect("current directory")
-        .try_into()
-        .expect("absolute cwd");
-    let cwd_uri = PathUri::from_abs_path(&cwd);
-    let self_exe = std::env::current_exe().expect("current executable");
-    let runtime_paths =
-        ExecServerRuntimePaths::new(self_exe.clone(), Some(self_exe)).expect("runtime paths");
-    let sandbox = FileSystemSandboxContext::from_permission_profile_with_cwd(
-        PermissionProfile::workspace_write(),
-        cwd_uri.clone(),
-    );
-    let params = ExecParams {
-        process_id: ProcessId::from("process-1"),
-        argv: vec![
-            "/bin/bash".to_string(),
-            "-lc".to_string(),
-            "pwd".to_string(),
-        ],
-        cwd: cwd_uri,
-        shell_snapshot: None,
-        env_policy: None,
-        env: HashMap::new(),
-        tty: false,
-        pipe_stdin: false,
-        arg0: None,
-        sandbox: Some(sandbox),
-        enforce_managed_network: false,
-        managed_network: None,
-        network_proxy: None,
-    };
-
-    let prepared = prepare_exec_request(
-        &params,
-        HashMap::new(),
-        Some(&runtime_paths),
-        /*network_policy_decider*/ None,
-        /*network_policy_audit_observer*/ None,
-    )
-    .await
-    .expect("prepare sandboxed request");
-
-    assert_ne!(prepared.command, params.argv);
-    assert_eq!(prepared.cwd, cwd);
-    #[cfg(target_os = "linux")]
-    {
-        assert_eq!(
-            prepared.command.first(),
-            Some(&runtime_paths.codex_self_exe.to_string_lossy().into_owned())
-        );
-        let permission_profile_json = prepared
-            .command
-            .iter()
-            .position(|arg| arg == "--permission-profile")
-            .and_then(|index| prepared.command.get(index + 1))
-            .expect("sandbox wrapper permission profile");
-        let permission_profile: PermissionProfile =
-            serde_json::from_str(permission_profile_json).expect("permission profile JSON");
-        assert_eq!(
-            permission_profile,
-            PermissionProfile::workspace_write()
-                .materialize_project_roots_with_workspace_roots(std::slice::from_ref(&cwd))
-        );
-    }
-}
-
-#[cfg(unix)]
-#[tokio::test]
-async fn sandbox_request_routes_custom_arg0_to_inner_helper() {
-    let cwd: AbsolutePathBuf = std::env::current_dir()
-        .expect("current directory")
-        .try_into()
-        .expect("absolute cwd");
-    let cwd_uri = PathUri::from_abs_path(&cwd);
-    let self_exe = std::env::current_exe().expect("current executable");
-    let runtime_paths =
-        ExecServerRuntimePaths::new(self_exe.clone(), Some(self_exe)).expect("runtime paths");
-    let sandbox = FileSystemSandboxContext::from_permission_profile_with_cwd(
-        PermissionProfile::workspace_write(),
-        cwd_uri.clone(),
-    );
-    let params = ExecParams {
-        process_id: ProcessId::from("process-custom-arg0"),
-        argv: vec!["/bin/sh".to_string(), "-c".to_string(), "true".to_string()],
-        cwd: cwd_uri,
-        shell_snapshot: None,
-        env_policy: None,
-        env: HashMap::new(),
-        tty: false,
-        pipe_stdin: false,
-        arg0: Some("custom-arg0".to_string()),
-        sandbox: Some(sandbox),
-        enforce_managed_network: false,
-        managed_network: None,
-        network_proxy: None,
-    };
-
-    let prepared = prepare_exec_request(
-        &params,
-        HashMap::new(),
-        Some(&runtime_paths),
-        /*network_policy_decider*/ None,
-        /*network_policy_audit_observer*/ None,
-    )
-    .await
-    .expect("prepare sandboxed request");
-    let helper_mode = prepared
-        .command
-        .iter()
-        .position(|arg| arg == CODEX_ARG0_EXEC_HELPER_ARG1)
-        .expect("sandboxed command should invoke arg0 helper");
-
-    assert_eq!(
-        prepared.command[helper_mode..],
-        [
-            CODEX_ARG0_EXEC_HELPER_ARG1,
-            "custom-arg0",
-            "/bin/sh",
-            "-c",
-            "true",
-        ]
-    );
-    #[cfg(target_os = "linux")]
-    assert_eq!(prepared.arg0, Some(CODEX_LINUX_SANDBOX_ARG0.to_string()));
-}
 
 #[tokio::test]
 async fn native_request_preserves_native_launch_fields() {

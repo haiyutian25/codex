@@ -116,7 +116,6 @@ impl Executor {
         let executor = target.clone();
         let processor = ConnectionProcessor::new(ExecServerRuntimePaths::new(
             std::env::current_exe()?,
-            /*codex_linux_sandbox_exe*/ None,
         )?);
         let server = tokio::spawn(async move {
             let mut connections = JoinSet::new();

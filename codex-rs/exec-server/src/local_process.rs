@@ -356,7 +356,6 @@ impl LocalProcess {
         }
         let sandbox_type = match prepared.sandbox {
             SandboxType::None => Some(ProcessSandboxType::None),
-            SandboxType::LinuxSeccomp => Some(ProcessSandboxType::LinuxSeccomp),
             // PRoot wrapping happens core-side (argv transformation); the
             // exec-server never receives this type as a process sandbox.
             SandboxType::Proot => Some(ProcessSandboxType::None),

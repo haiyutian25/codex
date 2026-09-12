@@ -100,7 +100,6 @@ impl ApplyPatchRuntime {
             cwd: Some(attempt.sandbox_cwd.clone()),
             workspace_roots: attempt.workspace_roots.to_vec(),
             temporary_directories: None,
-            use_legacy_landlock: attempt.use_legacy_landlock,
         })
     }
 }

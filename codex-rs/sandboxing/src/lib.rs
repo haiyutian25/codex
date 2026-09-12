@@ -1,6 +1,5 @@
 mod bwrap;
 mod denial;
-pub mod landlock;
 mod manager;
 pub mod policy_transforms;
 pub mod proot;
@@ -52,9 +51,6 @@ impl From<SandboxTransformError> for CodexErr {
             error @ SandboxTransformError::InvalidCommandCwd { .. }
             | error @ SandboxTransformError::InvalidSandboxPolicyCwd { .. } => {
                 CodexErr::InvalidRequest(error.to_string())
-            }
-            SandboxTransformError::MissingLinuxSandboxExecutable => {
-                CodexErr::LandlockSandboxExecutableNotProvided
             }
             SandboxTransformError::EnvironmentNetworkProxy(message) => {
                 CodexErr::UnsupportedOperation(message)

@@ -146,7 +146,6 @@ async fn executor_stop_hook_rejects_mismatched_environment() -> Result<()> {
             drop(listener);
             let runtime_paths = ExecServerRuntimePaths::new(
                 std::env::current_exe()?,
-                /*codex_linux_sandbox_exe*/ None,
             )?;
             let http_client_factory = fixture.test.config.http_client_factory();
             let executor_url_for_server = executor_url.clone();
@@ -401,7 +400,6 @@ impl ExecutorStopHookFixture {
                         self.test.config.permissions.permission_profile().clone(),
                     ),
                     shell_environment_policy: Default::default(),
-                    use_legacy_landlock: self.test.config.features.use_legacy_landlock(),
                     exec_policy: None,
                     mcp_policy: None,
                     network_policy: None,

@@ -469,9 +469,7 @@ fn transform_wraps_command_with_proot_when_proot_backend_selected() {
             environment_id: None,
             network: None,
             sandbox_policy_cwd: &cwd_uri,
-            codex_linux_sandbox_exe: None,
             proot: Some(&config),
-            use_legacy_landlock: false,
         })
         .expect("transform should wrap the command with proot");
 
@@ -520,9 +518,7 @@ fn transform_errors_when_proot_selected_without_config() {
             environment_id: None,
             network: None,
             sandbox_policy_cwd: &cwd_uri,
-            codex_linux_sandbox_exe: None,
             proot: None,
-            use_legacy_landlock: false,
         })
         .expect_err("transform should error when proot config is missing");
     assert!(matches!(err, SandboxTransformError::ProotPreparation(_)));

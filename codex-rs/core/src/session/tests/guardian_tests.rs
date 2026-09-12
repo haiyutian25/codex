@@ -51,7 +51,6 @@ use codex_protocol::request_permissions::RequestPermissionsArgs;
 use codex_protocol::request_permissions::RequestPermissionsResponse;
 use core_test_support::PathExt;
 use core_test_support::TempDirExt;
-use core_test_support::codex_linux_sandbox_exe_or_skip;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -538,7 +537,6 @@ async fn guardian_allows_exec_command_additional_permissions_requests_past_polic
     };
     environment.config_mut().permission_profile =
         config.permissions.permission_profile_state().snapshot();
-    config.codex_linux_sandbox_exe = codex_linux_sandbox_exe_or_skip!();
     config
         .features
         .enable(Feature::GuardianApproval)

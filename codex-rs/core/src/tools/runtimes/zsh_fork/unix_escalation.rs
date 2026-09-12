@@ -138,8 +138,6 @@ pub(crate) async fn prepare_unified_exec_zsh_fork(
         arg0: exec_request.arg0.clone(),
         sandbox_policy_cwd,
         sandbox_workspace_roots: exec_request.sandbox_workspace_roots.clone(),
-        codex_linux_sandbox_exe: ctx.step_context.turn.config.codex_linux_sandbox_exe.clone(),
-        use_legacy_landlock: req.turn_environment.config().use_legacy_landlock,
     };
     let escalation_policy = CoreShellActionProvider {
         policy: Arc::clone(&exec_policy),
@@ -569,8 +567,6 @@ struct CoreShellCommandExecutor {
     arg0: Option<String>,
     sandbox_policy_cwd: AbsolutePathBuf,
     sandbox_workspace_roots: Vec<AbsolutePathBuf>,
-    codex_linux_sandbox_exe: Option<PathBuf>,
-    use_legacy_landlock: bool,
 }
 
 struct PrepareSandboxedExecParams<'a> {
@@ -776,9 +772,7 @@ impl CoreShellCommandExecutor {
             environment_id: self.network_environment_id.as_deref(),
             network: self.network.as_ref(),
             sandbox_policy_cwd: &sandbox_policy_cwd,
-            codex_linux_sandbox_exe: self.codex_linux_sandbox_exe.as_deref(),
             proot: self.proot.as_ref(),
-            use_legacy_landlock: self.use_legacy_landlock,
         })?;
         let mut exec_request = crate::sandboxing::ExecRequest::from_sandbox_exec_request(
             exec_request,

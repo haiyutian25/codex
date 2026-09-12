@@ -30,7 +30,6 @@ pub(crate) fn sandbox_type_from_protocol(
     match sandbox_type {
         None => None,
         Some(ProcessSandboxType::None) => Some(SandboxType::None),
-        Some(ProcessSandboxType::LinuxSeccomp) => Some(SandboxType::LinuxSeccomp),
     }
 }
 

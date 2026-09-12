@@ -191,29 +191,7 @@ allow_local_binding = true
 }
 
 fn default_test_overrides() -> ConfigOverrides {
-    ConfigOverrides {
-        codex_linux_sandbox_exe: Some(
-            find_codex_linux_sandbox_exe().expect("should find binary for codex-linux-sandbox"),
-        ),
-        ..ConfigOverrides::default()
-    }
-}
-
-#[cfg(target_os = "linux")]
-pub fn find_codex_linux_sandbox_exe() -> Result<PathBuf, CargoBinError> {
-    if let Some(path) = TEST_ARG0_PATH_ENTRY
-        .get()
-        .and_then(Option::as_ref)
-        .and_then(|path_entry| path_entry.paths().codex_linux_sandbox_exe.clone())
-    {
-        return Ok(path);
-    }
-
-    if let Ok(path) = std::env::current_exe() {
-        return Ok(path);
-    }
-
-    codex_utils_cargo_bin::cargo_bin("codex-linux-sandbox")
+    ConfigOverrides::default()
 }
 
 pub async fn wait_for_event<F>(
@@ -559,24 +537,3 @@ macro_rules! skip_if_no_remote_env {
     }};
 }
 
-#[macro_export]
-macro_rules! codex_linux_sandbox_exe_or_skip {
-    () => {{
-        match $crate::find_codex_linux_sandbox_exe() {
-            Ok(path) => Some(path),
-            Err(err) => {
-                eprintln!("codex-linux-sandbox binary not available, skipping test: {err}");
-                return;
-            }
-        }
-    }};
-    ($return_value:expr $(,)?) => {{
-        match $crate::find_codex_linux_sandbox_exe() {
-            Ok(path) => Some(path),
-            Err(err) => {
-                eprintln!("codex-linux-sandbox binary not available, skipping test: {err}");
-                return $return_value;
-            }
-        }
-    }};
-}

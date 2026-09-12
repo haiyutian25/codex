@@ -4369,7 +4369,6 @@ async fn set_rate_limits_retains_previous_credits() {
         permission_profile_state: config.permissions.permission_profile_state().clone(),
         allow_login_shell: config.permissions.allow_login_shell,
         shell_environment_policy: config.permissions.shell_environment_policy.clone(),
-        use_legacy_landlock: config.features.use_legacy_landlock(),
         legacy_fallback_cwd: config.cwd.clone(),
         codex_home: config.codex_home.clone(),
         thread_name: None,
@@ -4483,7 +4482,6 @@ async fn set_rate_limits_updates_plan_type_when_present() {
         permission_profile_state: config.permissions.permission_profile_state().clone(),
         allow_login_shell: config.permissions.allow_login_shell,
         shell_environment_policy: config.permissions.shell_environment_policy.clone(),
-        use_legacy_landlock: config.features.use_legacy_landlock(),
         legacy_fallback_cwd: config.cwd.clone(),
         codex_home: config.codex_home.clone(),
         thread_name: None,
@@ -5122,7 +5120,6 @@ pub(crate) async fn make_session_configuration_for_tests() -> SessionConfigurati
         permission_profile_state: config.permissions.permission_profile_state().clone(),
         allow_login_shell: config.permissions.allow_login_shell,
         shell_environment_policy: config.permissions.shell_environment_policy.clone(),
-        use_legacy_landlock: config.features.use_legacy_landlock(),
         legacy_fallback_cwd: config.cwd.clone(),
         codex_home: config.codex_home.clone(),
         thread_name: None,
@@ -6028,7 +6025,6 @@ async fn session_new_fails_when_zsh_fork_enabled_without_packaged_zsh() {
         permission_profile_state: config.permissions.permission_profile_state().clone(),
         allow_login_shell: config.permissions.allow_login_shell,
         shell_environment_policy: config.permissions.shell_environment_policy.clone(),
-        use_legacy_landlock: config.features.use_legacy_landlock(),
         legacy_fallback_cwd: config.cwd.clone(),
         codex_home: config.codex_home.clone(),
         thread_name: None,
@@ -6178,7 +6174,6 @@ pub(crate) async fn make_session_and_context() -> (Session, TurnContext) {
         permission_profile_state: config.permissions.permission_profile_state().clone(),
         allow_login_shell: config.permissions.allow_login_shell,
         shell_environment_policy: config.permissions.shell_environment_policy.clone(),
-        use_legacy_landlock: config.features.use_legacy_landlock(),
         legacy_fallback_cwd: config.cwd.clone(),
         codex_home: config.codex_home.clone(),
         thread_name: None,
@@ -6472,7 +6467,6 @@ async fn make_session_with_config_and_rx(
         permission_profile_state: config.permissions.permission_profile_state().clone(),
         allow_login_shell: config.permissions.allow_login_shell,
         shell_environment_policy: config.permissions.shell_environment_policy.clone(),
-        use_legacy_landlock: config.features.use_legacy_landlock(),
         legacy_fallback_cwd: config.cwd.clone(),
         codex_home: config.codex_home.clone(),
         thread_name: None,
@@ -6595,7 +6589,6 @@ async fn make_session_with_history_source_and_agent_control_and_rx(
         permission_profile_state: config.permissions.permission_profile_state().clone(),
         allow_login_shell: config.permissions.allow_login_shell,
         shell_environment_policy: config.permissions.shell_environment_policy.clone(),
-        use_legacy_landlock: config.features.use_legacy_landlock(),
         legacy_fallback_cwd: config.cwd.clone(),
         codex_home: config.codex_home.clone(),
         thread_name: None,
@@ -8447,7 +8440,6 @@ where
         permission_profile_state: config.permissions.permission_profile_state().clone(),
         allow_login_shell: config.permissions.allow_login_shell,
         shell_environment_policy: config.permissions.shell_environment_policy.clone(),
-        use_legacy_landlock: config.features.use_legacy_landlock(),
         legacy_fallback_cwd: config.cwd.clone(),
         codex_home: config.codex_home.clone(),
         thread_name: None,
@@ -9224,10 +9216,6 @@ async fn capability_discovery_uses_environment_permission_profile() {
         .permissions
         .set_permission_profile(PermissionProfile::Disabled)
         .expect("unrestricted permission profile should be allowed");
-    config
-        .features
-        .disable(Feature::UseLegacyLandlock)
-        .expect("disable legacy Landlock");
     let mut environment = turn_context
         .environments
         .primary()
@@ -9247,13 +9235,11 @@ async fn capability_discovery_uses_environment_permission_profile() {
             &file_system_policy,
             NetworkSandboxPolicy::Restricted,
         ));
-    environment_config.use_legacy_landlock = true;
     let expected_sandbox = FileSystemSandboxContext {
         permissions: environment.permission_profile().clone().into(),
         cwd: Some(environment.cwd().clone()),
         workspace_roots: environment.workspace_roots().to_vec(),
         temporary_directories: environment.temporary_directories.clone(),
-        use_legacy_landlock: true,
     };
     let environment_id = environment.selection.environment_id.clone();
     turn_context.environments.environments[0] = TurnEnvironmentState::Ready(environment);

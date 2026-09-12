@@ -27,7 +27,6 @@ fn test_turn_environment(environment_id: &str) -> crate::session::turn_context::
             config: EnvironmentConfigState::Ready(EnvironmentConfig {
                 allow_login_shell: true,
                 workspace_roots: Vec::new(),
-                use_legacy_landlock: false,
                 permission_profile: PermissionProfileSnapshot::legacy(
                     PermissionProfile::read_only(),
                 ),
@@ -235,7 +234,7 @@ async fn file_system_sandbox_context_preserves_executor_workspace_permissions() 
     let manager = SandboxManager::new();
     let sandbox_policy_cwd = PathUri::from_abs_path(&path);
     let attempt = SandboxAttempt {
-        sandbox: SandboxType::LinuxSeccomp,
+        sandbox: SandboxType::Proot,
         sandbox_requested: true,
         permissions: &permissions,
         exec_server_permissions: &exec_server_permissions,
@@ -243,9 +242,7 @@ async fn file_system_sandbox_context_preserves_executor_workspace_permissions() 
         manager: &manager,
         sandbox_cwd: &sandbox_policy_cwd,
         workspace_roots: std::slice::from_ref(&sandbox_policy_cwd),
-        codex_linux_sandbox_exe: None,
         proot: None,
-        use_legacy_landlock: true,
         network_denial_cancellation_token: None,
         network_proxy: None,
     };
@@ -271,7 +268,6 @@ async fn file_system_sandbox_context_preserves_executor_workspace_permissions() 
         sandbox.cwd,
         Some(codex_utils_path_uri::PathUri::from_abs_path(&path))
     );
-    assert_eq!(sandbox.use_legacy_landlock, true);
 }
 
 #[tokio::test]
@@ -306,9 +302,7 @@ async fn file_system_sandbox_context_respects_sandbox_request() {
         manager: &manager,
         sandbox_cwd: &sandbox_policy_cwd,
         workspace_roots: std::slice::from_ref(&sandbox_policy_cwd),
-        codex_linux_sandbox_exe: None,
         proot: None,
-        use_legacy_landlock: false,
         network_denial_cancellation_token: None,
         network_proxy: None,
     };
@@ -336,7 +330,6 @@ async fn file_system_sandbox_context_respects_sandbox_request() {
             cwd: Some(cwd.clone()),
             workspace_roots: vec![cwd],
             temporary_directories: None,
-            use_legacy_landlock: false,
         })
     );
 }

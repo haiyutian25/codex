@@ -255,18 +255,14 @@ pub async fn process_exec_tool_call(
     params: ExecParams,
     permission_profile: &PermissionProfile,
     sandbox_cwd: &AbsolutePathBuf,
-    codex_linux_sandbox_exe: &Option<PathBuf>,
     proot: Option<&codex_sandboxing::ProotConfig>,
-    use_legacy_landlock: bool,
     stdout_stream: Option<StdoutStream>,
 ) -> Result<ExecToolCallOutput> {
     let exec_req = build_exec_request(
         params,
         permission_profile,
         sandbox_cwd,
-        codex_linux_sandbox_exe,
         proot,
-        use_legacy_landlock,
     )?;
 
     // Route through the sandboxing module for a single, unified execution path.
@@ -279,9 +275,7 @@ pub fn build_exec_request(
     params: ExecParams,
     permission_profile: &PermissionProfile,
     sandbox_cwd: &AbsolutePathBuf,
-    codex_linux_sandbox_exe: &Option<PathBuf>,
     proot: Option<&codex_sandboxing::ProotConfig>,
-    use_legacy_landlock: bool,
 ) -> Result<ExecRequest> {
     let ExecParams {
         command,
@@ -345,9 +339,7 @@ pub fn build_exec_request(
             environment_id: network_environment_id.as_deref(),
             network: network.as_ref(),
             sandbox_policy_cwd: &sandbox_policy_cwd_uri,
-            codex_linux_sandbox_exe: codex_linux_sandbox_exe.as_deref(),
             proot,
-            use_legacy_landlock,
         })
         .map_err(CodexErr::from)?;
     ExecRequest::from_sandbox_exec_request(request, options, vec![sandbox_cwd.clone()])

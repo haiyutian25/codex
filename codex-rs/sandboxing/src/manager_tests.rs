@@ -98,9 +98,7 @@ fn unsandboxed_transform_preserves_foreign_cwd_and_unrestricted_file_system_poli
             environment_id: None,
             network: None,
             sandbox_policy_cwd: &cwd_uri,
-            codex_linux_sandbox_exe: None,
             proot: None,
-            use_legacy_landlock: false,
         })
         .expect("transform");
 
@@ -153,9 +151,7 @@ fn transform_additional_permissions_enable_network_for_external_sandbox() {
             environment_id: None,
             network: None,
             sandbox_policy_cwd: &cwd_uri,
-            codex_linux_sandbox_exe: None,
             proot: None,
-            use_legacy_landlock: false,
         })
         .expect("transform");
 
@@ -223,9 +219,7 @@ fn transform_additional_permissions_preserves_denied_entries() {
             environment_id: None,
             network: None,
             sandbox_policy_cwd: &cwd_uri,
-            codex_linux_sandbox_exe: None,
             proot: None,
-            use_legacy_landlock: false,
         })
         .expect("transform");
 
@@ -298,57 +292,5 @@ fn managed_mitm_ca_bundle_becomes_readable_for_restricted_sandbox() {
             },
         ])
     );
-}
-
-#[cfg(target_os = "linux")]
-fn transform_linux_seccomp_request(
-    codex_linux_sandbox_exe: &std::path::Path,
-) -> super::SandboxExecRequest {
-    let manager = SandboxManager::new();
-    let cwd = AbsolutePathBuf::current_dir().expect("current dir");
-    let cwd_uri = PathUri::from_abs_path(&cwd);
-    let permissions = PermissionProfile::Disabled;
-    manager
-        .transform(SandboxTransformRequest {
-            command: SandboxCommand {
-                program: "true".into(),
-                args: Vec::new(),
-                cwd: cwd_uri.clone(),
-                env: HashMap::new(),
-                managed_network: None,
-                additional_permissions: None,
-            },
-            permissions: &permissions,
-            sandbox: SandboxType::LinuxSeccomp,
-            enforce_managed_network: false,
-            environment_id: None,
-            network: None,
-            sandbox_policy_cwd: &cwd_uri,
-            codex_linux_sandbox_exe: Some(codex_linux_sandbox_exe),
-            proot: None,
-            use_legacy_landlock: false,
-        })
-        .expect("transform")
-}
-
-#[cfg(target_os = "linux")]
-#[test]
-fn transform_linux_seccomp_preserves_helper_path_in_arg0_when_available() {
-    let codex_linux_sandbox_exe = std::path::PathBuf::from("/tmp/codex-linux-sandbox");
-    let exec_request = transform_linux_seccomp_request(&codex_linux_sandbox_exe);
-
-    assert_eq!(
-        exec_request.arg0,
-        Some(codex_linux_sandbox_exe.to_string_lossy().into_owned())
-    );
-}
-
-#[cfg(target_os = "linux")]
-#[test]
-fn transform_linux_seccomp_uses_helper_alias_when_launcher_is_not_helper_path() {
-    let codex_linux_sandbox_exe = std::path::PathBuf::from("/tmp/codex");
-    let exec_request = transform_linux_seccomp_request(&codex_linux_sandbox_exe);
-
-    assert_eq!(exec_request.arg0, Some("codex-linux-sandbox".to_string()));
 }
 
