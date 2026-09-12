@@ -224,7 +224,7 @@ When referencing files in your response, make sure to include the relevant start
   * Line/column (1‑based, optional): :line[:column] or #Lline[Ccolumn] (column defaults to 1).
   * Do not use URIs like file://, vscode://, or https://.
   * Do not provide range of lines
-  * Examples: src/app.ts, src/app.ts:42, b/server/index.js#L10, C:\repo\project\main.rs:12:5
+  * Examples: src/app.ts, src/app.ts:42, b/server/index.js#L10
 
 **Structure**
 

@@ -15,15 +15,7 @@ For POSIX shells, invoke the resolver through `sh`, without assuming an executab
 sh <skill-dir>/scripts/resolve-latest-model-info
 ```
 
-On Windows, use the CommonJS entry point with Node.js 18 or newer:
-
-```text
-node <skill-dir>\scripts\resolve-latest-model-info.cjs
-```
-
-If the Windows Node runtime is unavailable and `load_workspace_dependencies` is callable, use its returned runtime and retry once. Do not execute the extensionless POSIX wrapper directly on Windows.
-
-Do not suppress or redirect resolver stdout. Success requires JSON with nonempty `model`, `migrationGuideUrl`, and `promptingGuideUrl` fields. If the command fails or any required field is missing, retry the platform-specific command once, then fall back to current official documentation and finally disclosed bundled references.
+Do not suppress or redirect resolver stdout. Success requires JSON with nonempty `model`, `migrationGuideUrl`, and `promptingGuideUrl` fields. If the command fails or any required field is missing, retry the command once, then fall back to current official documentation and finally disclosed bundled references.
 
 ## Retrieve only the guidance this request needs
 

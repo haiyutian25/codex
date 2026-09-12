@@ -109,8 +109,7 @@ const tempFilePath = (cacheDir, suffix) =>
 const requestManualWithCurl = async (url, { cacheDir, method, timeoutMs }) => {
   const headerPath = tempFilePath(cacheDir, ".headers");
   const bodyPath = tempFilePath(cacheDir, ".body");
-  const curlNames =
-    process.platform === "win32" ? ["curl.exe", "curl"] : ["curl"];
+  const curlNames = ["curl"];
   const args = [
     "--silent",
     "--show-error",
@@ -135,7 +134,7 @@ const requestManualWithCurl = async (url, { cacheDir, method, timeoutMs }) => {
   let lastError;
   for (const curlName of curlNames) {
     try {
-      await execFileAsync(curlName, args, { windowsHide: true });
+      await execFileAsync(curlName, args);
       const [rawHeaders, body] = await Promise.all([
         readFile(headerPath, "utf8"),
         readFile(bodyPath, "utf8"),
@@ -275,10 +274,8 @@ const defaultCacheDirCandidates = () => {
     }
   });
 
-  if (process.platform !== "win32") {
-    pushCandidate(`/private/tmp/${DEFAULT_CACHE_DIR_NAME}`);
-    pushCandidate(`/tmp/${DEFAULT_CACHE_DIR_NAME}`);
-  }
+  pushCandidate(`/private/tmp/${DEFAULT_CACHE_DIR_NAME}`);
+  pushCandidate(`/tmp/${DEFAULT_CACHE_DIR_NAME}`);
 
   return candidates;
 };
@@ -546,9 +543,6 @@ const envProxyHint = () => {
   }
   if (typeof fetch !== "function") {
     return "Hint: native fetch is unavailable in this Node runtime. Install `curl` or use a newer Node version to fetch the manual.";
-  }
-  if (process.platform === "win32") {
-    return "Hint: on Windows, pass a cache dir under `%TEMP%` or `%TMP%`.";
   }
   return null;
 };

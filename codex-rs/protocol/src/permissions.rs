@@ -2304,12 +2304,12 @@ mod tests {
     }
 
     #[test]
-    fn permission_paths_preserve_native_strings_across_path_conventions() {
+    fn permission_paths_preserve_raw_strings() {
         for path in [
             "/workspace/src",
-            r"C:\workspace\src",
-            r"\\server\share\src",
-            r"\\localhost\share",
+            "/C:/workspace/src",
+            "//server/share/src",
+            "//localhost/share",
         ] {
             let expected = serde_json::json!({ "type": "path", "path": path });
             let actual = serde_json::from_value::<RawFileSystemPath>(expected.clone())

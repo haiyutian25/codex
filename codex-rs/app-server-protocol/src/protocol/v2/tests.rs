@@ -4763,9 +4763,9 @@ fn thread_settings_update_params_preserve_field_level_experimental_gates() {
 
 #[test]
 fn turn_start_params_round_trip_environments() {
-    // Use a path foreign to the test host so this exercises syntax preservation instead of the
-    // host-native conversion performed by test_absolute_path().
-    let raw_cwd = r"C:\workspace";
+    // Use a path that is not an absolute POSIX path so this exercises syntax preservation
+    // instead of the host-native conversion performed by test_absolute_path().
+    let raw_cwd = "workspace/src";
     let cwd: LegacyAppPathString =
         serde_json::from_value(json!(raw_cwd)).expect("API path should deserialize");
     let workspace_root = cwd.clone();

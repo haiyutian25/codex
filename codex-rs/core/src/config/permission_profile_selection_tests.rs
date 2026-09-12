@@ -9,44 +9,44 @@ use std::collections::BTreeMap;
 fn resolves_managed_profile_without_compiling_executor_paths() -> anyhow::Result<()> {
     let configured_profiles = toml::from_str::<PermissionsToml>(
         r#"
-[configured-windows]
+[configured-remote]
 extends = ":workspace"
 
-[configured-windows.workspace_roots]
-'C:\Users\agent\workspace' = true
+[configured-remote.workspace_roots]
+'/srv/agent/workspace' = true
 
-[configured-windows.filesystem]
-'C:\Users\agent\workspace' = "write"
+[configured-remote.filesystem]
+'/srv/agent/workspace' = "write"
 "#,
     )?;
     let requirements = toml::from_str::<ConfigRequirementsToml>(
         r#"
-default_permissions = "managed-windows"
+default_permissions = "managed-remote"
 
 [allowed_permission_profiles]
-configured-windows = false
-managed-windows = true
+configured-remote = false
+managed-remote = true
 
-[permissions.managed-windows.workspace_roots]
-'D:\Managed\workspace' = true
+[permissions.managed-remote.workspace_roots]
+'/srv/managed/workspace' = true
 
-[permissions.managed-windows.filesystem]
-'D:\Managed\workspace' = "read"
+[permissions.managed-remote.filesystem]
+'/srv/managed/workspace' = "read"
 "#,
     )?;
     let expected_profiles = PermissionsToml {
         entries: BTreeMap::from([
             (
-                "configured-windows".to_string(),
-                configured_profiles.entries["configured-windows"].clone(),
+                "configured-remote".to_string(),
+                configured_profiles.entries["configured-remote"].clone(),
             ),
             (
-                "managed-windows".to_string(),
+                "managed-remote".to_string(),
                 requirements
                     .permissions
                     .as_ref()
                     .expect("managed profiles should deserialize")
-                    .profiles["managed-windows"]
+                    .profiles["managed-remote"]
                     .clone(),
             ),
         ]),
@@ -54,14 +54,14 @@ managed-windows = true
 
     let resolved = resolve_permission_profile_selection(
         Some(&configured_profiles),
-        Some("configured-windows"),
+        Some("configured-remote"),
         &requirements,
     )?;
 
     assert_eq!(
         resolved,
         ResolvedPermissionProfileSelection {
-            profile_id: Some("managed-windows"),
+            profile_id: Some("managed-remote"),
             profiles: Some(expected_profiles),
         }
     );
