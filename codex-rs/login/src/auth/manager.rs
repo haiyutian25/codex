@@ -701,11 +701,15 @@ impl AuthManager {
     }
 
     pub async fn logout(&self) -> std::io::Result<bool> {
-        logout(
+        let removed = logout(
             &self.codex_home,
             self.auth_credentials_store_mode,
             self.keyring_backend_kind,
-        )
+        )?;
+        // Always reload so cached credentials do not survive logout, even when
+        // nothing was stored. Host-injected external auth is left untouched.
+        self.reload().await;
+        Ok(removed)
     }
 
     pub async fn logout_with_revoke(&self) -> std::io::Result<bool> {
