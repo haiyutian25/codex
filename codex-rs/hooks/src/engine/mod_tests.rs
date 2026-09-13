@@ -659,7 +659,7 @@ with Path(r"{log_path}").open("a", encoding="utf-8") as handle:
 }
 
 #[tokio::test]
-async fn requirements_managed_hooks_ignore_windows_command_override() {
+async fn requirements_managed_hooks_ignore_command_override() {
     let temp = tempdir().expect("create temp dir");
     let managed_dir =
         AbsolutePathBuf::try_from(temp.path().join("managed-hooks")).expect("absolute path");

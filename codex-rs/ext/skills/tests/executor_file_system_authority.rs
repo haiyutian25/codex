@@ -329,11 +329,14 @@ async fn foreign_executor_skill_read_rejects_disabled_sandbox_on_any_orchestrato
             mcp_resources: None,
         })
         .await
-        .expect_err("disabled sandbox must fail closed");
+        .expect_err("sandboxed read must fail closed");
 
-    assert_eq!(
-        error.message,
-        "executor skill resource requires an unavailable filesystem sandbox"
+    assert!(
+        error
+            .message
+            .contains("sandboxed filesystem operations require configured runtime paths"),
+        "unexpected error: {}",
+        error.message
     );
 }
 
@@ -401,7 +404,7 @@ async fn selected_root_id_distinguishes_identical_executor_paths() {
 }
 
 #[tokio::test]
-async fn executor_discovery_preserves_posix_and_windows_locator_alias_roots() {
+async fn executor_discovery_preserves_posix_and_foreign_locator_alias_roots() {
     let provider = ExecutorSkillProvider::new_with_restriction_product(
         Arc::new(EnvironmentManager::default_for_tests()),
         /*restriction_product*/ None,

@@ -3735,41 +3735,36 @@ impl Session {
         if turn_context.config.features.enabled(Feature::TokenBudget)
             && turn_context.model_context_window().is_some()
         {
-            // Keep the legacy bridge hint when native Notes is disabled. A failed
-            // native request must not fall back to the bridge.
-            if !turn_context
-                .config
-                .token_budget
-                .as_ref()
-                .is_some_and(|config| config.use_history_notes_extension)
-                && let Some(mcp_result) = self
-                    .services
-                    .mcp_runtime
-                    .latest_call_tool(
-                        "notes",
-                        "thread_hint",
-                        /*environment_id*/ None,
-                        /*arguments*/ None,
-                        Some(serde_json::json!({
-                            "threadId": self.thread_id().to_string(),
-                        })),
-                        /*requested_timeout*/ None,
-                        /*wait_for_server*/ true,
-                    )
-                    .await
-                    .ok()
-                    .and_then(|result| {
-                        let text = result
-                            .content
-                            .iter()
-                            .filter_map(|content| {
-                                content.get("text").and_then(serde_json::Value::as_str)
-                            })
-                            .filter(|text| !text.is_empty())
-                            .collect::<Vec<_>>()
-                            .join("\n");
-                        (!text.is_empty()).then_some(text)
-                    })
+            // Emit the legacy bridge hint when the notes MCP server provides one.
+            // A failed request must not fall back to another source.
+            if let Some(mcp_result) = self
+                .services
+                .mcp_runtime
+                .latest_call_tool(
+                    "notes",
+                    "thread_hint",
+                    /*environment_id*/ None,
+                    /*arguments*/ None,
+                    Some(serde_json::json!({
+                        "threadId": self.thread_id().to_string(),
+                    })),
+                    /*requested_timeout*/ None,
+                    /*wait_for_server*/ true,
+                )
+                .await
+                .ok()
+                .and_then(|result| {
+                    let text = result
+                        .content
+                        .iter()
+                        .filter_map(|content| {
+                            content.get("text").and_then(serde_json::Value::as_str)
+                        })
+                        .filter(|text| !text.is_empty())
+                        .collect::<Vec<_>>()
+                        .join("\n");
+                    (!text.is_empty()).then_some(text)
+                })
             {
                 context_window_hints.push(mcp_result);
             }

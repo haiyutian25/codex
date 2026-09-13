@@ -1561,7 +1561,7 @@ mod tests {
     }
 
     #[test]
-    fn pre_tool_use_resolves_windows_command_override_during_discovery() {
+    fn pre_tool_use_resolves_command_override_during_discovery() {
         let mut handlers = Vec::new();
         let mut warnings = Vec::new();
         let mut display_order = 0;

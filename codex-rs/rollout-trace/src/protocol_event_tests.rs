@@ -75,7 +75,7 @@ fn exec_command_trace_payloads_use_inferred_native_cwd() -> anyhow::Result<()> {
         turn_id: "turn-1".to_string(),
         started_at_ms: 1234,
         command: vec!["pwd".to_string()],
-        cwd: "file:///C:/windows".parse()?,
+        cwd: "file:///C:/workdir".parse()?,
         parsed_cmd: Vec::new(),
         source: ExecCommandSource::Agent,
         interaction_input: None,
@@ -115,7 +115,7 @@ fn exec_command_trace_payloads_use_inferred_native_cwd() -> anyhow::Result<()> {
             "turn_id": "turn-1",
             "started_at_ms": 1234,
             "command": ["pwd"],
-            "cwd": "/C:/windows",
+            "cwd": "/C:/workdir",
             "parsed_cmd": [],
             "source": "agent"
         })
