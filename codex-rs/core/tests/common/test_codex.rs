@@ -433,10 +433,6 @@ impl TestCodexBuilder {
         self
     }
 
-    pub fn with_windows_cmd_shell(self) -> Self {
-        self
-    }
-
     pub async fn build(&mut self, server: &wiremock::MockServer) -> anyhow::Result<TestCodex> {
         let home = match self.home.clone() {
             Some(home) => home,

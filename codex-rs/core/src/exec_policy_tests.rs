@@ -1878,7 +1878,7 @@ fn derive_requested_execpolicy_amendment_returns_none_for_exact_banned_prefix_ru
 }
 
 #[test]
-fn derive_requested_execpolicy_amendment_returns_none_for_windows_and_pypy_variants() {
+fn derive_requested_execpolicy_amendment_returns_none_for_python_launcher_and_pypy_variants() {
     for prefix_rule in [
         vec!["py".to_string()],
         vec!["py".to_string(), "-3".to_string()],

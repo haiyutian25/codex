@@ -231,7 +231,7 @@ async fn resolves_relocated_script_through_executor_filesystem() {
 }
 
 #[test]
-fn recognizes_windows_executor_plugin_cache_root() {
+fn recognizes_foreign_executor_plugin_cache_root() {
     let attribution = PluginCommandAttribution {
         plugin_id: PluginId::parse("presentations@openai-primary-runtime").expect("plugin id"),
         normalized_relative_path:

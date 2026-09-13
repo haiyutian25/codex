@@ -1268,7 +1268,7 @@ async fn apply_patch_cli_can_use_exec_command_output_as_patch_input() -> Result<
     );
 
     let harness =
-        apply_patch_harness_with(|builder| builder.with_model("gpt-5.4").with_windows_cmd_shell())
+        apply_patch_harness_with(|builder| builder.with_model("gpt-5.4"))
             .await?;
 
     let source_contents = "line1\nnaïve café\nline3\n";
@@ -1926,7 +1926,7 @@ async fn apply_patch_turn_diff_emits_portable_paths_for_remote_cwd() -> Result<(
     let test = harness.test();
     let codex = test.codex.clone();
 
-    let call_id = "apply-foreign-windows-diff";
+    let call_id = "apply-foreign-diff";
     let file = "nested/foreign.txt";
     let patch = format!("*** Begin Patch\n*** Add File: {file}\n+hello\n*** End Patch");
     mount_apply_patch(&harness, call_id, &patch, "ok").await;
