@@ -80,7 +80,7 @@ pub async fn detached_memory_responses_metadata(
     installation_id: String,
     session_id: String,
     thread_id: String,
-    window_id: String,
+    span_id: String,
     session_source: &SessionSource,
     cwd: &AbsolutePathBuf,
     permission_profile: &PermissionProfile,
@@ -95,7 +95,7 @@ pub async fn detached_memory_responses_metadata(
             permission_profile_policy_tag(permission_profile, cwd.as_path()).to_string(),
         ),
         workspaces: memory_workspaces(cwd).await,
-        ..CodexResponsesMetadata::new(installation_id, session_id, thread_id, window_id)
+        ..CodexResponsesMetadata::new(installation_id, session_id, thread_id, span_id)
     }
 }
 
@@ -252,12 +252,12 @@ impl TurnMetadataState {
     pub(crate) fn to_responses_metadata(
         &self,
         installation_id: String,
-        window_id: String,
+        span_id: String,
         request_kind: CodexResponsesRequestKind,
     ) -> CodexResponsesMetadata {
         CodexResponsesMetadata {
             installation_id,
-            window_id,
+            span_id,
             request_kind: Some(request_kind),
             ..self.responses_metadata_template()
         }

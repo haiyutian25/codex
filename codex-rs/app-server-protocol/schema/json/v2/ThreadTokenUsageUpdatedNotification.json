@@ -6,7 +6,7 @@
         "last": {
           "$ref": "#/definitions/TokenUsageBreakdown"
         },
-        "modelContextWindow": {
+        "modelContextSpan": {
           "format": "int64",
           "type": [
             "integer",

@@ -113,14 +113,14 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
     })
     .await?;
 
-    let parent_window_id = parent
+    let parent_span_id = parent
         .header("x-codex-window-id")
         .ok_or_else(|| anyhow!("parent request missing x-codex-window-id"))?;
-    let child_window_id = child
+    let child_span_id = child
         .header("x-codex-window-id")
         .ok_or_else(|| anyhow!("child request missing x-codex-window-id"))?;
-    let (parent_thread_id, parent_generation) = split_window_id(&parent_window_id)?;
-    let (child_thread_id, child_generation) = split_window_id(&child_window_id)?;
+    let (parent_thread_id, parent_generation) = split_span_id(&parent_span_id)?;
+    let (child_thread_id, child_generation) = split_span_id(&child_span_id)?;
 
     assert_eq!(parent_generation, 0);
     assert_eq!(child_generation, 0);
@@ -265,9 +265,9 @@ fn request_header<'a>(req: &'a wiremock::Request, name: &str) -> Option<&'a str>
     req.headers.get(name).and_then(|value| value.to_str().ok())
 }
 
-fn split_window_id(window_id: &str) -> Result<(&str, u64)> {
-    let (thread_id, generation) = window_id
+fn split_span_id(span_id: &str) -> Result<(&str, u64)> {
+    let (thread_id, generation) = span_id
         .rsplit_once(':')
-        .ok_or_else(|| anyhow!("invalid window id header: {window_id}"))?;
+        .ok_or_else(|| anyhow!("invalid window id header: {span_id}"))?;
     Ok((thread_id, generation.parse::<u64>()?))
 }

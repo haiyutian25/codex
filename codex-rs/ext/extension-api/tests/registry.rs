@@ -415,7 +415,7 @@ async fn contributors_preserve_registration_order() {
                     session_store: &session_store,
                     thread_store: &thread_store,
                     turn_store: &turn_store,
-                    model_context_window: Some(123),
+                    model_context_span: Some(123),
                 })
                 .await,
         );

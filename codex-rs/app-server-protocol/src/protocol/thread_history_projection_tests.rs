@@ -29,7 +29,7 @@ fn projects_turn_lifecycle_without_prior_builder_state() {
             turn_id: "turn-1".to_string(),
             trace_id: None,
             started_at: Some(10),
-            model_context_window: None,
+            model_context_span: None,
             collaboration_mode_kind: Default::default(),
         },
     )));
@@ -201,10 +201,10 @@ fn ignores_legacy_abort_without_turn_id_and_context_only_records() {
         message: String::new(),
         replacement_history: None,
         mcp_resource_origins: None,
-        window_number: None,
-        first_window_id: None,
-        previous_window_id: None,
-        window_id: None,
+        span_number: None,
+        first_span_id: None,
+        previous_span_id: None,
+        span_id: None,
     }));
     let security_risk = project(RolloutItem::SecurityRiskScore(SecurityRiskScore {
         scores: BTreeMap::from([("action_risk".to_string(), 0.92)]),

@@ -270,7 +270,7 @@ impl LunaSampler {
             "x-codex-window-id",
             HeaderValue::from_str(&format!("{thread_id}:0")).map_err(|error| {
                 LunaSamplerError::Api(ApiError::Stream(format!(
-                    "invalid classifier window ID: {error}"
+                    "invalid classifier span ID: {error}"
                 )))
             })?,
         );
@@ -398,7 +398,7 @@ impl LunaSampler {
             | LunaSamplerError::Superseded
             | LunaSamplerError::Api(
                 ApiError::Transport(TransportError::Build(_))
-                | ApiError::ContextWindowExceeded
+                | ApiError::ContextSpanExceeded
                 | ApiError::QuotaExceeded
                 | ApiError::UsageNotIncluded
                 | ApiError::RateLimit(_)
@@ -579,7 +579,7 @@ impl LunaSampler {
                 ("thread_id".to_owned(), thread_id.clone()),
                 ("turn_id".to_owned(), turn_id.clone()),
                 ("x-openai-subagent".to_owned(), "guardian".to_owned()),
-                // Classifier requests do not advance their own context window.
+                // Classifier requests do not advance their own context span.
                 ("x-codex-window-id".to_owned(), format!("{thread_id}:0")),
                 (RESPONSES_LITE_METADATA_KEY.to_owned(), "true".to_owned()),
                 (TURN_METADATA_KEY.to_owned(), turn_metadata),

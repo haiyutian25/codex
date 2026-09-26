@@ -195,7 +195,7 @@ struct GuardianReviewSessionReuseKey {
     model: Option<String>,
     model_provider_id: String,
     model_provider: ModelProviderInfo,
-    model_context_window: Option<i64>,
+    model_context_span: Option<i64>,
     model_auto_compact_token_limit: Option<i64>,
     model_auto_compact_token_limit_scope: AutoCompactTokenLimitScope,
     model_reasoning_effort: Option<ReasoningEffortConfig>,
@@ -232,7 +232,7 @@ impl GuardianReviewSessionReuseKey {
             model: spawn_config.model.clone(),
             model_provider_id: spawn_config.model_provider_id.clone(),
             model_provider: spawn_config.model_provider.clone(),
-            model_context_window: spawn_config.model_context_window,
+            model_context_span: spawn_config.model_context_span,
             model_auto_compact_token_limit: spawn_config.model_auto_compact_token_limit,
             model_auto_compact_token_limit_scope: spawn_config.model_auto_compact_token_limit_scope,
             model_reasoning_effort: spawn_config.model_reasoning_effort.clone(),
@@ -1028,16 +1028,16 @@ async fn run_review_on_session(
                         _ => None,
                     })
                     .collect::<HashSet<_>>();
-                let context_window = model_info.resolved_context_window().map(|supported| {
+                let context_span = model_info.resolved_context_span().map(|supported| {
                     params
                         .spawn_config
-                        .model_context_window
+                        .model_context_span
                         .unwrap_or(supported)
                         .min(supported)
-                        .saturating_mul(model_info.effective_context_window_percent.clamp(0, 100))
+                        .saturating_mul(model_info.effective_context_span_percent.clamp(0, 100))
                         / 100
                 });
-                let admit_images = if let Some(context_window) = context_window.filter(|limit| {
+                let admit_images = if let Some(context_span) = context_span.filter(|limit| {
                     *limit > 0
                         && !model_info.used_fallback_model_metadata
                         && model_info.input_modalities.contains(&InputModality::Image)
@@ -1082,7 +1082,7 @@ async fn run_review_on_session(
                         .unwrap_or(i64::MAX)
                         .max(review_session.session.get_total_token_usage().await);
                     prompt_tokens <= GUARDIAN_MAX_IMAGE_ITEM_TOKENS
-                        && prompt_tokens.saturating_add(history_tokens) <= context_window
+                        && prompt_tokens.saturating_add(history_tokens) <= context_span
                 } else {
                     false
                 };

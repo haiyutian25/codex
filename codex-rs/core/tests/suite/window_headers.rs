@@ -20,7 +20,7 @@ use pretty_assertions::assert_eq;
 use std::sync::Arc;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn window_id_advances_after_compact_persists_on_resume_and_resets_on_fork() -> Result<()> {
+async fn span_id_advances_after_compact_persists_on_resume_and_resets_on_fork() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -81,11 +81,11 @@ async fn window_id_advances_after_compact_persists_on_resume_and_resets_on_fork(
     let requests = request_log.requests();
     assert_eq!(requests.len(), 5, "expected five model requests");
 
-    let (initial_thread_id, first_generation) = window_id_parts(&requests[0]);
-    let (compact_thread_id, compact_generation) = window_id_parts(&requests[1]);
-    let (after_compact_thread_id, after_compact_generation) = window_id_parts(&requests[2]);
-    let (after_resume_thread_id, after_resume_generation) = window_id_parts(&requests[3]);
-    let (after_fork_thread_id, after_fork_generation) = window_id_parts(&requests[4]);
+    let (initial_thread_id, first_generation) = span_id_parts(&requests[0]);
+    let (compact_thread_id, compact_generation) = span_id_parts(&requests[1]);
+    let (after_compact_thread_id, after_compact_generation) = span_id_parts(&requests[2]);
+    let (after_resume_thread_id, after_resume_generation) = span_id_parts(&requests[3]);
+    let (after_fork_thread_id, after_fork_generation) = span_id_parts(&requests[4]);
 
     assert_eq!(first_generation, 0);
     assert_eq!(compact_thread_id, initial_thread_id);
@@ -108,31 +108,31 @@ async fn window_id_advances_after_compact_persists_on_resume_and_resets_on_fork(
         .collect::<Vec<_>>();
     for (request, metadata) in requests.iter().zip(&metadata) {
         assert_eq!(
-            metadata["window_id"].as_str(),
+            metadata["span_id"].as_str(),
             request.header("x-codex-window-id").as_deref()
         );
         assert!(
-            metadata["context_window_id"]
+            metadata["context_span_id"]
                 .as_str()
-                .is_some_and(|window_id| uuid::Uuid::parse_str(window_id).is_ok())
+                .is_some_and(|span_id| uuid::Uuid::parse_str(span_id).is_ok())
         );
     }
     assert_eq!(
-        metadata[0]["context_window_id"],
-        metadata[1]["context_window_id"]
+        metadata[0]["context_span_id"],
+        metadata[1]["context_span_id"]
     );
     assert_ne!(
-        metadata[1]["context_window_id"],
-        metadata[2]["context_window_id"]
+        metadata[1]["context_span_id"],
+        metadata[2]["context_span_id"]
     );
     assert_eq!(
-        metadata[2]["context_window_id"],
-        metadata[3]["context_window_id"]
+        metadata[2]["context_span_id"],
+        metadata[3]["context_span_id"]
     );
     assert_eq!(
         metadata
             .iter()
-            .map(|metadata| metadata["window_number"].as_u64())
+            .map(|metadata| metadata["span_number"].as_u64())
             .collect::<Vec<_>>(),
         vec![Some(0), Some(0), Some(1), Some(1), Some(0)]
     );
@@ -168,11 +168,11 @@ async fn shutdown_thread(codex: &Arc<CodexThread>) -> Result<()> {
     Ok(())
 }
 
-fn window_id_parts(request: &ResponsesRequest) -> (String, u64) {
-    let window_id = request
+fn span_id_parts(request: &ResponsesRequest) -> (String, u64) {
+    let span_id = request
         .header("x-codex-window-id")
         .expect("missing x-codex-window-id header");
-    let (thread_id, generation) = window_id
+    let (thread_id, generation) = span_id
         .rsplit_once(':')
         .expect("window id header should contain a generation");
     let generation = generation

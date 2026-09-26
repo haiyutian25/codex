@@ -106,10 +106,10 @@ impl<'a> CatalogContext<'a> {
         let include_usage = model_info
             .as_deref()
             .is_some_and(|model_info| model_info.include_skills_usage_instructions);
-        let context_window = model_info
+        let context_span = model_info
             .as_deref()
-            .and_then(ModelInfo::resolved_context_window);
-        let metadata_budget = skill_metadata_budget(context_window, config.max_context_tokens);
+            .and_then(ModelInfo::resolved_context_span);
+        let metadata_budget = skill_metadata_budget(context_span, config.max_context_tokens);
         let emitted_warnings = input
             .turn_store
             .get_or_init(EmittedCatalogBudgetWarnings::default);

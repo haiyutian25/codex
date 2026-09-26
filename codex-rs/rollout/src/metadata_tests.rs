@@ -140,7 +140,7 @@ async fn extract_metadata_from_rollout_uses_session_meta() {
         history_base: None,
         subagent_history_start_ordinal: None,
         multi_agent_version: None,
-        context_window: None,
+        context_span: None,
     };
     let session_meta_line = SessionMetaLine {
         meta: session_meta,
@@ -239,7 +239,7 @@ async fn extract_metadata_from_rollout_returns_latest_memory_mode() {
         history_base: None,
         subagent_history_start_ordinal: None,
         multi_agent_version: None,
-        context_window: None,
+        context_span: None,
     };
     let polluted_meta = SessionMeta {
         memory_mode: Some("polluted".to_string()),
@@ -292,10 +292,10 @@ fn builder_from_items_falls_back_to_filename() {
         message: "noop".to_string(),
         replacement_history: None,
         mcp_resource_origins: None,
-        window_number: None,
-        first_window_id: None,
-        previous_window_id: None,
-        window_id: None,
+        span_number: None,
+        first_span_id: None,
+        previous_span_id: None,
+        span_id: None,
     })];
 
     let builder = builder_from_items(items.as_slice(), path.as_path()).expect("builder");
@@ -580,7 +580,7 @@ fn write_rollout_in_sessions_with_cwd(
         history_base: None,
         subagent_history_start_ordinal: None,
         multi_agent_version: None,
-        context_window: None,
+        context_span: None,
     };
     let session_meta_line = SessionMetaLine {
         meta: session_meta,

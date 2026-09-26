@@ -624,7 +624,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         .with_model("gpt-5.2")
         .with_config(|config| {
             config.review_model = Some("gpt-5.4".to_string());
-            config.model_context_window = Some(128_000);
+            config.model_context_span = Some(128_000);
             config.service_tier = Some(ServiceTier::Fast.request_value().to_string());
             config
                 .features

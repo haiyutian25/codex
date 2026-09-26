@@ -20,7 +20,7 @@ use serde_json::Value;
 
 pub fn map_api_error(err: ApiError) -> CodexErr {
     match err {
-        ApiError::ContextWindowExceeded => CodexErr::ContextWindowExceeded,
+        ApiError::ContextSpanExceeded => CodexErr::ContextSpanExceeded,
         ApiError::QuotaExceeded => CodexErr::QuotaExceeded,
         ApiError::UsageNotIncluded => CodexErr::UsageNotIncluded,
         ApiError::Retryable { message, delay } => {

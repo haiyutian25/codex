@@ -399,7 +399,7 @@ async fn persisted_host_snapshot_deduplicates_warning_after_reinitialization() -
         })
         .await;
     let mut model_info = model_info_from_slug("test-model");
-    model_info.context_window = Some(50);
+    model_info.context_span = Some(50);
     thread_store.insert(model_info);
     let turn_store = ExtensionData::new("turn-1");
     turn_store.insert(host_snapshot.clone());
@@ -440,7 +440,7 @@ async fn persisted_host_snapshot_deduplicates_warning_after_reinitialization() -
         })
         .await;
     let mut model_info = model_info_from_slug("test-model");
-    model_info.context_window = Some(50);
+    model_info.context_span = Some(50);
     resumed_thread_store.insert(model_info);
     let resumed_turn_store = ExtensionData::new("turn-2");
     resumed_turn_store.insert(host_snapshot);
@@ -2020,7 +2020,7 @@ async fn root_qualified_locator_selects_only_the_matching_executor_skill() -> Te
 }
 
 #[tokio::test]
-async fn model_context_window_scales_executor_and_orchestrator_catalogs() -> TestResult {
+async fn model_context_span_scales_executor_and_orchestrator_catalogs() -> TestResult {
     let orchestrator_entries = (0..40)
         .map(|index| {
             test_entry(
@@ -2082,7 +2082,7 @@ async fn model_context_window_scales_executor_and_orchestrator_catalogs() -> Tes
         })
         .await;
     let mut model_info = model_info_from_slug("test-model");
-    model_info.context_window = Some(10_000);
+    model_info.context_span = Some(10_000);
     thread_store.insert(model_info);
 
     let thread_fragments = registry.context_contributors()[0]
@@ -2322,7 +2322,7 @@ async fn host_catalog_compacts_shared_paths_under_budget_pressure() -> TestResul
         })
         .await;
     let mut model_info = model_info_from_slug("test-model");
-    model_info.context_window = Some(10_000);
+    model_info.context_span = Some(10_000);
     thread_store.insert(model_info);
     let turn_store = ExtensionData::new("turn-1");
     turn_store.insert(snapshot);

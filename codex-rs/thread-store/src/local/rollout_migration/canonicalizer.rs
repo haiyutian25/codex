@@ -348,7 +348,7 @@ impl LegacyRolloutCanonicalizer {
                 turn_id,
                 trace_id: None,
                 started_at: Some(started_at),
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             })),
         )

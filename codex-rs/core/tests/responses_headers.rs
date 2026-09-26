@@ -105,7 +105,7 @@ async fn responses_stream_includes_subagent_header_on_review() {
     let session_source = SessionSource::SubAgent(SubAgentSource::Review);
     let model_info =
         codex_core::test_support::construct_model_info_offline(model.as_str(), &config);
-    let expected_window_id = format!("{thread_id}:0");
+    let expected_span_id = format!("{thread_id}:0");
     let session_telemetry = SessionTelemetry::new(
         thread_id,
         model.as_str(),
@@ -174,7 +174,7 @@ async fn responses_stream_includes_subagent_header_on_review() {
     );
     assert_eq!(
         request.header("x-codex-window-id").as_deref(),
-        Some(expected_window_id.as_str())
+        Some(expected_span_id.as_str())
     );
     assert_eq!(request.header("x-codex-parent-thread-id"), None);
     assert_eq!(
@@ -183,7 +183,7 @@ async fn responses_stream_includes_subagent_header_on_review() {
     );
     assert_eq!(
         request.body_json()["client_metadata"]["x-codex-window-id"].as_str(),
-        Some(expected_window_id.as_str())
+        Some(expected_span_id.as_str())
     );
     assert_eq!(request.header("x-codex-sandbox"), None);
 }

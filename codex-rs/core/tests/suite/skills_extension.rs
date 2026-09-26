@@ -420,12 +420,12 @@ fn executor_omission_text(developer_texts: &[String]) -> &str {
 async fn rendered_catalogs(
     host_skills: &[(&str, &str)],
     executor_skills: &[(&str, &str)],
-    context_window: i64,
+    context_span: i64,
 ) -> Result<(Vec<String>, Vec<String>)> {
     rendered_catalogs_for_turns(
         host_skills,
         executor_skills,
-        context_window,
+        context_span,
         /*turn_count*/ 1,
     )
     .await
@@ -434,7 +434,7 @@ async fn rendered_catalogs(
 async fn rendered_catalogs_for_turns(
     host_skills: &[(&str, &str)],
     executor_skills: &[(&str, &str)],
-    context_window: i64,
+    context_span: i64,
     turn_count: usize,
 ) -> Result<(Vec<String>, Vec<String>)> {
     let server = responses::start_mock_server().await;
@@ -461,8 +461,8 @@ async fn rendered_catalogs_for_turns(
         .with_home(Arc::clone(&codex_home))
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.5", move |model_info| {
-            model_info.context_window = Some(context_window);
-            model_info.max_context_window = None;
+            model_info.context_span = Some(context_span);
+            model_info.max_context_span = None;
         })
         .with_config(configure_catalog_test);
     let test = builder.build_with_auto_env(&server).await?;
@@ -1342,8 +1342,8 @@ async fn production_turn_aliases_discovered_singleton_orchestrator_root() -> Res
         .with_exec_server_url("none")
         .with_extensions(Arc::new(extensions.build()))
         .with_model_info_override("gpt-5.5", |model_info| {
-            model_info.context_window = Some(1_000);
-            model_info.max_context_window = None;
+            model_info.context_span = Some(1_000);
+            model_info.max_context_span = None;
         })
         .with_config(|config| {
             config.include_skill_instructions = true;
@@ -1417,8 +1417,8 @@ async fn production_turn_aliases_executor_skill_roots() -> Result<()> {
     let mut builder = test_codex()
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.6-sol", |model_info| {
-            model_info.context_window = Some(3_000);
-            model_info.max_context_window = None;
+            model_info.context_span = Some(3_000);
+            model_info.max_context_span = None;
         })
         .with_config(configure_catalog_test);
     let test = builder.build_with_auto_env(&server).await?;
@@ -1991,8 +1991,8 @@ async fn production_turn_aliases_combined_skill_catalogs_under_shared_budget() -
         .with_exec_server_url("none")
         .with_extensions(Arc::new(extensions.build()))
         .with_model_info_override("gpt-5.5", |model_info| {
-            model_info.context_window = Some(10_000);
-            model_info.max_context_window = None;
+            model_info.context_span = Some(10_000);
+            model_info.max_context_span = None;
         })
         .with_config(|config| {
             configure_catalog_test(config);
@@ -2039,7 +2039,7 @@ async fn production_turn_aliases_combined_skill_catalogs_under_shared_budget() -
 async fn production_turn_scales_extension_catalog_from_resolved_model_window() -> Result<()> {
     let skill_count = 800;
     let mut included_counts = Vec::new();
-    for (context_window, max_context_window, expected_budget) in
+    for (context_span, max_context_span, expected_budget) in
         [(Some(10_000), None, 200), (None, Some(400_000), 8_000)]
     {
         let server = responses::start_mock_server().await;
@@ -2090,8 +2090,8 @@ async fn production_turn_scales_extension_catalog_from_resolved_model_window() -
         let mut builder = test_codex()
             .with_extensions(Arc::new(extensions.build()))
             .with_model_info_override("gpt-5.5", move |model_info| {
-                model_info.context_window = context_window;
-                model_info.max_context_window = max_context_window;
+                model_info.context_span = context_span;
+                model_info.max_context_span = max_context_span;
             })
             .with_config(|config| {
                 config.include_skill_instructions = true;
@@ -2211,8 +2211,8 @@ async fn production_turn_uses_configured_skill_catalog_token_budget() -> Result<
         .with_home(codex_home)
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.5", |model_info| {
-            model_info.context_window = Some(SHORTENING_CONTEXT_WINDOW);
-            model_info.max_context_window = None;
+            model_info.context_span = Some(SHORTENING_CONTEXT_WINDOW);
+            model_info.max_context_span = None;
         })
         .with_config(configure_catalog_test);
     let test = builder.build_with_auto_env(&server).await?;
@@ -2296,8 +2296,8 @@ async fn production_turn_preserves_host_alias_root_order_across_turns() -> Resul
         .with_home(Arc::clone(&codex_home))
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.5", |model_info| {
-            model_info.context_window = Some(SHORTENING_CONTEXT_WINDOW);
-            model_info.max_context_window = None;
+            model_info.context_span = Some(SHORTENING_CONTEXT_WINDOW);
+            model_info.max_context_span = None;
         })
         .with_config(configure_catalog_test);
     let test = builder.build_with_auto_env(&server).await?;
@@ -2892,7 +2892,7 @@ async fn production_turn_preserves_empty_core_compatible_host_fragment() -> Resu
         "Host-only skill.",
     )];
     let (developer_texts, warning_messages) =
-        rendered_catalogs(&host_skills, &[], /*context_window*/ 1_000).await?;
+        rendered_catalogs(&host_skills, &[], /*context_span*/ 1_000).await?;
     let host_fragment = developer_texts
         .iter()
         .find(|text| text.contains("## Skills"))
@@ -3058,8 +3058,8 @@ async fn production_turn_fairly_shortens_extension_catalog_descriptions() -> Res
     let mut builder = test_codex()
         .with_extensions(Arc::new(extensions.build()))
         .with_model_info_override("gpt-5.5", |model_info| {
-            model_info.context_window = Some(100_000);
-            model_info.max_context_window = None;
+            model_info.context_span = Some(100_000);
+            model_info.max_context_span = None;
         })
         .with_config(|config| {
             config.include_skill_instructions = true;

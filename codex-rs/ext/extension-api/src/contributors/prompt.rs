@@ -9,7 +9,7 @@ pub enum PromptSlot {
     DeveloperPolicy,
     DeveloperCapabilities,
     /// Text inside the context-window message, supplied by `contribute_thread_context`.
-    ContextWindow,
+    ContextSpan,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

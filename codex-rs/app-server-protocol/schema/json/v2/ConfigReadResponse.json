@@ -456,7 +456,7 @@
             }
           ]
         },
-        "model_context_window": {
+        "model_context_span": {
           "format": "int64",
           "type": [
             "integer",

@@ -39,7 +39,7 @@ pub(super) fn apply_persistent_defaults(config: &mut Config) {
 #[derive(Default)]
 pub(crate) struct CurrentTimeReminderState {
     last_delivery_time: Option<DateTime<Utc>>,
-    last_window_id: Option<String>,
+    last_span_id: Option<String>,
     pending_user_or_tool_output_boundary: bool,
 }
 
@@ -60,23 +60,23 @@ impl CurrentTimeReminderState {
 
     fn take_reminder_due(
         &mut self,
-        window_id: &str,
+        span_id: &str,
         current_time: DateTime<Utc>,
         interval_seconds: u64,
         delivery_mode: CurrentTimeReminderDeliveryMode,
     ) -> bool {
-        let is_new_window = self.last_window_id.as_deref() != Some(window_id);
+        let is_new_span = self.last_span_id.as_deref() != Some(span_id);
         // Consume the boundary for this inference even if the interval suppresses delivery.
         let follows_user_or_tool_output =
             std::mem::take(&mut self.pending_user_or_tool_output_boundary);
         if delivery_mode == CurrentTimeReminderDeliveryMode::AfterUserOrToolOutput
-            && !is_new_window
+            && !is_new_span
             && !follows_user_or_tool_output
         {
             return false;
         }
 
-        let reminder_is_due = is_new_window
+        let reminder_is_due = is_new_span
             || interval_seconds == 0
             || self.last_delivery_time.is_none_or(|last_delivery_time| {
                 current_time
@@ -87,7 +87,7 @@ impl CurrentTimeReminderState {
 
         if reminder_is_due {
             self.last_delivery_time = Some(current_time);
-            self.last_window_id = Some(window_id.to_string());
+            self.last_span_id = Some(span_id.to_string());
         }
 
         reminder_is_due
@@ -97,7 +97,7 @@ impl CurrentTimeReminderState {
 pub(super) async fn maybe_record_current_time_reminder(
     sess: &Session,
     turn_context: &TurnContext,
-    window_id: &str,
+    span_id: &str,
 ) -> CodexResult<()> {
     if !turn_context
         .config
@@ -120,7 +120,7 @@ pub(super) async fn maybe_record_current_time_reminder(
     let reminder_is_due = {
         let mut state = sess.state.lock().await;
         state.current_time_reminder.take_reminder_due(
-            window_id,
+            span_id,
             current_time,
             config.reminder_interval_seconds,
             config.delivery_mode,

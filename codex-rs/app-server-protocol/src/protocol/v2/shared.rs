@@ -75,7 +75,7 @@ pub enum NonSteerableTurnKind {
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub enum CodexErrorInfo {
-    ContextWindowExceeded,
+    ContextSpanExceeded,
     SessionBudgetExceeded,
     UsageLimitExceeded,
     RateLimitExceeded,
@@ -123,7 +123,7 @@ pub enum CodexErrorInfo {
 impl From<CoreCodexErrorInfo> for CodexErrorInfo {
     fn from(value: CoreCodexErrorInfo) -> Self {
         match value {
-            CoreCodexErrorInfo::ContextWindowExceeded => CodexErrorInfo::ContextWindowExceeded,
+            CoreCodexErrorInfo::ContextSpanExceeded => CodexErrorInfo::ContextSpanExceeded,
             CoreCodexErrorInfo::SessionBudgetExceeded => CodexErrorInfo::SessionBudgetExceeded,
             CoreCodexErrorInfo::UsageLimitExceeded => CodexErrorInfo::UsageLimitExceeded,
             CoreCodexErrorInfo::RateLimitExceeded => CodexErrorInfo::RateLimitExceeded,

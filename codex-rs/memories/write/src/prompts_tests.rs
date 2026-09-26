@@ -3,12 +3,12 @@ use codex_models_manager::model_info::model_info_from_slug;
 use tempfile::tempdir;
 
 #[test]
-fn build_stage_one_input_message_truncates_rollout_using_model_context_window() {
+fn build_stage_one_input_message_truncates_rollout_using_model_context_span() {
     let input = format!("{}{}{}", "a".repeat(700_000), "middle", "z".repeat(700_000));
     let mut model_info = model_info_from_slug("gpt-5.3-codex");
-    model_info.context_window = Some(123_000);
+    model_info.context_span = Some(123_000);
     let expected_rollout_token_limit = usize::try_from(
-        ((123_000_i64 * model_info.effective_context_window_percent) / 100)
+        ((123_000_i64 * model_info.effective_context_span_percent) / 100)
             * crate::stage_one::CONTEXT_WINDOW_PERCENT
             / 100,
     )
@@ -32,11 +32,11 @@ fn build_stage_one_input_message_truncates_rollout_using_model_context_window() 
 }
 
 #[test]
-fn build_stage_one_input_message_uses_default_limit_when_model_context_window_missing() {
+fn build_stage_one_input_message_uses_default_limit_when_model_context_span_missing() {
     let input = format!("{}{}{}", "a".repeat(700_000), "middle", "z".repeat(700_000));
     let mut model_info = model_info_from_slug("gpt-5.3-codex");
-    model_info.context_window = None;
-    model_info.max_context_window = None;
+    model_info.context_span = None;
+    model_info.max_context_span = None;
     let expected_truncated = truncate_text(
         &input,
         TruncationPolicy::Tokens(crate::stage_one::DEFAULT_ROLLOUT_TOKEN_LIMIT),

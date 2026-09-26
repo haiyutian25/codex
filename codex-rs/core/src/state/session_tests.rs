@@ -1,6 +1,6 @@
 use super::*;
 use crate::session::tests::make_session_configuration_for_tests;
-use crate::state::AutoCompactWindowSnapshot;
+use crate::state::AutoCompactSpanSnapshot;
 use codex_protocol::protocol::CreditsSnapshot;
 use codex_protocol::protocol::RateLimitWindow;
 use codex_protocol::protocol::SpendControlLimitSnapshot;
@@ -66,16 +66,16 @@ async fn set_rate_limits_defaults_limit_id_to_codex_when_missing() {
 }
 
 #[tokio::test]
-async fn replace_history_clears_auto_compact_window_prefill() {
+async fn replace_history_clears_auto_compact_span_prefill() {
     let session_configuration = make_session_configuration_for_tests().await;
     let mut state = SessionState::new(session_configuration);
 
-    state.set_auto_compact_window_estimated_prefill(/*tokens*/ 100);
+    state.set_auto_compact_span_estimated_prefill(/*tokens*/ 100);
     state.replace_history(Vec::new(), /*reference_context_item*/ None);
 
     assert_eq!(
-        state.auto_compact_window_snapshot(),
-        AutoCompactWindowSnapshot {
+        state.auto_compact_span_snapshot(),
+        AutoCompactSpanSnapshot {
             prefill_input_tokens: None,
         }
     );

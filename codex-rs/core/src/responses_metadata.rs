@@ -29,9 +29,9 @@ pub(crate) const SESSION_ID_KEY: &str = "session_id";
 pub(crate) const THREAD_ID_KEY: &str = "thread_id";
 pub(crate) const AGENT_NAME_KEY: &str = "agent_name";
 pub(crate) const TURN_ID_KEY: &str = "turn_id";
-pub(crate) const WINDOW_ID_KEY: &str = "window_id";
-pub(crate) const WINDOW_NUMBER_KEY: &str = "window_number";
-pub(crate) const CONTEXT_WINDOW_ID_KEY: &str = "context_window_id";
+pub(crate) const WINDOW_ID_KEY: &str = "span_id";
+pub(crate) const WINDOW_NUMBER_KEY: &str = "span_number";
+pub(crate) const CONTEXT_WINDOW_ID_KEY: &str = "context_span_id";
 pub(crate) const REQUEST_KIND_KEY: &str = "request_kind";
 pub(crate) const COMPACTION_KEY: &str = "compaction";
 // Keep the removed inventory reserved so callers cannot reintroduce oversized metadata.
@@ -221,9 +221,9 @@ pub struct CodexResponsesMetadata {
     pub(crate) agent_name: Option<String>,
     pub(crate) turn_id: Option<String>,
     pub(crate) routing_hint: Option<HeaderValue>,
-    pub(crate) window_id: String,
-    pub(crate) window_number: Option<u64>,
-    pub(crate) context_window_id: Option<Uuid>,
+    pub(crate) span_id: String,
+    pub(crate) span_number: Option<u64>,
+    pub(crate) context_span_id: Option<Uuid>,
     pub(crate) request_kind: Option<CodexResponsesRequestKind>,
     pub(crate) forked_from_thread_id: Option<ThreadId>,
     pub(crate) forked_from_ordinal_exclusive: Option<u64>,
@@ -250,7 +250,7 @@ impl CodexResponsesMetadata {
         installation_id: String,
         session_id: String,
         thread_id: String,
-        window_id: String,
+        span_id: String,
     ) -> Self {
         Self {
             installation_id,
@@ -259,9 +259,9 @@ impl CodexResponsesMetadata {
             agent_name: None,
             turn_id: None,
             routing_hint: None,
-            window_id,
-            window_number: None,
-            context_window_id: None,
+            span_id,
+            span_number: None,
+            context_span_id: None,
             request_kind: None,
             forked_from_thread_id: None,
             forked_from_ordinal_exclusive: None,
@@ -304,7 +304,7 @@ impl CodexResponsesMetadata {
             ),
             (SESSION_ID_KEY.to_string(), self.session_id.clone()),
             (THREAD_ID_KEY.to_string(), self.thread_id.clone()),
-            (X_CODEX_WINDOW_ID_HEADER.to_string(), self.window_id.clone()),
+            (X_CODEX_WINDOW_ID_HEADER.to_string(), self.span_id.clone()),
         ]);
         if let Some(turn_id) = &self.turn_id {
             client_metadata.insert(TURN_ID_KEY.to_string(), turn_id.clone());
@@ -337,7 +337,7 @@ impl CodexResponsesMetadata {
 
     pub(crate) fn compatibility_headers(&self) -> ApiHeaderMap {
         let mut headers = ApiHeaderMap::new();
-        insert_header(&mut headers, X_CODEX_WINDOW_ID_HEADER, &self.window_id);
+        insert_header(&mut headers, X_CODEX_WINDOW_ID_HEADER, &self.span_id);
         // Direct x-codex-turn-metadata is compatibility output. Keep the unbounded tool inventory
         // in client_metadata only so HTTP and WebSocket compatibility headers remain bounded.
         if self.has_turn_metadata()
@@ -385,10 +385,10 @@ impl CodexResponsesMetadata {
             turn_id: has_turn_identity
                 .then_some(self.turn_id.as_deref())
                 .flatten(),
-            window_id: has_request_identity.then_some(self.window_id.as_str()),
-            window_number: has_request_identity.then_some(self.window_number).flatten(),
-            context_window_id: has_request_identity
-                .then_some(self.context_window_id)
+            span_id: has_request_identity.then_some(self.span_id.as_str()),
+            span_number: has_request_identity.then_some(self.span_number).flatten(),
+            context_span_id: has_request_identity
+                .then_some(self.context_span_id)
                 .flatten(),
             request_kind: request_kind_value,
             forked_from_thread_id: self.forked_from_thread_id,
@@ -512,11 +512,11 @@ struct CodexTurnMetadataPayload<'a> {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     turn_id: Option<&'a str>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    window_id: Option<&'a str>,
+    span_id: Option<&'a str>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    window_number: Option<u64>,
+    span_number: Option<u64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    context_window_id: Option<Uuid>,
+    context_span_id: Option<Uuid>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     request_kind: Option<&'static str>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

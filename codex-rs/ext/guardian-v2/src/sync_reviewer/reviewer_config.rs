@@ -262,7 +262,7 @@ fn isolated_reviewer_config(
     }
 
     if reviewer_model.info.slug != parent_model {
-        config.model_context_window = None;
+        config.model_context_span = None;
         config.model_auto_compact_token_limit = None;
     }
 

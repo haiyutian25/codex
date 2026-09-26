@@ -89,7 +89,7 @@ pub(crate) async fn run_remote_compact_task(
         turn_id: turn_context.sub_id.clone(),
         trace_id: turn_context.trace_id.clone(),
         started_at: turn_context.turn_timing_state.started_at_unix_secs().await,
-        model_context_window: turn_context.model_context_window(),
+        model_context_span: turn_context.model_context_span(),
         collaboration_mode_kind: turn_context.mode(),
     });
     sess.send_event(&turn_context, start_event).await;
@@ -265,7 +265,7 @@ async fn run_remote_compact_task_inner_impl(
         new_history,
         trace_input_history,
     } = attempt;
-    let (new_window_number, new_window_ids) = sess.advance_auto_compact_window().await;
+    let (new_span_number, new_span_ids) = sess.advance_auto_compact_span().await;
     let (new_history, world_state_baseline) =
         process_compacted_history(sess.as_ref(), new_history, &initial_context_injection).await;
 
@@ -296,8 +296,8 @@ async fn run_remote_compact_task_inner_impl(
         world_state_baseline,
         CompactedHistoryMetadata {
             message: String::new(),
-            window_number: new_window_number,
-            window_ids: new_window_ids,
+            span_number: new_span_number,
+            span_ids: new_span_ids,
         },
     )
     .await;
@@ -396,12 +396,12 @@ pub(crate) fn should_keep_compacted_history_item(item: &ResponseItem) -> bool {
     }
 }
 
-pub(crate) fn trim_function_call_history_to_fit_context_window(
+pub(crate) fn trim_function_call_history_to_fit_context_span(
     history: &mut ContextManager,
     turn_context: &TurnContext,
     base_instructions: &BaseInstructions,
 ) -> (usize, i64) {
-    let Some(context_window) = turn_context.model_context_window() else {
+    let Some(context_span) = turn_context.model_context_span() else {
         return (0, 0);
     };
     // Keep the unclamped total so replacing an item cannot lose an overflow hidden by i64
@@ -421,7 +421,7 @@ pub(crate) fn trim_function_call_history_to_fit_context_window(
         .into_iter()
         .rev()
     {
-        if i64::try_from(estimated_tokens).unwrap_or(i64::MAX) <= context_window {
+        if i64::try_from(estimated_tokens).unwrap_or(i64::MAX) <= context_span {
             break;
         }
         let group_item_count = 1 + usize::from(group.attached_notice.is_some());
@@ -430,7 +430,7 @@ pub(crate) fn trim_function_call_history_to_fit_context_window(
             .saturating_sub(consumed_items.saturating_add(group_item_count));
         let Some(rewritten_item) = original_items
             .get(source_index)
-            .and_then(rewritten_output_for_context_window)
+            .and_then(rewritten_output_for_context_span)
         else {
             break;
         };
@@ -454,7 +454,7 @@ pub(crate) fn trim_function_call_history_to_fit_context_window(
     (rewritten_outputs, estimated_deleted_tokens)
 }
 
-fn rewritten_output_for_context_window(
+fn rewritten_output_for_context_span(
     envelope: &ResponseItemEnvelope,
 ) -> Option<ResponseItemEnvelope> {
     let item = match &envelope.item {

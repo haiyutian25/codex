@@ -839,7 +839,7 @@ async fn model_activation_uses_destination_metadata_defaults(
     .await;
     let test = step_settings_test()
         .with_config(move |config| {
-            config.model_context_window = None;
+            config.model_context_span = None;
             config.model_auto_compact_token_limit = None;
             config.model_reasoning_summary = configured_summary;
             config.service_tier = Some(ServiceTier::Fast.request_value().to_string());
@@ -850,11 +850,11 @@ async fn model_activation_uses_destination_metadata_defaults(
                 .expect("controlled model catalog")
                 .models
             {
-                model.context_window = Some(256_000);
+                model.context_span = Some(256_000);
                 model.auto_compact_token_limit = Some(200_000);
                 model.default_reasoning_summary = ReasoningSummary::Concise;
                 if model.slug == MODEL_B {
-                    model.context_window = Some(128_000);
+                    model.context_span = Some(128_000);
                     model.auto_compact_token_limit = Some(100_000);
                     model.default_reasoning_summary = ReasoningSummary::Detailed;
                     model

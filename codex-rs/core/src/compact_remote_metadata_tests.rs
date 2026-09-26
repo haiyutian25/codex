@@ -18,7 +18,7 @@ fn rewritten_output_preserves_harness_metadata() {
         metadata: Some(CodexHarnessMetadata::default()),
     };
 
-    let rewritten = rewritten_output_for_context_window(&envelope)
+    let rewritten = rewritten_output_for_context_span(&envelope)
         .expect("function output should be rewritten");
 
     assert_eq!(rewritten.metadata, envelope.metadata);

@@ -14,7 +14,7 @@ use codex_protocol::ThreadId;
 use codex_protocol::models::ContentItem;
 use codex_protocol::models::ResponseItem;
 use codex_protocol::protocol::InterAgentCommunication;
-use codex_protocol::protocol::SessionContextWindow;
+use codex_protocol::protocol::SessionContextSpan;
 use codex_protocol::protocol::SessionMeta;
 use codex_protocol::protocol::SessionMetaLine;
 use codex_protocol::protocol::WorldStateItem;
@@ -93,7 +93,7 @@ fn completed_user_turn_rollout(
                 turn_id: turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -313,7 +313,7 @@ async fn record_initial_history_resumed_hydrates_previous_turn_settings_from_lif
                 turn_id: turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -385,7 +385,7 @@ async fn reconstruct_history_rollback_keeps_history_and_metadata_in_sync_for_com
                 turn_id: first_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -421,7 +421,7 @@ async fn reconstruct_history_rollback_keeps_history_and_metadata_in_sync_for_com
                 turn_id: rolled_back_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -505,7 +505,7 @@ async fn reconstruct_history_rollback_keeps_history_and_metadata_in_sync_for_inc
                 turn_id: first_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -538,7 +538,7 @@ async fn reconstruct_history_rollback_keeps_history_and_metadata_in_sync_for_inc
                 turn_id: incomplete_turn_id,
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -604,7 +604,7 @@ async fn reconstruct_history_rollback_skips_non_user_turns_for_history_and_metad
                 turn_id: first_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -637,7 +637,7 @@ async fn reconstruct_history_rollback_skips_non_user_turns_for_history_and_metad
                 turn_id: second_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -669,7 +669,7 @@ async fn reconstruct_history_rollback_skips_non_user_turns_for_history_and_metad
                 turn_id: standalone_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -736,7 +736,7 @@ async fn reconstruct_history_rollback_counts_inter_agent_assistant_turns() {
                 turn_id: first_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -769,7 +769,7 @@ async fn reconstruct_history_rollback_counts_inter_agent_assistant_turns() {
                 turn_id: assistant_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -833,7 +833,7 @@ async fn reconstruct_history_rollback_clears_history_and_metadata_when_exceeding
                 turn_id: only_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -890,7 +890,7 @@ async fn record_initial_history_resumed_rollback_skips_only_user_turns() {
                 turn_id: user_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -922,7 +922,7 @@ async fn record_initial_history_resumed_rollback_skips_only_user_turns() {
                 turn_id: standalone_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -970,7 +970,7 @@ async fn record_initial_history_resumed_rollback_drops_incomplete_user_turn_comp
                 turn_id: previous_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1001,7 +1001,7 @@ async fn record_initial_history_resumed_rollback_drops_incomplete_user_turn_comp
                 turn_id: incomplete_turn_id,
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1019,10 +1019,10 @@ async fn record_initial_history_resumed_rollback_drops_incomplete_user_turn_comp
             message: String::new(),
             replacement_history: Some(Vec::new()),
             mcp_resource_origins: None,
-            window_number: None,
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: None,
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         }),
         RolloutItem::EventMsg(EventMsg::ThreadRolledBack(
             codex_protocol::protocol::ThreadRolledBackEvent { num_turns: 1 },
@@ -1080,10 +1080,10 @@ async fn record_initial_history_resumed_does_not_seed_reference_context_item_aft
             message: String::new(),
             replacement_history: Some(Vec::new()),
             mcp_resource_origins: None,
-            window_number: None,
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: None,
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         }),
     ];
 
@@ -1100,16 +1100,16 @@ async fn record_initial_history_resumed_does_not_seed_reference_context_item_aft
 }
 
 #[tokio::test]
-async fn reconstruct_history_restores_initial_window_from_session_meta() {
+async fn reconstruct_history_restores_initial_span_from_session_meta() {
     let (session, turn_context) = make_session_and_context().await;
     let thread_id = ThreadId::default();
-    let initial_window_id = Uuid::now_v7();
+    let initial_span_id = Uuid::now_v7();
     let rollout_items = vec![RolloutItem::SessionMeta(SessionMetaLine {
         meta: SessionMeta {
             session_id: thread_id.into(),
             id: thread_id,
-            context_window: Some(SessionContextWindow {
-                window_id: initial_window_id.to_string(),
+            context_span: Some(SessionContextSpan {
+                span_id: initial_span_id.to_string(),
             }),
             ..SessionMeta::default()
         },
@@ -1120,27 +1120,27 @@ async fn reconstruct_history_restores_initial_window_from_session_meta() {
         .reconstruct_history_from_rollout(&turn_context, &rollout_items)
         .await;
 
-    assert_eq!(reconstructed.window_number, 0);
-    assert_eq!(reconstructed.first_window_id, Some(initial_window_id));
-    assert_eq!(reconstructed.previous_window_id, None);
-    assert_eq!(reconstructed.window_id, Some(initial_window_id));
+    assert_eq!(reconstructed.span_number, 0);
+    assert_eq!(reconstructed.first_span_id, Some(initial_span_id));
+    assert_eq!(reconstructed.previous_span_id, None);
+    assert_eq!(reconstructed.span_id, Some(initial_span_id));
 }
 
 #[tokio::test]
 async fn reconstruct_history_prefers_compacted_window_over_session_meta() {
     let (session, turn_context) = make_session_and_context().await;
     let thread_id = ThreadId::default();
-    let initial_window_id = Uuid::now_v7();
-    let compacted_first_window_id = Uuid::now_v7();
-    let compacted_previous_window_id = Uuid::now_v7();
-    let compacted_window_id = Uuid::now_v7();
+    let initial_span_id = Uuid::now_v7();
+    let compacted_first_span_id = Uuid::now_v7();
+    let compacted_previous_span_id = Uuid::now_v7();
+    let compacted_span_id = Uuid::now_v7();
     let rollout_items = vec![
         RolloutItem::SessionMeta(SessionMetaLine {
             meta: SessionMeta {
                 session_id: thread_id.into(),
                 id: thread_id,
-                context_window: Some(SessionContextWindow {
-                    window_id: initial_window_id.to_string(),
+                context_span: Some(SessionContextSpan {
+                    span_id: initial_span_id.to_string(),
                 }),
                 ..SessionMeta::default()
             },
@@ -1150,10 +1150,10 @@ async fn reconstruct_history_prefers_compacted_window_over_session_meta() {
             message: String::new(),
             replacement_history: Some(Vec::new()),
             mcp_resource_origins: None,
-            window_number: Some(2),
-            first_window_id: Some(compacted_first_window_id.to_string()),
-            previous_window_id: Some(compacted_previous_window_id.to_string()),
-            window_id: Some(compacted_window_id.to_string()),
+            span_number: Some(2),
+            first_span_id: Some(compacted_first_span_id.to_string()),
+            previous_span_id: Some(compacted_previous_span_id.to_string()),
+            span_id: Some(compacted_span_id.to_string()),
         }),
     ];
 
@@ -1161,16 +1161,16 @@ async fn reconstruct_history_prefers_compacted_window_over_session_meta() {
         .reconstruct_history_from_rollout(&turn_context, &rollout_items)
         .await;
 
-    assert_eq!(reconstructed.window_number, 2);
+    assert_eq!(reconstructed.span_number, 2);
     assert_eq!(
-        reconstructed.first_window_id,
-        Some(compacted_first_window_id)
+        reconstructed.first_span_id,
+        Some(compacted_first_span_id)
     );
     assert_eq!(
-        reconstructed.previous_window_id,
-        Some(compacted_previous_window_id)
+        reconstructed.previous_span_id,
+        Some(compacted_previous_span_id)
     );
-    assert_eq!(reconstructed.window_id, Some(compacted_window_id));
+    assert_eq!(reconstructed.span_id, Some(compacted_span_id));
 }
 
 #[tokio::test]
@@ -1186,10 +1186,10 @@ async fn reconstruct_history_replays_world_state_from_latest_compaction_window()
                 message: String::new(),
                 replacement_history: Some(Vec::new()),
                 mcp_resource_origins: None,
-                window_number: Some(1),
-                first_window_id: None,
-                previous_window_id: None,
-                window_id: None,
+                span_number: Some(1),
+                first_span_id: None,
+                previous_span_id: None,
+                span_id: None,
             }),
             RolloutItem::WorldState(WorldStateItem::full(object!({
                 "environment": {"status": "starting", "cwd": "/workspace"}
@@ -1217,14 +1217,14 @@ async fn reconstruct_history_replays_world_state_from_latest_compaction_window()
 async fn reconstruct_history_preserves_legacy_compaction_count_with_session_meta_window() {
     let (session, turn_context) = make_session_and_context().await;
     let thread_id = ThreadId::default();
-    let initial_window_id = Uuid::now_v7();
+    let initial_span_id = Uuid::now_v7();
     let rollout_items = vec![
         RolloutItem::SessionMeta(SessionMetaLine {
             meta: SessionMeta {
                 session_id: thread_id.into(),
                 id: thread_id,
-                context_window: Some(SessionContextWindow {
-                    window_id: initial_window_id.to_string(),
+                context_span: Some(SessionContextSpan {
+                    span_id: initial_span_id.to_string(),
                 }),
                 ..SessionMeta::default()
             },
@@ -1234,10 +1234,10 @@ async fn reconstruct_history_preserves_legacy_compaction_count_with_session_meta
             message: "legacy summary".to_string(),
             replacement_history: None,
             mcp_resource_origins: None,
-            window_number: None,
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: None,
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         }),
     ];
 
@@ -1245,10 +1245,10 @@ async fn reconstruct_history_preserves_legacy_compaction_count_with_session_meta
         .reconstruct_history_from_rollout(&turn_context, &rollout_items)
         .await;
 
-    assert_eq!(reconstructed.window_number, 1);
-    assert_eq!(reconstructed.first_window_id, None);
-    assert_eq!(reconstructed.previous_window_id, None);
-    assert_eq!(reconstructed.window_id, None);
+    assert_eq!(reconstructed.span_number, 1);
+    assert_eq!(reconstructed.first_span_id, None);
+    assert_eq!(reconstructed.previous_span_id, None);
+    assert_eq!(reconstructed.span_id, None);
 }
 
 #[tokio::test]
@@ -1262,10 +1262,10 @@ async fn reconstruct_history_legacy_compaction_without_replacement_history_does_
             message: "legacy summary".to_string(),
             replacement_history: None,
             mcp_resource_origins: None,
-            window_number: None,
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: None,
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         }),
     ];
 
@@ -1298,17 +1298,17 @@ async fn reconstruct_history_legacy_compaction_without_replacement_history_clear
             message: "legacy summary".to_string(),
             replacement_history: None,
             mcp_resource_origins: None,
-            window_number: None,
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: None,
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         }),
         RolloutItem::EventMsg(EventMsg::TurnStarted(
             codex_protocol::protocol::TurnStartedEvent {
                 turn_id: current_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1383,7 +1383,7 @@ async fn record_initial_history_resumed_turn_context_after_compaction_reestablis
                 turn_id: previous_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1402,10 +1402,10 @@ async fn record_initial_history_resumed_turn_context_after_compaction_reestablis
             message: String::new(),
             replacement_history: Some(Vec::new()),
             mcp_resource_origins: None,
-            window_number: None,
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: None,
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         }),
         RolloutItem::TurnContext(previous_context_item),
         RolloutItem::EventMsg(EventMsg::TurnComplete(
@@ -1511,7 +1511,7 @@ async fn record_initial_history_resumed_aborted_turn_without_id_clears_active_tu
                 turn_id: previous_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1542,7 +1542,7 @@ async fn record_initial_history_resumed_aborted_turn_without_id_clears_active_tu
                 turn_id: aborted_turn_id,
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1569,10 +1569,10 @@ async fn record_initial_history_resumed_aborted_turn_without_id_clears_active_tu
             message: String::new(),
             replacement_history: Some(Vec::new()),
             mcp_resource_origins: None,
-            window_number: None,
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: None,
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         }),
     ];
 
@@ -1639,7 +1639,7 @@ async fn record_initial_history_resumed_unmatched_abort_preserves_active_turn_fo
                 turn_id: previous_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1670,7 +1670,7 @@ async fn record_initial_history_resumed_unmatched_abort_preserves_active_turn_fo
                 turn_id: current_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1773,7 +1773,7 @@ async fn record_initial_history_resumed_trailing_incomplete_turn_compaction_clea
                 turn_id: previous_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1804,7 +1804,7 @@ async fn record_initial_history_resumed_trailing_incomplete_turn_compaction_clea
                 turn_id: incomplete_turn_id,
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1822,10 +1822,10 @@ async fn record_initial_history_resumed_trailing_incomplete_turn_compaction_clea
             message: String::new(),
             replacement_history: Some(Vec::new()),
             mcp_resource_origins: None,
-            window_number: None,
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: None,
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         }),
     ];
 
@@ -1863,7 +1863,7 @@ async fn record_initial_history_resumed_trailing_incomplete_turn_preserves_turn_
                 turn_id: current_turn_id,
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1947,7 +1947,7 @@ async fn record_initial_history_resumed_replaced_incomplete_compacted_turn_clear
                 turn_id: previous_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1978,7 +1978,7 @@ async fn record_initial_history_resumed_replaced_incomplete_compacted_turn_clear
                 turn_id: compacted_incomplete_turn_id,
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -1996,10 +1996,10 @@ async fn record_initial_history_resumed_replaced_incomplete_compacted_turn_clear
             message: String::new(),
             replacement_history: Some(Vec::new()),
             mcp_resource_origins: None,
-            window_number: None,
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: None,
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         }),
         // A newer TurnStarted replaces the incomplete compacted turn without a matching
         // completion/abort for the old one.
@@ -2008,7 +2008,7 @@ async fn record_initial_history_resumed_replaced_incomplete_compacted_turn_clear
                 turn_id: replacing_turn_id,
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),

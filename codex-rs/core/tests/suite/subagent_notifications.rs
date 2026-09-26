@@ -1074,7 +1074,7 @@ enum FullHistoryV2ModelSelection {
 
 #[test_case(FullHistoryV2ModelSelection::ConfiguredDefault; "configured default with omitted fork_turns")]
 #[test_case(FullHistoryV2ModelSelection::ExplicitOverride; "explicit override with fork_turns all")]
-#[test_case(FullHistoryV2ModelSelection::WorldStateIdentity; "world state appends context window when agent identity changes")]
+#[test_case(FullHistoryV2ModelSelection::WorldStateIdentity; "world state appends context span when agent identity changes")]
 #[test_case(FullHistoryV2ModelSelection::CurrentTimeReminders; "full fork drops inherited current-time reminders")]
 #[test_case(FullHistoryV2ModelSelection::MultiAgentModeInstructions; "full fork drops inherited multi-agent mode instructions")]
 #[test_case(FullHistoryV2ModelSelection::MultiAgentModeTransitions; "full fork restores explicit policy after proactive transition")]
@@ -1233,7 +1233,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
                 .features
                 .enable(Feature::TokenBudget)
                 .expect("test config should allow feature update");
-            config.model_context_window = Some(128_000);
+            config.model_context_span = Some(128_000);
         }
         if matches!(selection, FullHistoryV2ModelSelection::ConfiguredDefault) {
             config.developer_instructions = None;
@@ -1453,26 +1453,26 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
                 .expect("child rollout should exist"),
         )
         .await?;
-        let context_window_snapshots = child_rollout
+        let context_span_snapshots = child_rollout
             .get_rollout_items()
             .iter()
             .filter_map(|item| match item {
                 RolloutItem::WorldState(world_state) => {
-                    world_state.state.get("context_window").cloned()
+                    world_state.state.get("context_span").cloned()
                 }
                 _ => None,
             })
             .collect::<Vec<_>>();
         assert_eq!(
-            context_window_snapshots,
+            context_span_snapshots,
             vec![json!("/root"), json!("/root/worker")]
         );
-        let context_windows = child_request
+        let context_spans = child_request
             .message_input_texts("developer")
             .into_iter()
-            .filter(|text| text.starts_with("<context_window>\n"))
+            .filter(|text| text.starts_with("<context_span>\n"))
             .collect::<Vec<_>>();
-        let identities = context_windows
+        let identities = context_spans
             .iter()
             .map(|text| text.lines().nth(1).expect("agent identity"))
             .collect::<Vec<_>>();
@@ -1480,15 +1480,15 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
             identities,
             ["Agent name: /root", "Agent name: /root/worker"]
         );
-        let window_ids = context_windows
+        let span_ids = context_spans
             .iter()
             .map(|text| {
                 text.lines()
-                    .find_map(|line| line.strip_prefix("Current context window id: "))
-                    .expect("context window id")
+                    .find_map(|line| line.strip_prefix("Current context span id: "))
+                    .expect("context span id")
             })
             .collect::<Vec<_>>();
-        assert_ne!(window_ids[0], window_ids[1]);
+        assert_ne!(span_ids[0], span_ids[1]);
         let checkpoint = child_rollout
             .get_rollout_items()
             .iter()
@@ -1505,18 +1505,18 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
         );
         assert_eq!(
             (
-                checkpoint.window_number,
-                checkpoint.first_window_id.as_deref(),
-                checkpoint.previous_window_id.as_deref(),
-                checkpoint.window_id.as_deref(),
+                checkpoint.span_number,
+                checkpoint.first_span_id.as_deref(),
+                checkpoint.previous_span_id.as_deref(),
+                checkpoint.span_id.as_deref(),
             ),
-            (Some(0), Some(window_ids[1]), None, Some(window_ids[1]))
+            (Some(0), Some(span_ids[1]), None, Some(span_ids[1]))
         );
         assert!(
             child_request.has_message_with_input_texts("developer", |message| {
                 matches!(
                     message,
-                    [text] if text.starts_with("<context_window>\nAgent name: /root/worker\n")
+                    [text] if text.starts_with("<context_span>\nAgent name: /root/worker\n")
                 )
             })
         );

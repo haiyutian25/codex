@@ -5,7 +5,7 @@ use super::run_remote_compaction_request_v2;
 use crate::Prompt;
 use crate::client::ModelClientSession;
 use crate::compact::CompactionAnalyticsDetails;
-use crate::compact_remote::trim_function_call_history_to_fit_context_window;
+use crate::compact_remote::trim_function_call_history_to_fit_context_span;
 use crate::responses_metadata::CodexResponsesRequestKind;
 use crate::responses_metadata::CompactionTurnMetadata;
 use crate::session::session::Session;
@@ -41,7 +41,7 @@ pub(super) async fn run_remote_compact_v2_attempt(
     let mut history = sess.clone_history().await;
     let base_instructions = sess.get_base_instructions().await;
     let (rewritten_outputs, estimated_deleted_tokens) =
-        trim_function_call_history_to_fit_context_window(
+        trim_function_call_history_to_fit_context_span(
             &mut history,
             turn_context.as_ref(),
             &base_instructions,

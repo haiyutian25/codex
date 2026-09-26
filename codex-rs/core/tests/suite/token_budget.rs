@@ -72,33 +72,33 @@ fn model_token_budget_config() -> ModelTokenBudgetConfig {
 }
 
 fn token_budget_contexts(request: &ResponsesRequest) -> Vec<String> {
-    let context_window_prefix = format!("{CONTEXT_WINDOW_OPEN_TAG}\n");
+    let context_span_prefix = format!("{CONTEXT_WINDOW_OPEN_TAG}\n");
     request
         .message_input_texts("developer")
         .into_iter()
-        .filter(|text| text.starts_with(&context_window_prefix))
+        .filter(|text| text.starts_with(&context_span_prefix))
         .collect()
 }
 
-fn token_budget_window_ids(text: &str, agent_name: &str) -> (String, Option<String>, String) {
+fn token_budget_span_ids(text: &str, agent_name: &str) -> (String, Option<String>, String) {
     let captures = assert_regex_match(
         &format!(
-            r"^{CONTEXT_WINDOW_OPEN_TAG}\nAgent name: {agent_name}\nFirst context window id: ([0-9a-f-]{{36}})\nCurrent context window id: ([0-9a-f-]{{36}})(?:\nPrevious context window id: ([0-9a-f-]{{36}}))?\n{CONTEXT_WINDOW_CLOSE_TAG}$"
+            r"^{CONTEXT_WINDOW_OPEN_TAG}\nAgent name: {agent_name}\nFirst context span id: ([0-9a-f-]{{36}})\nCurrent context span id: ([0-9a-f-]{{36}})(?:\nPrevious context span id: ([0-9a-f-]{{36}}))?\n{CONTEXT_WINDOW_CLOSE_TAG}$"
         ),
         text,
     );
-    let first_window_id = captures
+    let first_span_id = captures
         .get(1)
         .expect("first window id capture")
         .as_str()
         .to_string();
-    let window_id = captures
+    let span_id = captures
         .get(2)
         .expect("window id capture")
         .as_str()
         .to_string();
-    let previous_window_id = captures.get(3).map(|capture| capture.as_str().to_string());
-    (first_window_id, previous_window_id, window_id)
+    let previous_span_id = captures.get(3).map(|capture| capture.as_str().to_string());
+    (first_span_id, previous_span_id, span_id)
 }
 
 fn tool_names(request: &ResponsesRequest) -> Vec<String> {
@@ -199,7 +199,7 @@ async fn token_budget_context_is_only_emitted_with_full_context() -> Result<()> 
     .await;
     let test = test_codex()
         .with_config(|config| {
-            config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
+            config.model_context_span = Some(CONFIGURED_CONTEXT_WINDOW);
             config
                 .features
                 .enable(Feature::TokenBudget)
@@ -220,21 +220,21 @@ async fn token_budget_context_is_only_emitted_with_full_context() -> Result<()> 
 
     let initial_token_budget = token_budget_contexts(&requests[0]);
     assert_eq!(initial_token_budget.len(), 1);
-    let (first_window_id, previous_window_id, window_id) =
-        token_budget_window_ids(&initial_token_budget[0], "/root");
-    assert_eq!(previous_window_id, None);
-    assert_eq!(first_window_id, window_id);
+    let (first_span_id, previous_span_id, span_id) =
+        token_budget_span_ids(&initial_token_budget[0], "/root");
+    assert_eq!(previous_span_id, None);
+    assert_eq!(first_span_id, span_id);
     assert_eq!(
         token_budget_contexts(&requests[1]),
         initial_token_budget,
-        "steady-state context update should not advance the context window"
+        "steady-state context update should not advance the context span"
     );
 
     Ok(())
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn token_budget_guidance_precedes_standalone_context_window() -> Result<()> {
+async fn token_budget_guidance_precedes_standalone_context_span() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -249,7 +249,7 @@ async fn token_budget_guidance_precedes_standalone_context_window() -> Result<()
     let guidance_message = "Preserve important state before compaction.";
     let test = test_codex()
         .with_config(move |config| {
-            config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
+            config.model_context_span = Some(CONFIGURED_CONTEXT_WINDOW);
             config.token_budget = Some(TokenBudgetConfig {
                 guidance_message: Some(guidance_message.to_string()),
                 ..TokenBudgetConfig::default()
@@ -266,12 +266,12 @@ async fn token_budget_guidance_precedes_standalone_context_window() -> Result<()
 
     let request = response.single_request();
     assert!(request.has_content_kinds(&[
-        "token_budget.context_window_guidance",
+        "token_budget.context_span_guidance",
         "permissions.instructions",
     ]));
-    assert!(request.has_content_kinds(&["token_budget.context_window"]));
+    assert!(request.has_content_kinds(&["token_budget.context_span"]));
     let developer_texts = request.message_input_texts("developer");
-    let context_window_index = developer_texts
+    let context_span_index = developer_texts
         .iter()
         .position(|text| text.starts_with(CONTEXT_WINDOW_OPEN_TAG))
         .expect("context-window metadata should be present");
@@ -283,7 +283,7 @@ async fn token_budget_guidance_precedes_standalone_context_window() -> Result<()
             )
         })
         .expect("context-window guidance should be present");
-    assert!(guidance_index < context_window_index);
+    assert!(guidance_index < context_span_index);
 
     Ok(())
 }
@@ -312,7 +312,7 @@ async fn token_budget_uses_model_message_defaults() -> Result<()> {
                 .token_budget = Some(model_defaults);
         })
         .with_config(|config| {
-            config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
+            config.model_context_span = Some(CONFIGURED_CONTEXT_WINDOW);
             config
                 .features
                 .enable(Feature::TokenBudget)
@@ -366,7 +366,7 @@ async fn token_budget_explicit_default_template_overrides_model_defaults() -> Re
                 .token_budget = Some(model_token_budget_config());
         })
         .with_config(|config| {
-            config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
+            config.model_context_span = Some(CONFIGURED_CONTEXT_WINDOW);
         })
         .build_with_auto_env(&server)
         .await?;
@@ -417,7 +417,7 @@ async fn token_budget_defaults_follow_the_active_model() -> Result<()> {
         })
         .with_model("gpt-5.2")
         .with_config(|config| {
-            config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
+            config.model_context_span = Some(CONFIGURED_CONTEXT_WINDOW);
             config
                 .features
                 .enable(Feature::TokenBudget)
@@ -508,7 +508,7 @@ async fn token_budget_ignores_invalid_model_message_defaults() -> Result<()> {
                     .token_budget = Some(model_defaults);
             })
             .with_config(|config| {
-                config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
+                config.model_context_span = Some(CONFIGURED_CONTEXT_WINDOW);
                 config
                     .features
                     .enable(Feature::TokenBudget)
@@ -579,7 +579,7 @@ async fn token_budget_context_injects_plain_thread_hint_text() -> Result<()> {
     let rmcp_test_server_bin = stdio_server_bin()?;
     let test = test_codex()
         .with_config(move |config| {
-            config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
+            config.model_context_span = Some(CONFIGURED_CONTEXT_WINDOW);
             config
                 .features
                 .enable(Feature::TokenBudget)
@@ -638,7 +638,7 @@ async fn token_budget_context_injects_plain_thread_hint_text() -> Result<()> {
     assert_eq!(token_budgets.len(), 1);
     let captures = assert_regex_match(
         &format!(
-            r"^{CONTEXT_WINDOW_OPEN_TAG}\nAgent name: /root\nFirst context window id: ([0-9a-f-]{{36}})\nCurrent context window id: ([0-9a-f-]{{36}})\nmanual history hint for thread {thread_id}\nunstructured notes/thread_hint fixture result\n{CONTEXT_WINDOW_CLOSE_TAG}$"
+            r"^{CONTEXT_WINDOW_OPEN_TAG}\nAgent name: /root\nFirst context span id: ([0-9a-f-]{{36}})\nCurrent context span id: ([0-9a-f-]{{36}})\nmanual history hint for thread {thread_id}\nunstructured notes/thread_hint fixture result\n{CONTEXT_WINDOW_CLOSE_TAG}$"
         ),
         &token_budgets[0],
     );
@@ -674,7 +674,7 @@ async fn token_budget_reminder_emits_after_crossing_compaction_threshold() -> Re
     .await;
     let test = test_codex()
         .with_config(|config| {
-            config.model_context_window = Some(10_000);
+            config.model_context_span = Some(10_000);
             config.token_budget = Some(TokenBudgetConfig {
                 reminder_threshold_tokens: Some(2_000),
                 ..TokenBudgetConfig::default()
@@ -694,7 +694,7 @@ async fn token_budget_reminder_emits_after_crossing_compaction_threshold() -> Re
     assert_eq!(requests.len(), 2);
     let initial_context = token_budget_contexts(&requests[0]);
     assert_eq!(initial_context.len(), 1);
-    let reminder = "Your context window is nearly exhausted (only 1000 tokens remaining) and will be automatically reset for you soon. Once reset, message items in current context window will be cleared in the new window, but notes and history items will be persistent across windows.";
+    let reminder = "Your context span is nearly exhausted (only 1000 tokens remaining) and will be automatically reset for you soon. Once reset, message items in current context span will be cleared in the new span, but notes and history items will be persistent across spans.";
     assert_eq!(
         requests[1]
             .message_input_texts("developer")
@@ -730,7 +730,7 @@ async fn token_budget_reminder_uses_body_after_prefix_window() -> Result<()> {
     .await;
     let test = test_codex()
         .with_config(|config| {
-            config.model_context_window = Some(10_000);
+            config.model_context_span = Some(10_000);
             config.model_auto_compact_token_limit = Some(1_000);
             config.model_auto_compact_token_limit_scope =
                 AutoCompactTokenLimitScope::BodyAfterPrefix;
@@ -752,7 +752,7 @@ async fn token_budget_reminder_uses_body_after_prefix_window() -> Result<()> {
 
     let requests = responses.requests();
     assert_eq!(requests.len(), 3);
-    let reminder = "Your context window is nearly exhausted (only 400 tokens remaining) and will be automatically reset for you soon. Once reset, message items in current context window will be cleared in the new window, but notes and history items will be persistent across windows.";
+    let reminder = "Your context span is nearly exhausted (only 400 tokens remaining) and will be automatically reset for you soon. Once reset, message items in current context span will be cleared in the new span, but notes and history items will be persistent across spans.";
     assert!(
         requests[1]
             .message_input_texts("developer")
@@ -801,7 +801,7 @@ async fn get_context_remaining_returns_token_budget_remaining_fragment() -> Resu
     .await;
     let test = test_codex()
         .with_config(|config| {
-            config.model_context_window = Some(10_000);
+            config.model_context_span = Some(10_000);
             config
                 .features
                 .enable(Feature::TokenBudget)
@@ -822,10 +822,10 @@ async fn get_context_remaining_returns_token_budget_remaining_fragment() -> Resu
         "get_context_remaining should be exposed when token budget is enabled"
     );
 
-    let remaining_context = "You have 6500 tokens left in this context window.".to_string();
+    let remaining_context = "You have 6500 tokens left in this context span.".to_string();
     let token_budgets = token_budget_contexts(&requests[1]);
     assert_eq!(token_budgets.len(), 1);
-    token_budget_window_ids(&token_budgets[0], "/root");
+    token_budget_span_ids(&token_budgets[0], "/root");
     assert_eq!(
         requests[2].function_call_output_content_and_success(call_id),
         Some((Some(remaining_context), None))
@@ -865,7 +865,7 @@ async fn get_context_remaining_uses_body_after_prefix_window() -> Result<()> {
     .await;
     let test = test_codex()
         .with_config(|config| {
-            config.model_context_window = Some(10_000);
+            config.model_context_span = Some(10_000);
             config.model_auto_compact_token_limit = Some(7_000);
             config.model_auto_compact_token_limit_scope =
                 AutoCompactTokenLimitScope::BodyAfterPrefix;
@@ -889,7 +889,7 @@ async fn get_context_remaining_uses_body_after_prefix_window() -> Result<()> {
         "get_context_remaining should be exposed when token budget is enabled"
     );
 
-    let remaining_context = "You have 6500 tokens left in this context window.".to_string();
+    let remaining_context = "You have 6500 tokens left in this context span.".to_string();
     assert_eq!(
         requests[2].function_call_output_content_and_success(call_id),
         Some((Some(remaining_context), None))
@@ -922,11 +922,11 @@ async fn get_context_remaining_returns_unknown_when_threshold_is_unbounded() -> 
     .await;
     let test = test_codex()
         .with_model_info_override("gpt-5.2", |model_info| {
-            model_info.context_window = None;
-            model_info.max_context_window = None;
+            model_info.context_span = None;
+            model_info.max_context_span = None;
         })
         .with_config(|config| {
-            config.model_context_window = None;
+            config.model_context_span = None;
             config
                 .features
                 .enable(Feature::TokenBudget)
@@ -950,7 +950,7 @@ async fn get_context_remaining_returns_unknown_when_threshold_is_unbounded() -> 
     assert_eq!(
         requests[1].function_call_output_content_and_success(call_id),
         Some((
-            Some("You have unknown tokens left in this context window.".to_string()),
+            Some("You have unknown tokens left in this context span.".to_string()),
             None,
         ))
     );
@@ -988,7 +988,7 @@ async fn token_budget_context_uses_new_window_after_compaction(
     let test = test_codex()
         .with_config(move |config| {
             config.model_provider = model_provider;
-            config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
+            config.model_context_span = Some(CONFIGURED_CONTEXT_WINDOW);
             config
                 .features
                 .enable(Feature::TokenBudget)
@@ -1026,41 +1026,41 @@ async fn token_budget_context_uses_new_window_after_compaction(
 
     let initial_token_budget = token_budget_contexts(&requests[0]);
     assert_eq!(initial_token_budget.len(), 1);
-    let (initial_first_window_id, initial_previous_window_id, initial_window_id) =
-        token_budget_window_ids(&initial_token_budget[0], "/root");
+    let (initial_first_span_id, initial_previous_span_id, initial_span_id) =
+        token_budget_span_ids(&initial_token_budget[0], "/root");
     let initial_turn_metadata: Value = serde_json::from_str(
         &requests[0]
             .header("x-codex-turn-metadata")
-            .expect("initial context window metadata"),
+            .expect("initial context span metadata"),
     )?;
     assert_eq!(
-        initial_turn_metadata["context_window_id"].as_str(),
-        Some(initial_window_id.as_str())
+        initial_turn_metadata["context_span_id"].as_str(),
+        Some(initial_span_id.as_str())
     );
     let post_compaction_token_budget = token_budget_contexts(&requests[1]);
     assert_eq!(post_compaction_token_budget.len(), 1);
     let (
-        post_compaction_first_window_id,
-        post_compaction_previous_window_id,
-        post_compaction_window_id,
-    ) = token_budget_window_ids(&post_compaction_token_budget[0], "/root");
+        post_compaction_first_span_id,
+        post_compaction_previous_span_id,
+        post_compaction_span_id,
+    ) = token_budget_span_ids(&post_compaction_token_budget[0], "/root");
     let post_compaction_turn_metadata: Value = serde_json::from_str(
         &requests[1]
             .header("x-codex-turn-metadata")
-            .expect("post-compaction context window metadata"),
+            .expect("post-compaction context span metadata"),
     )?;
     assert_eq!(
-        post_compaction_turn_metadata["context_window_id"].as_str(),
-        Some(post_compaction_window_id.as_str())
+        post_compaction_turn_metadata["context_span_id"].as_str(),
+        Some(post_compaction_span_id.as_str())
     );
-    assert_eq!(initial_previous_window_id, None);
-    assert_eq!(initial_first_window_id, initial_window_id);
-    assert_eq!(post_compaction_first_window_id, initial_first_window_id);
+    assert_eq!(initial_previous_span_id, None);
+    assert_eq!(initial_first_span_id, initial_span_id);
+    assert_eq!(post_compaction_first_span_id, initial_first_span_id);
     assert_eq!(
-        post_compaction_previous_window_id.as_deref(),
-        Some(initial_window_id.as_str())
+        post_compaction_previous_span_id.as_deref(),
+        Some(initial_span_id.as_str())
     );
-    assert_ne!(post_compaction_window_id, initial_window_id);
+    assert_ne!(post_compaction_span_id, initial_span_id);
     assert!(
         !requests[1].body_contains_text("before compact"),
         "token budget compaction should drop prior user messages"
@@ -1090,7 +1090,7 @@ async fn token_budget_compaction_runs_compact_hooks() -> Result<()> {
     let test = test_codex()
         .with_pre_build_hook(write_token_budget_compact_hooks)
         .with_config(|config| {
-            config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
+            config.model_context_span = Some(CONFIGURED_CONTEXT_WINDOW);
             config
                 .features
                 .enable(Feature::TokenBudget)
@@ -1171,7 +1171,7 @@ async fn token_budget_mid_turn_auto_compaction_resets_before_active_follow_up(
         })
         .with_config(move |config| {
             config.model_provider = model_provider;
-            config.model_context_window = Some(10_000);
+            config.model_context_span = Some(10_000);
             config.token_budget = Some(TokenBudgetConfig {
                 reminder_threshold_tokens: Some(16_384),
                 reminder_message_template: "Bridge reminder: {n_remaining} tokens remain."
@@ -1227,25 +1227,25 @@ async fn token_budget_mid_turn_auto_compaction_resets_before_active_follow_up(
             item.get("type").and_then(Value::as_str) == Some("function_call_output")
                 && item.get("call_id").and_then(Value::as_str) == Some(call_id)
         }),
-        "fresh token-budget windows should drop active tool output with the prior history"
+        "fresh token-budget spans should drop active tool output with the prior history"
     );
 
     let initial_token_budget = token_budget_contexts(&requests[0]);
     assert_eq!(initial_token_budget.len(), 1);
-    let (initial_first_window_id, _, initial_window_id) =
-        token_budget_window_ids(&initial_token_budget[0], "/root");
+    let (initial_first_span_id, _, initial_span_id) =
+        token_budget_span_ids(&initial_token_budget[0], "/root");
     let follow_up_token_budget = token_budget_contexts(&requests[1]);
     assert_eq!(follow_up_token_budget.len(), 1);
-    let (follow_up_first_window_id, follow_up_previous_window_id, follow_up_window_id) =
-        token_budget_window_ids(&follow_up_token_budget[0], "/root");
-    assert_eq!(follow_up_first_window_id, initial_first_window_id);
+    let (follow_up_first_span_id, follow_up_previous_span_id, follow_up_span_id) =
+        token_budget_span_ids(&follow_up_token_budget[0], "/root");
+    assert_eq!(follow_up_first_span_id, initial_first_span_id);
     assert_eq!(
-        follow_up_previous_window_id.as_deref(),
-        Some(initial_window_id.as_str())
+        follow_up_previous_span_id.as_deref(),
+        Some(initial_span_id.as_str())
     );
     assert!(
         !requests[1].body_contains_text("trigger mid-turn auto compaction"),
-        "fresh token-budget windows should drop prior user messages"
+        "fresh token-budget spans should drop prior user messages"
     );
     assert_eq!(
         requests[1].body_contains_text("MID_TURN_CLIENT_INSTRUCTIONS"),
@@ -1253,8 +1253,8 @@ async fn token_budget_mid_turn_auto_compaction_resets_before_active_follow_up(
         "mid-turn token-budget compaction should retain client-authored developer messages when enabled"
     );
     assert_ne!(
-        follow_up_window_id, initial_window_id,
-        "mid-turn token-budget auto-compaction should reset the context window"
+        follow_up_span_id, initial_span_id,
+        "mid-turn token-budget auto-compaction should reset the context span"
     );
 
     Ok(())
@@ -1297,7 +1297,7 @@ async fn token_budget_auto_compact_fallback_uses_buffer_until_new_context() -> R
     let test = test_codex()
         .with_config(|config| {
             config.model_provider.name = "OpenAI (test)".into();
-            config.model_context_window = Some(50_000);
+            config.model_context_span = Some(50_000);
             config.model_auto_compact_token_limit = Some(9_000);
             config.token_budget = Some(TokenBudgetConfig {
                 auto_compact_fallback_prompt: Some(AUTO_COMPACT_FALLBACK_PROMPT.to_string()),
@@ -1332,22 +1332,22 @@ async fn token_budget_auto_compact_fallback_uses_buffer_until_new_context() -> R
     );
     assert_eq!(
         fallback_request.function_call_output_text(trigger_call_id),
-        Some("You have 0 tokens left in this context window.".to_string())
+        Some("You have 0 tokens left in this context span.".to_string())
     );
     let initial_context = token_budget_contexts(&requests[0]);
     assert_eq!(token_budget_contexts(fallback_request), initial_context);
     assert_eq!(token_budget_contexts(&requests[2]), initial_context);
     assert!(requests[2].body_contains_text(AUTO_COMPACT_FALLBACK_PROMPT));
     assert!(requests[2].body_contains_text(fallback_call_id));
-    let (_, _, initial_window_id) = token_budget_window_ids(&initial_context[0], "/root");
+    let (_, _, initial_span_id) = token_budget_span_ids(&initial_context[0], "/root");
     let follow_up_context = token_budget_contexts(&requests[3]);
-    let (_, previous_window_id, follow_up_window_id) =
-        token_budget_window_ids(&follow_up_context[0], "/root");
+    let (_, previous_span_id, follow_up_span_id) =
+        token_budget_span_ids(&follow_up_context[0], "/root");
     assert_eq!(
-        previous_window_id.as_deref(),
-        Some(initial_window_id.as_str())
+        previous_span_id.as_deref(),
+        Some(initial_span_id.as_str())
     );
-    assert_ne!(follow_up_window_id, initial_window_id);
+    assert_ne!(follow_up_span_id, initial_span_id);
     assert!(!requests[3].body_contains_text(AUTO_COMPACT_FALLBACK_PROMPT));
     assert_eq!(
         requests[3].function_call_output_text(fallback_call_id),
@@ -1390,7 +1390,7 @@ async fn token_budget_auto_compact_fallback_rolls_over_after_buffer() -> Result<
     let test = test_codex()
         .with_config(|config| {
             config.model_provider.name = "OpenAI (test)".into();
-            config.model_context_window = Some(50_000);
+            config.model_context_span = Some(50_000);
             config.model_auto_compact_token_limit = Some(9_000);
             config.token_budget = Some(TokenBudgetConfig {
                 auto_compact_fallback_prompt: Some(AUTO_COMPACT_FALLBACK_PROMPT.to_string()),
@@ -1432,7 +1432,7 @@ async fn new_context_tool_skips_auto_compact_fallback() -> Result<()> {
     let continue_call_id = "continue-call";
     let continue_args = json!({
         "plan": [
-            {"step": "Continue in the new context window", "status": "in_progress"}
+            {"step": "Continue in the new context span", "status": "in_progress"}
         ],
     })
     .to_string();
@@ -1468,7 +1468,7 @@ async fn new_context_tool_skips_auto_compact_fallback() -> Result<()> {
     let test = test_codex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| {
-            config.model_context_window = Some(10_000);
+            config.model_context_span = Some(10_000);
             config.token_budget = Some(TokenBudgetConfig {
                 auto_compact_fallback_prompt: Some(AUTO_COMPACT_FALLBACK_PROMPT.to_string()),
                 auto_compact_fallback_buffer_tokens: Some(4_000),
@@ -1482,7 +1482,7 @@ async fn new_context_tool_skips_auto_compact_fallback() -> Result<()> {
         .build(&server)
         .await?;
 
-    test.submit_turn("request new context window").await?;
+    test.submit_turn("request new context span").await?;
 
     let requests = responses.requests();
     assert_eq!(requests.len(), 3);
@@ -1495,20 +1495,20 @@ async fn new_context_tool_skips_auto_compact_fallback() -> Result<()> {
     );
     let initial_token_budget = token_budget_contexts(&requests[0]);
     assert_eq!(initial_token_budget.len(), 1);
-    let (initial_first_window_id, _, initial_window_id) =
-        token_budget_window_ids(&initial_token_budget[0], "/root");
-    let new_window_token_budget = token_budget_contexts(&requests[2]);
-    assert_eq!(new_window_token_budget.len(), 1);
-    let (new_first_window_id, new_previous_window_id, new_window_id) =
-        token_budget_window_ids(&new_window_token_budget[0], "/root");
-    assert_eq!(new_first_window_id, initial_first_window_id);
+    let (initial_first_span_id, _, initial_span_id) =
+        token_budget_span_ids(&initial_token_budget[0], "/root");
+    let new_span_token_budget = token_budget_contexts(&requests[2]);
+    assert_eq!(new_span_token_budget.len(), 1);
+    let (new_first_span_id, new_previous_span_id, new_span_id) =
+        token_budget_span_ids(&new_span_token_budget[0], "/root");
+    assert_eq!(new_first_span_id, initial_first_span_id);
     assert_eq!(
-        new_previous_window_id.as_deref(),
-        Some(initial_window_id.as_str())
+        new_previous_span_id.as_deref(),
+        Some(initial_span_id.as_str())
     );
-    assert_ne!(new_window_id, initial_window_id);
+    assert_ne!(new_span_id, initial_span_id);
     assert!(
-        !requests[2].body_contains_text("request new context window"),
+        !requests[2].body_contains_text("request new context span"),
         "new_context should drop the prior window history before continuing the turn"
     );
     assert_eq!(
@@ -1516,15 +1516,15 @@ async fn new_context_tool_skips_auto_compact_fallback() -> Result<()> {
         Some("Plan updated".to_string())
     );
     let snapshot = context_snapshot::format_labeled_requests_snapshot(
-        "New context window tool installs fresh full context before the next follow-up request.",
+        "New context span tool installs fresh full context before the next follow-up request.",
         &[("Final Follow-Up Request", &requests[2])],
         &ContextSnapshotOptions::default(),
     );
     let snapshot = snapshot
-        .replace(&new_first_window_id, "<FIRST_WINDOW_ID>")
-        .replace(&new_window_id, "<WINDOW_ID>");
+        .replace(&new_first_span_id, "<FIRST_WINDOW_ID>")
+        .replace(&new_span_id, "<WINDOW_ID>");
     insta::assert_snapshot!(
-        "token_budget_new_context_window_tool_full_context",
+        "token_budget_new_context_span_tool_full_context",
         snapshot
     );
 

@@ -40,7 +40,7 @@ unknown_key = true"#;
 fn type_errors_take_precedence_over_ignored_fields() {
     let path = Path::new("/tmp/config.toml");
     let contents = r#"
-model_context_window = "wide"
+model_context_span = "wide"
 unknown_key = true"#;
 
     let error =

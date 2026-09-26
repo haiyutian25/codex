@@ -1,15 +1,15 @@
 use super::PreviousSectionState;
 use super::WorldStateSection;
-use crate::context::ContextWindowGuidance;
+use crate::context::ContextSpanGuidance;
 use crate::context::ContextualUserFragment;
 
-/// Model-visible guidance for managing the current context window.
+/// Model-visible guidance for managing the current context span.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ContextWindowGuidanceState {
+pub(crate) struct ContextSpanGuidanceState {
     message: String,
 }
 
-impl ContextWindowGuidanceState {
+impl ContextSpanGuidanceState {
     pub(crate) fn new(message: &str) -> Self {
         Self {
             message: message.to_string(),
@@ -17,8 +17,8 @@ impl ContextWindowGuidanceState {
     }
 }
 
-impl WorldStateSection for ContextWindowGuidanceState {
-    const ID: &'static str = "context_window_guidance";
+impl WorldStateSection for ContextSpanGuidanceState {
+    const ID: &'static str = "context_span_guidance";
     type Snapshot = String;
 
     fn snapshot(&self) -> Self::Snapshot {
@@ -26,7 +26,7 @@ impl WorldStateSection for ContextWindowGuidanceState {
     }
 
     fn matches_legacy_fragment(role: &str, text: &str) -> bool {
-        role == "developer" && ContextWindowGuidance::matches_text(text)
+        role == "developer" && ContextSpanGuidance::matches_text(text)
     }
 
     fn has_retained_fragment_matcher() -> bool {
@@ -45,10 +45,10 @@ impl WorldStateSection for ContextWindowGuidanceState {
             return None;
         }
 
-        Some(Box::new(ContextWindowGuidance::new(&self.message)))
+        Some(Box::new(ContextSpanGuidance::new(&self.message)))
     }
 }
 
 #[cfg(test)]
-#[path = "context_window_guidance_tests.rs"]
+#[path = "context_span_guidance_tests.rs"]
 mod tests;

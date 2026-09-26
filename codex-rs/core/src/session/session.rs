@@ -583,15 +583,15 @@ impl Session {
         turn_context: &TurnContext,
         request_kind: CodexResponsesRequestKind,
     ) -> CodexResponsesMetadata {
-        let (window_id, window_number, context_window_id) = self.current_window().await;
+        let (span_id, span_number, context_span_id) = self.current_span().await;
         let responses_metadata = turn_context.turn_metadata_state.to_responses_metadata(
             self.installation_id.clone(),
-            window_id,
+            span_id,
             request_kind,
         );
         CodexResponsesMetadata {
-            window_number: Some(window_number),
-            context_window_id: Some(context_window_id),
+            span_number: Some(span_number),
+            context_span_id: Some(context_span_id),
             forked_from_ordinal_exclusive: self
                 .forked_from_ordinal_exclusive
                 .filter(|_| responses_metadata.forked_from_thread_id.is_some()),
@@ -746,18 +746,18 @@ impl Session {
                 SessionId::from(thread_id)
             }
         });
-        let initial_auto_compact_window_ids = AutoCompactWindowIds::new_initial();
-        let restore_child_window = matches!(&initial_history, InitialHistory::Forked(_))
+        let initial_auto_compact_span_ids = AutoCompactSpanIds::new_initial();
+        let restore_child_span = matches!(&initial_history, InitialHistory::Forked(_))
             && session_configuration.session_source.is_non_root_agent()
             && config.features.enabled(Feature::TokenBudget);
-        if restore_child_window && let InitialHistory::Forked(items) = &mut initial_history {
-            let child_window_id = initial_auto_compact_window_ids.window_id.to_string();
+        if restore_child_span && let InitialHistory::Forked(items) = &mut initial_history {
+            let child_span_id = initial_auto_compact_span_ids.span_id.to_string();
             for item in items {
                 if let RolloutItem::Compacted(checkpoint) = item {
-                    checkpoint.window_number = Some(0);
-                    checkpoint.first_window_id = Some(child_window_id.clone());
-                    checkpoint.previous_window_id = None;
-                    checkpoint.window_id = Some(child_window_id.clone());
+                    checkpoint.span_number = Some(0);
+                    checkpoint.first_span_id = Some(child_span_id.clone());
+                    checkpoint.previous_span_id = None;
+                    checkpoint.span_id = Some(child_span_id.clone());
                 }
             }
         }
@@ -823,8 +823,8 @@ impl Session {
                                 ForkPersistence::Referenced { history_base, .. } => *history_base,
                             },
                             subagent_history_start_ordinal: None,
-                            initial_window_id: initial_auto_compact_window_ids
-                                .window_id
+                            initial_span_id: initial_auto_compact_span_ids
+                                .span_id
                                 .to_string(),
                             metadata: ThreadPersistenceMetadata {
                                 cwd: Some(config.cwd.to_path_buf()),
@@ -1087,7 +1087,7 @@ impl Session {
                 config
                     .model_reasoning_summary
                     .unwrap_or(ReasoningSummaryConfig::Auto),
-                config.model_context_window,
+                config.model_context_span,
                 config.model_auto_compact_token_limit,
                 config.permissions.approval_policy.value(),
                 config
@@ -1193,9 +1193,9 @@ impl Session {
                 );
             }
             session_configuration.thread_name = thread_name.clone();
-            let mut state = SessionState::new_with_auto_compact_window_ids(
+            let mut state = SessionState::new_with_auto_compact_span_ids(
                 session_configuration.clone(),
-                initial_auto_compact_window_ids,
+                initial_auto_compact_span_ids,
             );
             state.base_instructions_provenance = base_instructions_provenance.clone();
             let managed_network_requirements_configured = config
@@ -1533,10 +1533,10 @@ impl Session {
 
             // record_initial_history can emit events. We record only after the SessionConfiguredEvent is emitted.
             Box::pin(sess.record_initial_history(initial_history)).await;
-            if restore_child_window {
-                sess.state.lock().await.restore_auto_compact_window(
-                    /*window_number*/ 0,
-                    initial_auto_compact_window_ids,
+            if restore_child_span {
+                sess.state.lock().await.restore_auto_compact_span(
+                    /*span_number*/ 0,
+                    initial_auto_compact_span_ids,
                 );
             }
             if matches!(&sess.fork_persistence, ForkPersistence::Referenced { .. }) {

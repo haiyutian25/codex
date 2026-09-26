@@ -146,11 +146,11 @@ fn test_model_info(
         web_search_tool_type: Default::default(),
         truncation_policy: TruncationPolicyConfig::bytes(/*limit*/ 10_000),
         supports_image_detail_original: false,
-        context_window: Some(272_000),
-        max_context_window: None,
+        context_span: Some(272_000),
+        max_context_span: None,
         auto_compact_token_limit: None,
         comp_hash: None,
-        effective_context_window_percent: 95,
+        effective_context_span_percent: 95,
         experimental_supported_tools: Vec::new(),
     }
 }
@@ -1328,24 +1328,24 @@ async fn thread_rollback_after_generated_image_drops_entire_image_turn_history()
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<()> {
+async fn model_switch_to_smaller_model_updates_token_context_span() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
 
     let large_model_slug = "test-image-model";
     let smaller_model_slug = "test-text-only-model";
-    let large_context_window = 272_000;
-    let smaller_context_window = 128_000;
-    let effective_context_window_percent = 95;
-    let large_effective_window = (large_context_window * effective_context_window_percent) / 100;
-    let smaller_effective_window =
-        (smaller_context_window * effective_context_window_percent) / 100;
+    let large_context_span = 272_000;
+    let smaller_context_span = 128_000;
+    let effective_context_span_percent = 95;
+    let large_effective_span = (large_context_span * effective_context_span_percent) / 100;
+    let smaller_effective_span =
+        (smaller_context_span * effective_context_span_percent) / 100;
 
     let base_model = ModelInfo {
         slug: large_model_slug.to_string(),
         display_name: "Larger Model".to_string(),
-        description: Some("larger context window model".to_string()),
+        description: Some("larger context span model".to_string()),
         default_reasoning_level: Some(ReasoningEffort::Medium),
         supported_reasoning_levels: vec![ReasoningEffortPreset {
             effort: ReasoningEffort::Medium,
@@ -1382,18 +1382,18 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
         web_search_tool_type: Default::default(),
         truncation_policy: TruncationPolicyConfig::bytes(/*limit*/ 10_000),
         supports_image_detail_original: false,
-        context_window: Some(large_context_window),
-        max_context_window: None,
+        context_span: Some(large_context_span),
+        max_context_span: None,
         auto_compact_token_limit: None,
         comp_hash: None,
-        effective_context_window_percent,
+        effective_context_span_percent,
         experimental_supported_tools: Vec::new(),
     };
     let mut smaller_model = base_model.clone();
     smaller_model.slug = smaller_model_slug.to_string();
     smaller_model.display_name = "Smaller Model".to_string();
-    smaller_model.description = Some("smaller context window model".to_string());
-    smaller_model.context_window = Some(smaller_context_window);
+    smaller_model.description = Some("smaller context span model".to_string());
+    smaller_model.context_span = Some(smaller_context_span);
 
     mount_models_once(
         &server,
@@ -1441,13 +1441,13 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
     let large_model_info = models_manager
         .get_model_info(large_model_slug, &test.config.to_models_manager_config())
         .await;
-    assert_eq!(large_model_info.context_window, Some(large_context_window));
+    assert_eq!(large_model_info.context_span, Some(large_context_span));
     let smaller_model_info = models_manager
         .get_model_info(smaller_model_slug, &test.config.to_models_manager_config())
         .await;
     assert_eq!(
-        smaller_model_info.context_window,
-        Some(smaller_context_window)
+        smaller_model_info.context_span,
+        Some(smaller_context_span)
     );
 
     test.codex
@@ -1479,8 +1479,8 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
         large_token_count
             .info
             .as_ref()
-            .and_then(|info| info.model_context_window),
-        Some(large_effective_window)
+            .and_then(|info| info.model_context_span),
+        Some(large_effective_span)
     );
     wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
@@ -1508,7 +1508,7 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
         matches!(
             event,
             EventMsg::TurnStarted(started)
-                if started.model_context_window == Some(smaller_effective_window)
+                if started.model_context_span == Some(smaller_effective_span)
         )
     })
     .await;
@@ -1516,8 +1516,8 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
         unreachable!("wait_for_event returned unexpected event");
     };
     assert_eq!(
-        smaller_turn_started.model_context_window,
-        Some(smaller_effective_window)
+        smaller_turn_started.model_context_span,
+        Some(smaller_effective_span)
     );
 
     let smaller_window_event = wait_for_event(&test.codex, |event| {
@@ -1537,9 +1537,9 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
     let smaller_window = smaller_token_count
         .info
         .as_ref()
-        .and_then(|info| info.model_context_window);
-    assert_eq!(smaller_window, Some(smaller_effective_window));
-    assert_ne!(smaller_window, Some(large_effective_window));
+        .and_then(|info| info.model_context_span);
+    assert_eq!(smaller_window, Some(smaller_effective_span));
+    assert_ne!(smaller_window, Some(large_effective_span));
     wait_for_event(&test.codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     Ok(())

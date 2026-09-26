@@ -148,10 +148,10 @@ pub struct CompactedItem {
     pub message: String,
     pub replacement_history: Option<Vec<ResponseItemEnvelope>>,
     pub mcp_resource_origins: Option<McpResourceOriginCheckpoint>,
-    pub window_number: Option<u64>,
-    pub first_window_id: Option<String>,
-    pub previous_window_id: Option<String>,
-    pub window_id: Option<String>,
+    pub span_number: Option<u64>,
+    pub first_span_id: Option<String>,
+    pub previous_span_id: Option<String>,
+    pub span_id: Option<String>,
 }
 
 impl Serialize for CompactedItem {

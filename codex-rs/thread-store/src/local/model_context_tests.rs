@@ -523,7 +523,7 @@ fn turn_started(turn_id: &str) -> RolloutItem {
         turn_id: turn_id.to_string(),
         trace_id: None,
         started_at: None,
-        model_context_window: Some(128_000),
+        model_context_span: Some(128_000),
         collaboration_mode_kind: Default::default(),
     }))
 }
@@ -625,9 +625,9 @@ fn compacted(message: &str, replacement_history: Option<Vec<ResponseItem>>) -> R
         replacement_history: replacement_history
             .map(|items| items.into_iter().map(Into::into).collect()),
         mcp_resource_origins: None,
-        window_number: Some(1),
-        first_window_id: None,
-        previous_window_id: None,
-        window_id: None,
+        span_number: Some(1),
+        first_span_id: None,
+        previous_span_id: None,
+        span_id: None,
     })
 }

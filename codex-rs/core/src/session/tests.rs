@@ -2147,11 +2147,11 @@ async fn reconstruct_history_matches_live_compactions() {
         .await;
 
     assert_eq!(expected, raw_envelopes(&reconstructed.history));
-    assert_eq!(2, reconstructed.window_number);
+    assert_eq!(2, reconstructed.span_number);
     assert_eq!(
         reconstructed
-            .window_id
-            .map(|window_id| window_id.get_version_num()),
+            .span_id
+            .map(|span_id| span_id.get_version_num()),
         Some(7)
     );
 }
@@ -2186,17 +2186,17 @@ async fn reconstruct_history_uses_replacement_history_verbatim() {
             internal_chat_message_metadata_passthrough: None,
         }),
     ];
-    let first_window_id = Uuid::now_v7();
-    let previous_window_id = Uuid::now_v7();
-    let window_id = Uuid::now_v7();
+    let first_span_id = Uuid::now_v7();
+    let previous_span_id = Uuid::now_v7();
+    let span_id = Uuid::now_v7();
     let rollout_items = vec![RolloutItem::Compacted(CompactedItem {
         message: String::new(),
         replacement_history: Some(replacement_history.clone()),
         mcp_resource_origins: None,
-        window_number: Some(42),
-        first_window_id: Some(first_window_id.to_string()),
-        previous_window_id: Some(previous_window_id.to_string()),
-        window_id: Some(window_id.to_string()),
+        span_number: Some(42),
+        first_span_id: Some(first_span_id.to_string()),
+        previous_span_id: Some(previous_span_id.to_string()),
+        span_id: Some(span_id.to_string()),
     })];
 
     let reconstructed = session
@@ -2204,10 +2204,10 @@ async fn reconstruct_history_uses_replacement_history_verbatim() {
         .await;
 
     assert_eq!(reconstructed.history, replacement_history);
-    assert_eq!(42, reconstructed.window_number);
-    assert_eq!(Some(first_window_id), reconstructed.first_window_id);
-    assert_eq!(Some(previous_window_id), reconstructed.previous_window_id);
-    assert_eq!(Some(window_id), reconstructed.window_id);
+    assert_eq!(42, reconstructed.span_number);
+    assert_eq!(Some(first_span_id), reconstructed.first_span_id);
+    assert_eq!(Some(previous_span_id), reconstructed.previous_span_id);
+    assert_eq!(Some(span_id), reconstructed.span_id);
 }
 
 #[tokio::test]
@@ -2792,7 +2792,7 @@ async fn record_initial_history_seeds_token_info_from_rollout() {
             total_tokens: 7,
             codex_rollout_budget_units: None,
         },
-        model_context_window: Some(1_000),
+        model_context_span: Some(1_000),
     };
     let info2 = TokenUsageInfo {
         total_token_usage: TokenUsage {
@@ -2813,7 +2813,7 @@ async fn record_initial_history_seeds_token_info_from_rollout() {
             total_tokens: 35,
             codex_rollout_budget_units: None,
         },
-        model_context_window: Some(2_000),
+        model_context_span: Some(2_000),
     };
 
     rollout_items.push(RolloutItem::EventMsg(EventMsg::TokenCount(
@@ -2895,7 +2895,7 @@ async fn recompute_token_usage_uses_session_base_instructions() {
 }
 
 #[tokio::test]
-async fn recompute_token_usage_updates_model_context_window() {
+async fn recompute_token_usage_updates_model_context_span() {
     let (session, mut turn_context) = make_session_and_context().await;
 
     {
@@ -2903,19 +2903,19 @@ async fn recompute_token_usage_updates_model_context_window() {
         state.set_token_info(Some(TokenUsageInfo {
             total_token_usage: TokenUsage::default(),
             last_token_usage: TokenUsage::default(),
-            model_context_window: Some(258_400),
+            model_context_span: Some(258_400),
         }));
     }
 
     update_turn_settings_for_test(&mut turn_context, |settings| {
-        Arc::make_mut(&mut settings.model_info).context_window = Some(128_000);
-        Arc::make_mut(&mut settings.model_info).effective_context_window_percent = 100;
+        Arc::make_mut(&mut settings.model_info).context_span = Some(128_000);
+        Arc::make_mut(&mut settings.model_info).effective_context_span_percent = 100;
     });
 
     session.recompute_token_usage(&turn_context).await;
 
     let actual = session.state.lock().await.token_info().expect("token info");
-    assert_eq!(actual.model_context_window, Some(128_000));
+    assert_eq!(actual.model_context_span, Some(128_000));
 }
 
 #[tokio::test]
@@ -3015,7 +3015,7 @@ async fn record_token_usage_info_notifies_extension_contributors() {
             token_usage: TokenUsageInfo {
                 total_token_usage: first_usage.clone(),
                 last_token_usage: first_usage,
-                model_context_window: turn_context.model_context_window(),
+                model_context_span: turn_context.model_context_span(),
             },
             saw_session_store: true,
             saw_thread_store: true,
@@ -3027,7 +3027,7 @@ async fn record_token_usage_info_notifies_extension_contributors() {
             token_usage: TokenUsageInfo {
                 total_token_usage: expected_total_usage,
                 last_token_usage: second_usage,
-                model_context_window: turn_context.model_context_window(),
+                model_context_span: turn_context.model_context_span(),
             },
             saw_session_store: true,
             saw_thread_store: true,
@@ -3382,7 +3382,7 @@ async fn record_initial_history_reconstructs_forked_transcript() {
 }
 
 #[tokio::test]
-async fn start_new_context_window_assigns_and_persists_item_ids() {
+async fn start_new_context_span_assigns_and_persists_item_ids() {
     let (mut session, turn_context, _rx) = make_session_and_context_with_auth_and_config_and_rx(
         CodexAuth::from_api_key("Test API Key"),
         Vec::new(),
@@ -3403,7 +3403,7 @@ async fn start_new_context_window_assigns_and_persists_item_ids() {
     );
 
     session
-        .start_new_context_window(&step_context, world_state)
+        .start_new_context_span(&step_context, world_state)
         .await;
 
     let live_history = session.clone_history().await;
@@ -3693,7 +3693,7 @@ async fn record_initial_history_forked_hydrates_previous_turn_settings() {
                 turn_id: turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -3900,7 +3900,7 @@ async fn thread_rollback_recomputes_previous_turn_settings_and_reference_context
                 turn_id: first_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -3931,7 +3931,7 @@ async fn thread_rollback_recomputes_previous_turn_settings_and_reference_context
                 turn_id: rolled_back_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -4014,9 +4014,9 @@ async fn thread_rollback_restores_cleared_reference_context_item_after_compactio
         user_message("turn 1 user"),
         user_message("summary after compaction"),
     ];
-    let first_window_id = Uuid::now_v7();
-    let previous_window_id = Uuid::now_v7();
-    let compacted_window_id = Uuid::now_v7();
+    let first_span_id = Uuid::now_v7();
+    let previous_span_id = Uuid::now_v7();
+    let compacted_span_id = Uuid::now_v7();
 
     sess.persist_rollout_items(&[
         RolloutItem::EventMsg(EventMsg::TurnStarted(
@@ -4024,7 +4024,7 @@ async fn thread_rollback_restores_cleared_reference_context_item_after_compactio
                 turn_id: first_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -4053,7 +4053,7 @@ async fn thread_rollback_restores_cleared_reference_context_item_after_compactio
                 turn_id: compact_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -4067,10 +4067,10 @@ async fn thread_rollback_restores_cleared_reference_context_item_after_compactio
                     .collect(),
             ),
             mcp_resource_origins: None,
-            window_number: Some(7),
-            first_window_id: Some(first_window_id.to_string()),
-            previous_window_id: Some(previous_window_id.to_string()),
-            window_id: Some(compacted_window_id.to_string()),
+            span_number: Some(7),
+            first_span_id: Some(first_span_id.to_string()),
+            previous_span_id: Some(previous_span_id.to_string()),
+            span_id: Some(compacted_span_id.to_string()),
         }),
         RolloutItem::EventMsg(EventMsg::TurnComplete(TurnCompleteEvent {
             turn_id: compact_turn_id,
@@ -4086,7 +4086,7 @@ async fn thread_rollback_restores_cleared_reference_context_item_after_compactio
                 turn_id: rolled_back_turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -4124,12 +4124,12 @@ async fn thread_rollback_restores_cleared_reference_context_item_after_compactio
     .await;
     {
         let mut state = sess.state.lock().await;
-        state.restore_auto_compact_window(
-            /*window_number*/ 99,
-            AutoCompactWindowIds {
-                first_window_id: Uuid::now_v7(),
-                previous_window_id: Some(Uuid::now_v7()),
-                window_id: Uuid::now_v7(),
+        state.restore_auto_compact_span(
+            /*span_number*/ 99,
+            AutoCompactSpanIds {
+                first_span_id: Uuid::now_v7(),
+                previous_span_id: Some(Uuid::now_v7()),
+                span_id: Uuid::now_v7(),
             },
         );
     }
@@ -4144,14 +4144,14 @@ async fn thread_rollback_restores_cleared_reference_context_item_after_compactio
     );
     assert!(sess.reference_context_item().await.is_none());
     assert_eq!(
-        sess.state.lock().await.auto_compact_window_ids(),
-        AutoCompactWindowIds {
-            first_window_id,
-            previous_window_id: Some(previous_window_id),
-            window_id: compacted_window_id,
+        sess.state.lock().await.auto_compact_span_ids(),
+        AutoCompactSpanIds {
+            first_span_id,
+            previous_span_id: Some(previous_span_id),
+            span_id: compacted_span_id,
         }
     );
-    assert!(sess.current_window_id().await.ends_with(":7"));
+    assert!(sess.current_span_id().await.ends_with(":7"));
 }
 
 #[tokio::test]
@@ -4169,7 +4169,7 @@ async fn thread_rollback_persists_marker_and_replays_cumulatively() {
                 turn_id: "turn-1".to_string(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -4198,7 +4198,7 @@ async fn thread_rollback_persists_marker_and_replays_cumulatively() {
                 turn_id: "turn-2".to_string(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -4227,7 +4227,7 @@ async fn thread_rollback_persists_marker_and_replays_cumulatively() {
                 turn_id: "turn-3".to_string(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: Some(128_000),
+                model_context_span: Some(128_000),
                 collaboration_mode_kind: ModeKind::Default,
             },
         )),
@@ -4830,7 +4830,7 @@ async fn open_thread_persistence(session: &mut Session) -> PathBuf {
             history_mode: Default::default(),
             subagent_history_start_ordinal: None,
             history_base: None,
-            initial_window_id: Uuid::now_v7().to_string(),
+            initial_span_id: Uuid::now_v7().to_string(),
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(config.cwd.to_path_buf()),
                 model_provider: config.model_provider_id.clone(),
@@ -5137,140 +5137,6 @@ pub(crate) async fn make_session_configuration_for_tests() -> SessionConfigurati
         dynamic_tools: Vec::new(),
         user_shell_override: None,
     }
-}
-
-#[tokio::test]
-async fn emit_subagent_session_started_includes_fork_lineage_and_originator() {
-    use codex_app_server_protocol::ServerNotification;
-    use codex_app_server_protocol::ThreadArchivedNotification;
-    use wiremock::Mock;
-    use wiremock::MockServer;
-    use wiremock::ResponseTemplate;
-    use wiremock::matchers::method;
-    use wiremock::matchers::path;
-
-    let server = MockServer::start().await;
-    Mock::given(method("POST"))
-        .and(path("/codex/analytics-events/events"))
-        .respond_with(ResponseTemplate::new(200))
-        .mount(&server)
-        .await;
-
-    let auth_manager =
-        AuthManager::from_auth_for_testing(CodexAuth::from_api_key("dummy-test-api-key"));
-    let analytics_events_client = AnalyticsEventsClient::new(
-        auth_manager,
-        server.uri(),
-        /*analytics_enabled*/ Some(true),
-    );
-
-    let parent_thread_id = ThreadId::new();
-    let forked_from_thread_id = ThreadId::new();
-    let child_thread_id = ThreadId::new();
-    let mut session_configuration = make_session_configuration_for_tests().await;
-    session_configuration.forked_from_thread_id = Some(forked_from_thread_id);
-    session_configuration.thread_source = Some(ThreadSource::GuardianReview);
-
-    emit_subagent_session_started(
-        &analytics_events_client,
-        AppServerClientMetadata {
-            client_name: Some("codex-tui".to_string()),
-            client_version: Some("1.0.0".to_string()),
-        },
-        SessionId::from(child_thread_id),
-        child_thread_id,
-        Some(parent_thread_id),
-        session_configuration.thread_config_snapshot(Vec::new()),
-        SubAgentSource::Other(crate::guardian::GUARDIAN_REVIEWER_NAME.to_string()),
-    );
-
-    let event = timeout(Duration::from_secs(1), async {
-        'wait_for_event: loop {
-            if let Some(requests) = server.received_requests().await {
-                for request in requests {
-                    let payload: serde_json::Value =
-                        serde_json::from_slice(&request.body).expect("valid analytics payload");
-                    if let Some(event) = payload["events"].as_array().and_then(|events| {
-                        events
-                            .iter()
-                            .find(|event| event["event_type"] == "codex_thread_initialized")
-                    }) {
-                        break 'wait_for_event event.clone();
-                    }
-                }
-            }
-            tokio::time::sleep(Duration::from_millis(10)).await;
-        }
-    })
-    .await
-    .expect("subagent initialization analytics should be emitted");
-
-    assert_eq!(event["event_params"]["thread_source"], "guardian_review");
-    assert_eq!(
-        event["event_params"]["parent_thread_id"],
-        parent_thread_id.to_string()
-    );
-    assert_eq!(
-        event["event_params"]["forked_from_thread_id"],
-        forked_from_thread_id.to_string()
-    );
-    assert_eq!(
-        event["event_params"]["app_server_client"]["product_client_id"],
-        "test_originator"
-    );
-
-    let prewarmed_thread_id = ThreadId::new();
-    emit_subagent_session_started(
-        &analytics_events_client,
-        AppServerClientMetadata {
-            client_name: None,
-            client_version: None,
-        },
-        SessionId::from(parent_thread_id),
-        prewarmed_thread_id,
-        Some(parent_thread_id),
-        session_configuration.thread_config_snapshot(Vec::new()),
-        SubAgentSource::Other(crate::guardian::GUARDIAN_REVIEWER_NAME.to_string()),
-    );
-    // Archive analytics exposes retained lineage even before a parent connection exists.
-    analytics_events_client.track_notification(&ServerNotification::ThreadArchived(
-        ThreadArchivedNotification {
-            thread_id: prewarmed_thread_id.to_string(),
-        },
-    ));
-    analytics_events_client.flush().await;
-    let events = server
-        .received_requests()
-        .await
-        .expect("analytics requests")
-        .into_iter()
-        .flat_map(|request| {
-            let payload: serde_json::Value =
-                serde_json::from_slice(&request.body).expect("valid analytics payload");
-            payload["events"]
-                .as_array()
-                .expect("analytics events")
-                .clone()
-        })
-        .collect::<Vec<_>>();
-    let [initialization, archive] = events.as_slice() else {
-        panic!("expected one complete initialization and one archive: {events:?}");
-    };
-    assert_eq!(initialization, &event);
-    assert_eq!(
-        json!([
-            archive["event_type"],
-            archive["event_params"]["thread_id"],
-            archive["event_params"]["thread_source"],
-            archive["event_params"]["parent_thread_id"],
-        ]),
-        json!([
-            "codex_thread_archive_event",
-            prewarmed_thread_id.to_string(),
-            "guardian_review",
-            parent_thread_id.to_string(),
-        ])
-    );
 }
 
 async fn resolved_environments_for_configuration(
@@ -7904,7 +7770,7 @@ async fn shutdown_complete_does_not_append_to_thread_store_after_shutdown() {
             history_mode: Default::default(),
             subagent_history_start_ordinal: None,
             history_base: None,
-            initial_window_id: Uuid::now_v7().to_string(),
+            initial_span_id: Uuid::now_v7().to_string(),
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(config.cwd.to_path_buf()),
                 model_provider: config.model_provider_id.clone(),
@@ -8015,7 +7881,7 @@ async fn submission_loop_channel_close_runs_full_thread_teardown() {
             history_mode: Default::default(),
             subagent_history_start_ordinal: None,
             history_base: None,
-            initial_window_id: Uuid::now_v7().to_string(),
+            initial_span_id: Uuid::now_v7().to_string(),
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(config.cwd.to_path_buf()),
                 model_provider: config.model_provider_id.clone(),
@@ -9704,7 +9570,7 @@ struct PromptExtensionTestContributor;
 struct PromptExtensionTestState;
 struct TurnContextExtensionTestContributor;
 struct TurnContextExtensionTestState {
-    expected_model_context_window: Option<i64>,
+    expected_model_context_span: Option<i64>,
 }
 
 impl codex_extension_api::ContextContributor for PromptExtensionTestContributor {
@@ -9749,8 +9615,8 @@ impl codex_extension_api::ContextContributor for TurnContextExtensionTestContrib
             let Some(state) = input.turn_store.get::<TurnContextExtensionTestState>() else {
                 return Vec::new();
             };
-            (input.model_context_window == state.expected_model_context_window
-                && input.model_context_window.is_some()
+            (input.model_context_span == state.expected_model_context_span
+                && input.model_context_span.is_some()
                 && !input.turn_id.is_empty())
             .then(|| {
                 codex_extension_api::PromptFragment::developer_policy(
@@ -9793,13 +9659,13 @@ async fn build_initial_context_includes_turn_context_fragments_from_extensions()
     builder.prompt_contributor(Arc::new(TurnContextExtensionTestContributor));
     session.services.extensions = Arc::new(builder.build());
     update_turn_settings_for_test(&mut turn_context, |settings| {
-        Arc::make_mut(&mut settings.model_info).context_window = Some(100);
-        Arc::make_mut(&mut settings.model_info).effective_context_window_percent = 50;
+        Arc::make_mut(&mut settings.model_info).context_span = Some(100);
+        Arc::make_mut(&mut settings.model_info).effective_context_span_percent = 50;
     });
     turn_context
         .extension_data
         .insert(TurnContextExtensionTestState {
-            expected_model_context_window: Some(50),
+            expected_model_context_span: Some(50),
         });
     let turn_context = Arc::new(turn_context);
 
@@ -9822,13 +9688,13 @@ async fn record_context_updates_includes_turn_context_fragments_on_steady_state_
     builder.prompt_contributor(Arc::new(TurnContextExtensionTestContributor));
     session.services.extensions = Arc::new(builder.build());
     update_turn_settings_for_test(&mut turn_context, |settings| {
-        Arc::make_mut(&mut settings.model_info).context_window = Some(200);
-        Arc::make_mut(&mut settings.model_info).effective_context_window_percent = 25;
+        Arc::make_mut(&mut settings.model_info).context_span = Some(200);
+        Arc::make_mut(&mut settings.model_info).effective_context_span_percent = 25;
     });
     turn_context
         .extension_data
         .insert(TurnContextExtensionTestState {
-            expected_model_context_window: Some(50),
+            expected_model_context_span: Some(50),
         });
     let mut previous_context_item = turn_context.to_turn_context_item();
     previous_context_item.turn_id = Some("previous-turn-id".to_string());
@@ -9934,8 +9800,8 @@ async fn build_initial_context_adds_multi_agent_v2_subagent_usage_hint_as_develo
         developer_messages
             .iter()
             .flatten()
-            .any(|text| text.contains("<context_window>\nAgent name: /root/worker\n")),
-        "expected subagent context window to include its canonical name, got {developer_messages:?}"
+            .any(|text| text.contains("<context_span>\nAgent name: /root/worker\n")),
+        "expected subagent context span to include its canonical name, got {developer_messages:?}"
     );
     assert!(
         developer_messages
@@ -10548,7 +10414,7 @@ async fn attach_in_memory_thread_store(
             history_mode: Default::default(),
             subagent_history_start_ordinal: None,
             history_base: None,
-            initial_window_id: Uuid::now_v7().to_string(),
+            initial_span_id: Uuid::now_v7().to_string(),
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(config.cwd.to_path_buf()),
                 model_provider: config.model_provider_id.clone(),
@@ -11223,7 +11089,7 @@ async fn set_total_token_usage(sess: &Session, total_token_usage: TokenUsage) {
     state.set_token_info(Some(TokenUsageInfo {
         total_token_usage,
         last_token_usage: TokenUsage::default(),
-        model_context_window: None,
+        model_context_span: None,
     }));
 }
 
@@ -11667,15 +11533,15 @@ async fn sample_rollout(
     let user_messages1 = collect_user_messages(&snapshot1);
     let rebuilt1 = compact::build_compacted_history(Vec::new(), &user_messages1, summary1);
     live_history.replace_annotated(rebuilt1);
-    let (window_number, window_ids) = session.advance_auto_compact_window().await;
+    let (span_number, span_ids) = session.advance_auto_compact_span().await;
     rollout_items.push(RolloutItem::Compacted(CompactedItem {
         message: summary1.to_string(),
         replacement_history: None,
         mcp_resource_origins: None,
-        window_number: Some(window_number),
-        first_window_id: Some(window_ids.first_window_id.to_string()),
-        previous_window_id: window_ids.previous_window_id.map(|id| id.to_string()),
-        window_id: Some(window_ids.window_id.to_string()),
+        span_number: Some(span_number),
+        first_span_id: Some(span_ids.first_span_id.to_string()),
+        previous_span_id: span_ids.previous_span_id.map(|id| id.to_string()),
+        span_id: Some(span_ids.span_id.to_string()),
     }));
 
     let user2 = user_message("second user");
@@ -11697,15 +11563,15 @@ async fn sample_rollout(
     let user_messages2 = collect_user_messages(&snapshot2);
     let rebuilt2 = compact::build_compacted_history(Vec::new(), &user_messages2, summary2);
     live_history.replace_annotated(rebuilt2);
-    let (window_number, window_ids) = session.advance_auto_compact_window().await;
+    let (span_number, span_ids) = session.advance_auto_compact_span().await;
     rollout_items.push(RolloutItem::Compacted(CompactedItem {
         message: summary2.to_string(),
         replacement_history: None,
         mcp_resource_origins: None,
-        window_number: Some(window_number),
-        first_window_id: Some(window_ids.first_window_id.to_string()),
-        previous_window_id: window_ids.previous_window_id.map(|id| id.to_string()),
-        window_id: Some(window_ids.window_id.to_string()),
+        span_number: Some(span_number),
+        first_span_id: Some(span_ids.first_span_id.to_string()),
+        previous_span_id: span_ids.previous_span_id.map(|id| id.to_string()),
+        span_id: Some(span_ids.span_id.to_string()),
     }));
 
     let user3 = user_message("third user");

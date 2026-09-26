@@ -9,7 +9,7 @@ use crate::context::world_state::AgentsMdState;
 use crate::context::world_state::AppsInstructionsState;
 use crate::context::world_state::CollaborationModeState;
 use crate::context::world_state::CompactPermissionsState;
-use crate::context::world_state::ContextWindowGuidanceState;
+use crate::context::world_state::ContextSpanGuidanceState;
 use crate::context::world_state::EnvironmentsInstructionsState;
 use crate::context::world_state::EnvironmentsState;
 use crate::context::world_state::ManagedDeveloperInstructionsState;
@@ -106,17 +106,17 @@ impl Session {
             ));
         }
         if turn_context.config.features.enabled(Feature::TokenBudget)
-            && turn_context.model_context_window().is_some()
+            && turn_context.model_context_span().is_some()
         {
-            let window_ids = self.state.lock().await.auto_compact_window_ids();
+            let span_ids = self.state.lock().await.auto_compact_span_ids();
             world_state.add_section(TokenBudgetContext::new(
                 turn_context
                     .session_source
                     .get_agent_path()
                     .unwrap_or_else(codex_protocol::AgentPath::root),
-                window_ids.first_window_id,
-                window_ids.previous_window_id,
-                window_ids.window_id,
+                span_ids.first_span_id,
+                span_ids.previous_span_id,
+                span_ids.span_id,
                 /*thread_hint*/ None,
             ));
             if let Some(guidance) = turn_context
@@ -126,7 +126,7 @@ impl Session {
                 .and_then(|config| config.guidance_message.as_deref())
                 .filter(|message| !message.trim().is_empty())
             {
-                world_state.add_section(ContextWindowGuidanceState::new(guidance));
+                world_state.add_section(ContextSpanGuidanceState::new(guidance));
             }
         }
         let realtime_mode_instructions = self.conversation.mode_instructions().await;

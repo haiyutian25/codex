@@ -118,7 +118,7 @@ pub(crate) async fn run_remote_compact_task(
         turn_id: turn_context.sub_id.clone(),
         trace_id: turn_context.trace_id.clone(),
         started_at: turn_context.turn_timing_state.started_at_unix_secs().await,
-        model_context_window: turn_context.model_context_window(),
+        model_context_span: turn_context.model_context_span(),
         collaboration_mode_kind: turn_context.mode(),
     });
     sess.send_event(&turn_context, start_event).await;
@@ -318,7 +318,7 @@ async fn run_remote_compact_task_inner_impl(
         },
     );
     analytics_details.retained_image_count = Some(retained_images);
-    let (new_window_number, new_window_ids) = sess.advance_auto_compact_window().await;
+    let (new_span_number, new_span_ids) = sess.advance_auto_compact_span().await;
     let (initial_context, world_state_baseline) =
         build_compaction_initial_context(sess.as_ref(), &initial_context_injection).await;
     let new_history =
@@ -346,8 +346,8 @@ async fn run_remote_compact_task_inner_impl(
         world_state_baseline,
         CompactedHistoryMetadata {
             message: String::new(),
-            window_number: new_window_number,
-            window_ids: new_window_ids,
+            span_number: new_span_number,
+            span_ids: new_span_ids,
         },
     )
     .await;

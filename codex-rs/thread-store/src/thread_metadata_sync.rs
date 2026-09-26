@@ -452,7 +452,7 @@ mod tests {
             history_mode: ThreadHistoryMode::Legacy,
             history_base: None,
             subagent_history_start_ordinal: None,
-            initial_window_id: uuid::Uuid::now_v7().to_string(),
+            initial_span_id: uuid::Uuid::now_v7().to_string(),
             metadata: ThreadPersistenceMetadata {
                 cwd: None,
                 model_provider: "test-provider".to_string(),
@@ -583,10 +583,10 @@ mod tests {
             message: "compacted".to_string(),
             replacement_history: None,
             mcp_resource_origins: None,
-            window_number: None,
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: None,
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         });
 
         let first = sync
@@ -617,7 +617,7 @@ mod tests {
                     turn_id: "turn-1".to_string(),
                     trace_id: None,
                     started_at: None,
-                    model_context_window: None,
+                    model_context_span: None,
                     collaboration_mode_kind: Default::default(),
                 },
             ))])

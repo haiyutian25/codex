@@ -36,7 +36,7 @@ fn recognizes_skills_instructions_as_contextual_developer_content() {
 #[test]
 fn recognizes_legacy_token_budget_as_contextual_developer_content() {
     let content = vec![ContentItem::InputText {
-        text: "<token_budget>\nYou have 710 tokens left in this context window.\n</token_budget>"
+        text: "<token_budget>\nYou have 710 tokens left in this context span.\n</token_budget>"
             .to_string(),
     }];
 
@@ -45,7 +45,7 @@ fn recognizes_legacy_token_budget_as_contextual_developer_content() {
 }
 
 #[test]
-fn recognizes_context_window_as_contextual_developer_content() {
+fn recognizes_context_span_as_contextual_developer_content() {
     let content = vec![ContentItem::InputText {
         text: format!(
             r#"{CONTEXT_WINDOW_OPEN_TAG}
@@ -59,7 +59,7 @@ Agent name: /root
 }
 
 #[test]
-fn recognizes_context_window_guidance_as_contextual_developer_content() {
+fn recognizes_context_span_guidance_as_contextual_developer_content() {
     let content = vec![ContentItem::InputText {
         text: format!(
             "{CONTEXT_WINDOW_GUIDANCE_OPEN_TAG}\nPreserve important state.\n{CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG}"

@@ -325,11 +325,11 @@ pub(crate) async fn run_turn(
             break;
         }
 
-        let window_id = sess.current_window_id().await;
+        let span_id = sess.current_span_id().await;
         super::rollout_budget::maybe_record_reminder(
             sess.as_ref(),
             turn_context.as_ref(),
-            &window_id,
+            &span_id,
         )
         .await;
 
@@ -361,7 +361,7 @@ pub(crate) async fn run_turn(
             super::time_reminder::maybe_record_current_time_reminder(
                 sess.as_ref(),
                 turn_context.as_ref(),
-                &window_id,
+                &span_id,
             )
             .await?;
 
@@ -414,7 +414,7 @@ pub(crate) async fn run_turn(
                 let (has_pending_input, token_status) = async {
                     let has_pending_input =
                         sess.input_queue.has_pending_input(&sess.active_turn).await;
-                    let token_status = super::context_window::context_window_token_status(
+                    let token_status = super::context_span::context_span_token_status(
                         sess.as_ref(),
                         turn_context.as_ref(),
                     )
@@ -432,9 +432,9 @@ pub(crate) async fn run_turn(
                     auto_compact_scope_tokens = token_status.auto_compact_scope_tokens,
                     auto_compact_scope_limit = ?token_status.auto_compact_scope_limit,
                     auto_compact_limit_scope = ?turn_context.config.model_auto_compact_token_limit_scope,
-                    auto_compact_window_prefill_tokens = ?token_status.auto_compact_window_prefill_tokens,
-                    full_context_window_limit = ?token_status.full_context_window_limit,
-                    full_context_window_limit_reached = token_status.full_context_window_limit_reached,
+                    auto_compact_span_prefill_tokens = ?token_status.auto_compact_span_prefill_tokens,
+                    full_context_span_limit = ?token_status.full_context_span_limit,
+                    full_context_span_limit_reached = token_status.full_context_span_limit_reached,
                     token_limit_reached,
                     model_needs_follow_up,
                     has_pending_input,
@@ -459,12 +459,12 @@ pub(crate) async fn run_turn(
                 }
 
                 let should_roll_over = needs_follow_up
-                    && (sess.take_new_context_window_request().await || token_limit_reached);
+                    && (sess.take_new_context_span_request().await || token_limit_reached);
                 let allow_auto_compact_fallback = !should_roll_over && !token_limit_reached;
                 super::token_budget::maybe_record(
                     sess.as_ref(),
                     turn_context.as_ref(),
-                    token_status.base_window_tokens_remaining,
+                    token_status.base_span_tokens_remaining,
                     allow_auto_compact_fallback,
                 )
                 .await;
@@ -1039,9 +1039,9 @@ async fn run_pre_sampling_compact(
     maybe_run_previous_model_inline_compact(sess, turn_context, client_session, cancellation_token)
         .await?;
     let token_status =
-        super::context_window::context_window_token_status(sess.as_ref(), turn_context.as_ref())
+        super::context_span::context_span_token_status(sess.as_ref(), turn_context.as_ref())
             .await;
-    // Compact if the configured auto-compaction budget or usable context window is exhausted.
+    // Compact if the configured auto-compaction budget or usable context span is exhausted.
     if token_status.token_limit_reached {
         // Pre-turn compaction runs before run_turn creates the normal sampling step.
         let step_context = sess
@@ -1142,10 +1142,10 @@ async fn maybe_run_previous_model_inline_compact(
         return Ok(());
     }
 
-    let Some(old_context_window) = previous_model_turn_context.model_context_window() else {
+    let Some(old_context_span) = previous_model_turn_context.model_context_span() else {
         return Ok(());
     };
-    let Some(new_context_window) = turn_context.model_context_window() else {
+    let Some(new_context_span) = turn_context.model_context_span() else {
         return Ok(());
     };
     let active_context_tokens = sess.get_total_token_usage().await;
@@ -1159,13 +1159,13 @@ async fn maybe_run_previous_model_inline_compact(
                 .auto_compact_token_limit()
                 .unwrap_or(i64::MAX);
             active_context_tokens > new_auto_compact_limit
-                || active_context_tokens >= new_context_window
+                || active_context_tokens >= new_context_span
         }
-        AutoCompactTokenLimitScope::BodyAfterPrefix => active_context_tokens >= new_context_window,
+        AutoCompactTokenLimitScope::BodyAfterPrefix => active_context_tokens >= new_context_span,
     };
     let should_run = previous_model_limit_reached
         && previous_model_turn_context.model_info().slug != turn_context.model_info().slug
-        && old_context_window > new_context_window;
+        && old_context_span > new_context_span;
     if should_run {
         let step_context = sess
             .capture_step_context(Arc::clone(&previous_model_turn_context), cancellation_token)
@@ -1208,7 +1208,7 @@ async fn run_auto_compact(
     let turn_context = &step_context.turn;
     let _profile_guard = turn_context.turn_timing_state.begin_compaction();
     if turn_context.config.features.enabled(Feature::TokenBudget) {
-        // Compaction is the reset request, so force a new context window
+        // Compaction is the reset request, so force a new context span
         // instead of consuming a pending `new_context` tool request.
         crate::compact_token_budget::run_inline_auto_compact_task(
             Arc::clone(sess),
@@ -1424,7 +1424,7 @@ async fn run_sampling_request(
                 return Ok((output, original_input.unwrap_or(prompt.input)));
             }
             Err(err) => match err.details() {
-                CodexErrorDetails::ContextWindowExceeded => {
+                CodexErrorDetails::ContextSpanExceeded => {
                     sess.set_total_tokens_full(&turn_context).await;
                     return Err(err);
                 }

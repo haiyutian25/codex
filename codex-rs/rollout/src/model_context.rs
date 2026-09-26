@@ -24,7 +24,7 @@ pub enum ModelContextScanProgress {
 ///
 /// The scan stops once it has both:
 ///
-/// - `saw_compaction`: a `CompactedItem` with `replacement_history` and `window_number`;
+/// - `saw_compaction`: a `CompactedItem` with `replacement_history` and `span_number`;
 /// - `saw_completed_turn_context`: a completed user turn with a compatible `TurnContextItem`.
 ///
 /// If the scan reaches the beginning before finding a bounded cutoff, it has already collected
@@ -41,7 +41,7 @@ pub enum ModelContextScanProgress {
 ///
 /// These paginated shapes disable the bounded cutoff:
 ///
-/// - compaction without `replacement_history` or `window_number`;
+/// - compaction without `replacement_history` or `span_number`;
 /// - rollback markers;
 ///
 /// When one appears, the scanner continues to the beginning and returns the complete replay.
@@ -85,7 +85,7 @@ impl ModelContextScan {
 
         match item {
             RolloutItem::Compacted(compacted)
-                if compacted.replacement_history.is_none() || compacted.window_number.is_none() =>
+                if compacted.replacement_history.is_none() || compacted.span_number.is_none() =>
             {
                 self.must_scan_to_start = true;
             }

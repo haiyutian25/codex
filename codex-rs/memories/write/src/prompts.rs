@@ -106,9 +106,9 @@ pub fn build_stage_one_input_message(
     rollout_contents: &str,
 ) -> anyhow::Result<String> {
     let rollout_token_limit = model_info
-        .resolved_context_window()
+        .resolved_context_span()
         .and_then(|limit| (limit > 0).then_some(limit))
-        .map(|limit| limit.saturating_mul(model_info.effective_context_window_percent) / 100)
+        .map(|limit| limit.saturating_mul(model_info.effective_context_span_percent) / 100)
         .map(|limit| (limit.saturating_mul(crate::stage_one::CONTEXT_WINDOW_PERCENT) / 100).max(1))
         .and_then(|limit| usize::try_from(limit).ok())
         .unwrap_or(crate::stage_one::DEFAULT_ROLLOUT_TOKEN_LIMIT);

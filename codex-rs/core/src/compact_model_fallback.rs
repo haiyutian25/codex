@@ -11,7 +11,7 @@ pub(crate) fn should_retry_with_current_model(error: &CodexErr) -> bool {
         error.details(),
         CodexErrorDetails::InvalidRequest(_)
             | CodexErrorDetails::UnexpectedStatus(_)
-            | CodexErrorDetails::ContextWindowExceeded
+            | CodexErrorDetails::ContextSpanExceeded
             | CodexErrorDetails::UsageLimitReached(_)
             | CodexErrorDetails::ServerOverloaded
             | CodexErrorDetails::InternalServerError

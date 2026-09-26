@@ -170,8 +170,8 @@ async fn create_replacement_recorder(
     .with_history_base(history_base)
     .with_forked_from_ordinal_exclusive(forked_from_ordinal_exclusive)
     .with_subagent_history_start_ordinal(source_meta.subagent_history_start_ordinal);
-    if let Some(context_window) = source_meta.context_window {
-        params = params.with_initial_window_id(context_window.window_id);
+    if let Some(context_span) = source_meta.context_span {
+        params = params.with_initial_span_id(context_span.span_id);
     }
     RolloutRecorder::new(&config, params)
         .await

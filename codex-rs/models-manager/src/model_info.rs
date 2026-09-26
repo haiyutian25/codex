@@ -23,12 +23,12 @@ const PERSONALITY_PLACEHOLDER: &str = "{{ personality }}";
 const PERSONALITY_SECTION_HEADER: &str = "# Personality";
 
 pub fn with_config_overrides(mut model: ModelInfo, config: &ModelsManagerConfig) -> ModelInfo {
-    if let Some(context_window) = config.model_context_window {
-        model.context_window = Some(
+    if let Some(context_span) = config.model_context_span {
+        model.context_span = Some(
             model
-                .max_context_window
-                .map_or(context_window, |max_context_window| {
-                    context_window.min(max_context_window)
+                .max_context_span
+                .map_or(context_span, |max_context_span| {
+                    context_span.min(max_context_span)
                 }),
         );
     }
@@ -168,11 +168,11 @@ pub fn model_info_from_slug(slug: &str) -> ModelInfo {
         web_search_tool_type: WebSearchToolType::Text,
         truncation_policy: TruncationPolicyConfig::bytes(/*limit*/ 10_000),
         supports_image_detail_original: false,
-        context_window: Some(272_000),
-        max_context_window: Some(272_000),
+        context_span: Some(272_000),
+        max_context_span: Some(272_000),
         auto_compact_token_limit: None,
         comp_hash: None,
-        effective_context_window_percent: 95,
+        effective_context_span_percent: 95,
         experimental_supported_tools: Vec::new(),
         input_modalities: default_input_modalities(),
         used_fallback_model_metadata: true, // this is the fallback model metadata

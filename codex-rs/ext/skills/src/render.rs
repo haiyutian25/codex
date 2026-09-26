@@ -125,7 +125,7 @@ impl SkillRenderReport {
 }
 
 pub(crate) fn skill_metadata_budget(
-    context_window: Option<i64>,
+    context_span: Option<i64>,
     max_context_tokens: Option<NonZeroUsize>,
 ) -> SkillMetadataBudget {
     if let Some(max_context_tokens) = max_context_tokens {
@@ -136,7 +136,7 @@ pub(crate) fn skill_metadata_budget(
         );
     }
 
-    context_window
+    context_span
         .and_then(|window| usize::try_from(window).ok())
         .filter(|window| *window > 0)
         .map(|window| {

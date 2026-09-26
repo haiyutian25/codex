@@ -8,10 +8,10 @@ use codex_protocol::protocol::TokenUsage;
 pub(super) async fn maybe_record_reminder(
     sess: &Session,
     turn_context: &TurnContext,
-    window_id: &str,
+    span_id: &str,
 ) {
     let budget = sess.services.agent_control.rollout_budget();
-    let Some(reminder) = budget.pending_reminder(sess.thread_id(), window_id) else {
+    let Some(reminder) = budget.pending_reminder(sess.thread_id(), span_id) else {
         return;
     };
     let response_item = ContextualUserFragment::into(crate::context::RolloutBudgetContext {
@@ -19,7 +19,7 @@ pub(super) async fn maybe_record_reminder(
     });
     sess.record_conversation_items(turn_context, std::slice::from_ref(&response_item))
         .await;
-    budget.mark_reminder_delivered(sess.thread_id(), window_id, reminder);
+    budget.mark_reminder_delivered(sess.thread_id(), span_id, reminder);
 }
 
 impl Session {

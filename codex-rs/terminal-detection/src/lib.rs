@@ -330,7 +330,7 @@ fn detect_terminal_info_from_env(env: &dyn Environment) -> TerminalInfo {
         );
     }
 
-    if env.has("KITTY_WINDOW_ID")
+    if env.has("KITTY_SPAN_ID")
         || env
             .var("TERM")
             .map(|term| term.contains("kitty"))

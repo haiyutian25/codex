@@ -100,7 +100,7 @@ impl ContextManager {
             items: Arc::new(Vec::new()),
             history_version: 0,
             token_info: TokenUsageInfo::new_or_append(
-                &None, &None, /*model_context_window*/ None,
+                &None, &None, /*model_context_span*/ None,
             ),
             reference_context_item: None,
             world_state_baseline: None,
@@ -153,11 +153,11 @@ impl ContextManager {
         self.world_state_baseline = Some(snapshot);
     }
 
-    pub(crate) fn set_token_usage_full(&mut self, context_window: i64) {
+    pub(crate) fn set_token_usage_full(&mut self, context_span: i64) {
         match &mut self.token_info {
-            Some(info) => info.fill_to_context_window(context_window),
+            Some(info) => info.fill_to_context_span(context_span),
             None => {
-                self.token_info = Some(TokenUsageInfo::full_context_window(context_window));
+                self.token_info = Some(TokenUsageInfo::full_context_span(context_span));
             }
         }
     }
@@ -378,12 +378,12 @@ impl ContextManager {
     pub(crate) fn update_token_info(
         &mut self,
         usage: &TokenUsage,
-        model_context_window: Option<i64>,
+        model_context_span: Option<i64>,
     ) {
         self.token_info = TokenUsageInfo::new_or_append(
             &self.token_info,
             &Some(usage.clone()),
-            model_context_window,
+            model_context_span,
         );
     }
 

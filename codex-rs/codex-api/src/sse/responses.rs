@@ -416,8 +416,8 @@ pub fn process_responses_event(
                 if let Some(error) = resp_val.get("error")
                     && let Ok(error) = serde_json::from_value::<Error>(error.clone())
                 {
-                    if is_context_window_error(&error) {
-                        response_error = ApiError::ContextWindowExceeded;
+                    if is_context_span_error(&error) {
+                        response_error = ApiError::ContextSpanExceeded;
                     } else if is_quota_exceeded_error(&error) {
                         response_error = ApiError::QuotaExceeded;
                     } else if is_usage_not_included(&error) {
@@ -693,7 +693,7 @@ fn try_parse_retry_after(err: &Error) -> Option<Duration> {
     None
 }
 
-fn is_context_window_error(error: &Error) -> bool {
+fn is_context_span_error(error: &Error) -> bool {
     error.code.as_deref() == Some("context_length_exceeded")
 }
 
@@ -1141,8 +1141,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn context_window_error_is_fatal() {
-        let raw_error = r#"{"type":"response.failed","sequence_number":3,"response":{"id":"resp_5c66275b97b9baef1ed95550adb3b7ec13b17aafd1d2f11b","object":"response","created_at":1759510079,"status":"failed","background":false,"error":{"code":"context_length_exceeded","message":"Your input exceeds the context window of this model. Please adjust your input and try again."},"usage":null,"user":null,"metadata":{}}}"#;
+    async fn context_span_error_is_fatal() {
+        let raw_error = r#"{"type":"response.failed","sequence_number":3,"response":{"id":"resp_5c66275b97b9baef1ed95550adb3b7ec13b17aafd1d2f11b","object":"response","created_at":1759510079,"status":"failed","background":false,"error":{"code":"context_length_exceeded","message":"Your input exceeds the context span of this model. Please adjust your input and try again."},"usage":null,"user":null,"metadata":{}}}"#;
 
         let sse1 = format!("event: response.failed\ndata: {raw_error}\n\n");
 
@@ -1150,12 +1150,12 @@ mod tests {
 
         assert_eq!(events.len(), 1);
 
-        assert_matches!(events[0], Err(ApiError::ContextWindowExceeded));
+        assert_matches!(events[0], Err(ApiError::ContextSpanExceeded));
     }
 
     #[tokio::test]
-    async fn context_window_error_with_newline_is_fatal() {
-        let raw_error = r#"{"type":"response.failed","sequence_number":4,"response":{"id":"resp_fatal_newline","object":"response","created_at":1759510080,"status":"failed","background":false,"error":{"code":"context_length_exceeded","message":"Your input exceeds the context window of this model. Please adjust your input and try\nagain."},"usage":null,"user":null,"metadata":{}}}"#;
+    async fn context_span_error_with_newline_is_fatal() {
+        let raw_error = r#"{"type":"response.failed","sequence_number":4,"response":{"id":"resp_fatal_newline","object":"response","created_at":1759510080,"status":"failed","background":false,"error":{"code":"context_length_exceeded","message":"Your input exceeds the context span of this model. Please adjust your input and try\nagain."},"usage":null,"user":null,"metadata":{}}}"#;
 
         let sse1 = format!("event: response.failed\ndata: {raw_error}\n\n");
 
@@ -1163,7 +1163,7 @@ mod tests {
 
         assert_eq!(events.len(), 1);
 
-        assert_matches!(events[0], Err(ApiError::ContextWindowExceeded));
+        assert_matches!(events[0], Err(ApiError::ContextSpanExceeded));
     }
 
     #[tokio::test]

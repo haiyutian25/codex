@@ -189,10 +189,10 @@ fn compacted_replacement_history_stores_metadata_in_an_aligned_sidecar() -> Resu
             ResponseItemEnvelope::new(compaction_item.clone()),
         ]),
         mcp_resource_origins: None,
-        window_number: None,
-        first_window_id: None,
-        previous_window_id: None,
-        window_id: None,
+        span_number: None,
+        first_span_id: None,
+        previous_span_id: None,
+        span_id: None,
     };
 
     let serialized = serde_json::to_value(item)?;
@@ -291,10 +291,10 @@ fn compacted_metadata_remains_compatible_with_legacy_response_item_readers() -> 
         message: "summary".to_string(),
         replacement_history: Some(vec![envelope]),
         mcp_resource_origins: Some(McpResourceOriginCheckpoint::default()),
-        window_number: None,
-        first_window_id: None,
-        previous_window_id: None,
-        window_id: None,
+        span_number: None,
+        first_span_id: None,
+        previous_span_id: None,
+        span_id: None,
     }))?;
 
     let LegacyRolloutItem::Compacted(legacy) =
@@ -438,36 +438,36 @@ fn response_message(role: &str) -> ResponseItem {
 
 #[test]
 /// Preserves the stored compacted-item window metadata shape.
-fn compacted_item_serializes_window_number_and_id() -> Result<()> {
+fn compacted_item_serializes_span_number_and_id() -> Result<()> {
     let item = CompactedItem {
         message: "summary".to_string(),
         replacement_history: None,
         mcp_resource_origins: None,
-        window_number: Some(3),
-        first_window_id: Some("019b3f6e-0000-7000-8000-000000000001".to_string()),
-        previous_window_id: Some("019b3f6e-0000-7000-8000-000000000002".to_string()),
-        window_id: Some("019b3f6e-7a10-7cc3-8b6e-1d09e2f7a001".to_string()),
+        span_number: Some(3),
+        first_span_id: Some("019b3f6e-0000-7000-8000-000000000001".to_string()),
+        previous_span_id: Some("019b3f6e-0000-7000-8000-000000000002".to_string()),
+        span_id: Some("019b3f6e-7a10-7cc3-8b6e-1d09e2f7a001".to_string()),
     };
 
     assert_eq!(
         serde_json::to_value(item)?,
         json!({
             "message": "summary",
-            "window_number": 3,
-            "first_window_id": "019b3f6e-0000-7000-8000-000000000001",
-            "previous_window_id": "019b3f6e-0000-7000-8000-000000000002",
-            "window_id": "019b3f6e-7a10-7cc3-8b6e-1d09e2f7a001",
+            "span_number": 3,
+            "first_span_id": "019b3f6e-0000-7000-8000-000000000001",
+            "previous_span_id": "019b3f6e-0000-7000-8000-000000000002",
+            "span_id": "019b3f6e-7a10-7cc3-8b6e-1d09e2f7a001",
         })
     );
     Ok(())
 }
 
 #[test]
-/// Keeps legacy numeric window IDs readable in stored compacted items.
-fn compacted_item_migrates_legacy_numeric_window_id() -> Result<()> {
+/// Keeps legacy numeric span IDs readable in stored compacted items.
+fn compacted_item_migrates_legacy_numeric_span_id() -> Result<()> {
     let item = serde_json::from_value::<CompactedItem>(json!({
         "message": "summary",
-        "window_id": 3,
+        "span_id": 3,
     }))?;
 
     assert_eq!(
@@ -476,10 +476,10 @@ fn compacted_item_migrates_legacy_numeric_window_id() -> Result<()> {
             message: "summary".to_string(),
             replacement_history: None,
             mcp_resource_origins: None,
-            window_number: Some(3),
-            first_window_id: None,
-            previous_window_id: None,
-            window_id: None,
+            span_number: Some(3),
+            first_span_id: None,
+            previous_span_id: None,
+            span_id: None,
         }
     );
     Ok(())

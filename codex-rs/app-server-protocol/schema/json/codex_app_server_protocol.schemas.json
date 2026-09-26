@@ -7888,7 +7888,7 @@
         "oneOf": [
           {
             "enum": [
-              "contextWindowExceeded",
+              "contextSpanExceeded",
               "sessionBudgetExceeded",
               "usageLimitExceeded",
               "rateLimitExceeded",
@@ -8760,7 +8760,7 @@
               }
             ]
           },
-          "model_context_window": {
+          "model_context_span": {
             "format": "int64",
             "type": [
               "integer",
@@ -23147,7 +23147,7 @@
           "last": {
             "$ref": "#/definitions/v2/TokenUsageBreakdown"
           },
-          "modelContextWindow": {
+          "modelContextSpan": {
             "format": "int64",
             "type": [
               "integer",

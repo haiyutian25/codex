@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::OnceLock;
 
-use super::trim_function_call_history_to_fit_context_window;
+use super::trim_function_call_history_to_fit_context_span;
 use crate::Prompt;
 use crate::client::CompactConversationRequestSettings;
 use crate::compact::CompactionAnalyticsDetails;
@@ -32,7 +32,7 @@ pub(super) async fn run_remote_compact_attempt(
     let mut history = sess.clone_history().await;
     let base_instructions = sess.get_base_instructions().await;
     let (rewritten_outputs, estimated_deleted_tokens) =
-        trim_function_call_history_to_fit_context_window(
+        trim_function_call_history_to_fit_context_span(
             &mut history,
             turn_context.as_ref(),
             &base_instructions,

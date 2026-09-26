@@ -149,8 +149,8 @@ pub struct ConfigToml {
     /// Provider to use from the model_providers map.
     pub model_provider: Option<String>,
 
-    /// Size of the context window for the model, in tokens.
-    pub model_context_window: Option<i64>,
+    /// Size of the context span for the model, in tokens.
+    pub model_context_span: Option<i64>,
 
     /// Token usage threshold triggering auto-compaction of conversation history.
     pub model_auto_compact_token_limit: Option<i64>,

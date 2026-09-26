@@ -2,7 +2,7 @@ use super::*;
 use crate::context::world_state::WorldStateSnapshot;
 use crate::context_manager::is_user_turn_boundary;
 use codex_history::ResponseItemEnvelope;
-use codex_protocol::protocol::SessionContextWindow;
+use codex_protocol::protocol::SessionContextSpan;
 use uuid::Uuid;
 
 // Return value of `Session::reconstruct_history_from_rollout`, bundling the rebuilt history with
@@ -13,10 +13,10 @@ pub(super) struct RolloutReconstruction {
     pub(super) previous_turn_settings: Option<PreviousTurnSettings>,
     pub(super) reference_context_item: Option<TurnContextItem>,
     pub(super) world_state_baseline: Option<WorldStateSnapshot>,
-    pub(super) window_number: u64,
-    pub(super) first_window_id: Option<Uuid>,
-    pub(super) previous_window_id: Option<Uuid>,
-    pub(super) window_id: Option<Uuid>,
+    pub(super) span_number: u64,
+    pub(super) first_span_id: Option<Uuid>,
+    pub(super) previous_span_id: Option<Uuid>,
+    pub(super) span_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -121,19 +121,19 @@ impl Session {
         // stopping once a surviving replacement-history checkpoint and the required resume metadata
         // are both known; then replay only the buffered surviving tail forward to preserve exact
         // history semantics.
-        let has_legacy_compaction_without_window_number =
+        let has_legacy_compaction_without_span_number =
             rollout_items.iter().any(|item| {
-                matches!(item, RolloutItem::Compacted(compacted) if compacted.window_number.is_none())
+                matches!(item, RolloutItem::Compacted(compacted) if compacted.span_number.is_none())
             });
-        let initial_window = if has_legacy_compaction_without_window_number {
+        let initial_span = if has_legacy_compaction_without_span_number {
             None
         } else {
             rollout_items.iter().find_map(|item| match item {
                 RolloutItem::SessionMeta(session_meta) => session_meta
                     .meta
-                    .context_window
+                    .context_span
                     .as_ref()
-                    .and_then(reconstructed_window_from_session_context_window),
+                    .and_then(reconstructed_window_from_session_context_span),
                 _ => None,
             })
         };
@@ -159,16 +159,16 @@ impl Session {
                         active_segment.get_or_insert_with(ActiveReplaySegment::default);
                     active_segment.world_state_replay.push(item);
                     if active_segment.window.is_none()
-                        && let Some(window_number) = compacted.window_number
+                        && let Some(span_number) = compacted.span_number
                     {
                         active_segment.window = Some(ReconstructedWindow {
-                            number: window_number,
-                            first_id: compacted.first_window_id.as_deref().and_then(parse_uuid_v7),
+                            number: span_number,
+                            first_id: compacted.first_span_id.as_deref().and_then(parse_uuid_v7),
                             previous_id: compacted
-                                .previous_window_id
+                                .previous_span_id
                                 .as_deref()
                                 .and_then(parse_uuid_v7),
-                            id: compacted.window_id.as_deref().and_then(parse_uuid_v7),
+                            id: compacted.span_id.as_deref().and_then(parse_uuid_v7),
                         });
                     }
                     // Looking backward, compaction clears any older baseline unless a newer
@@ -310,7 +310,7 @@ impl Session {
             );
         }
 
-        let fallback_window_number = u64::try_from(
+        let fallback_span_number = u64::try_from(
             rollout_items
                 .iter()
                 .filter(|item| matches!(item, RolloutItem::Compacted(_)))
@@ -421,8 +421,8 @@ impl Session {
             }
         }
 
-        let window = window.or(initial_window).unwrap_or(ReconstructedWindow {
-            number: fallback_window_number,
+        let window = window.or(initial_span).unwrap_or(ReconstructedWindow {
+            number: fallback_span_number,
             first_id: None,
             previous_id: None,
             id: None,
@@ -432,10 +432,10 @@ impl Session {
             previous_turn_settings,
             reference_context_item,
             world_state_baseline,
-            window_number: window.number,
-            first_window_id: window.first_id,
-            previous_window_id: window.previous_id,
-            window_id: window.id,
+            span_number: window.number,
+            first_span_id: window.first_id,
+            previous_span_id: window.previous_id,
+            span_id: window.id,
         }
     }
 }
@@ -446,10 +446,10 @@ fn parse_uuid_v7(value: &str) -> Option<Uuid> {
         .filter(|uuid| uuid.get_version_num() == 7)
 }
 
-fn reconstructed_window_from_session_context_window(
-    context_window: &SessionContextWindow,
+fn reconstructed_window_from_session_context_span(
+    context_span: &SessionContextSpan,
 ) -> Option<ReconstructedWindow> {
-    let id = parse_uuid_v7(&context_window.window_id)?;
+    let id = parse_uuid_v7(&context_span.span_id)?;
     Some(ReconstructedWindow {
         number: 0,
         first_id: Some(id),

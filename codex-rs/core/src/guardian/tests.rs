@@ -3521,7 +3521,7 @@ async fn guardian_review_session_config_clears_context_overrides_for_distinct_ef
     let (session, mut turn) = guardian_test_session_and_turn(&server).await;
     let mut config = (*turn.config).clone();
     config.model = Some("codex-auto-review".to_string());
-    config.model_context_window = Some(900_000);
+    config.model_context_span = Some(900_000);
     config.model_auto_compact_token_limit = Some(600_000);
     Arc::get_mut(&mut turn)
         .expect("turn should be unique")
@@ -3534,7 +3534,7 @@ async fn guardian_review_session_config_clears_context_overrides_for_distinct_ef
 
     assert_eq!(
         (
-            guardian_config.model_context_window,
+            guardian_config.model_context_span,
             guardian_config.model_auto_compact_token_limit,
         ),
         (None, None)
@@ -3558,7 +3558,7 @@ async fn guardian_review_session_config_preserves_context_overrides_for_same_eff
     ));
     let mut config = (*turn.config).clone();
     config.model = Some("stale-parent-model".to_string());
-    config.model_context_window = Some(128_000);
+    config.model_context_span = Some(128_000);
     config.model_auto_compact_token_limit = Some(100_000);
     Arc::get_mut(&mut turn)
         .expect("turn should be unique")
@@ -3571,7 +3571,7 @@ async fn guardian_review_session_config_preserves_context_overrides_for_same_eff
 
     assert_eq!(
         (
-            guardian_config.model_context_window,
+            guardian_config.model_context_span,
             guardian_config.model_auto_compact_token_limit,
         ),
         (Some(128_000), Some(100_000))

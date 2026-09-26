@@ -420,8 +420,8 @@ async fn model_resolution_preserves_startup_overrides_and_instruction_provenance
         ..Default::default()
     };
     let mut model = model_info_from_slug("model-b");
-    model.context_window = Some(90_000);
-    model.max_context_window = Some(100_000);
+    model.context_span = Some(90_000);
+    model.max_context_span = Some(100_000);
     model.auto_compact_token_limit = Some(80_000);
     model.truncation_policy = TruncationPolicyConfig::tokens(/*limit*/ 1_000);
     let messages = model
@@ -445,7 +445,7 @@ async fn model_resolution_preserves_startup_overrides_and_instruction_provenance
     let mut config = test_config().await;
     config.model = Some("model-a".to_string());
     config.model_catalog = Some(catalog);
-    config.model_context_window = Some(160_000);
+    config.model_context_span = Some(160_000);
     config.model_auto_compact_token_limit = Some(70_000);
     config.tool_output_token_limit = Some(777);
     config.base_instructions = Some(configured_instructions.to_string());

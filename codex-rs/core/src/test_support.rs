@@ -178,7 +178,7 @@ pub fn responses_metadata(
     session_id: &str,
     thread_id: &str,
     turn_id: Option<&str>,
-    window_id: String,
+    span_id: String,
     session_source: &SessionSource,
     parent_thread_id: Option<ThreadId>,
     request_kind: TestCodexResponsesRequestKind,
@@ -198,7 +198,7 @@ pub fn responses_metadata(
             installation_id.to_string(),
             session_id.to_string(),
             thread_id.to_string(),
-            window_id,
+            span_id,
         )
     }
 }

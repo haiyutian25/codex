@@ -1868,7 +1868,7 @@ pub struct ThreadTokenUsage {
     pub last: TokenUsageBreakdown,
     // TODO(aibrahim): make this not optional
     #[ts(type = "number | null")]
-    pub model_context_window: Option<i64>,
+    pub model_context_span: Option<i64>,
 }
 
 impl From<CoreTokenUsageInfo> for ThreadTokenUsage {
@@ -1876,7 +1876,7 @@ impl From<CoreTokenUsageInfo> for ThreadTokenUsage {
         Self {
             total: value.total_token_usage.into(),
             last: value.last_token_usage.into(),
-            model_context_window: value.model_context_window,
+            model_context_span: value.model_context_span,
         }
     }
 }

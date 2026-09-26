@@ -221,7 +221,7 @@ fn started(turn_id: &str) -> RolloutItem {
         turn_id: turn_id.to_string(),
         trace_id: None,
         started_at: Some(1_735_905_600),
-        model_context_window: None,
+        model_context_span: None,
         collaboration_mode_kind: Default::default(),
     }))
 }
@@ -231,10 +231,10 @@ fn compacted(replacement_history: Vec<ResponseItem>) -> RolloutItem {
         message: "checkpoint".to_string(),
         replacement_history: Some(replacement_history.into_iter().map(Into::into).collect()),
         mcp_resource_origins: None,
-        window_number: Some(1),
-        first_window_id: None,
-        previous_window_id: None,
-        window_id: None,
+        span_number: Some(1),
+        first_span_id: None,
+        previous_span_id: None,
+        span_id: None,
     })
 }
 
@@ -1407,10 +1407,10 @@ async fn migration_compacts_subagent_prefix_and_does_not_project_it() {
                 message: "superseded checkpoint".repeat(1024),
                 replacement_history: Some(Vec::new()),
                 mcp_resource_origins: None,
-                window_number: Some(1),
-                first_window_id: None,
-                previous_window_id: None,
-                window_id: None,
+                span_number: Some(1),
+                first_span_id: None,
+                previous_span_id: None,
+                span_id: None,
             }),
             RolloutItem::Compacted(CompactedItem {
                 message: "latest checkpoint".to_string(),
@@ -1427,10 +1427,10 @@ async fn migration_compacts_subagent_prefix_and_does_not_project_it() {
                     .into(),
                 ]),
                 mcp_resource_origins: None,
-                window_number: Some(2),
-                first_window_id: None,
-                previous_window_id: None,
-                window_id: None,
+                span_number: Some(2),
+                first_span_id: None,
+                previous_span_id: None,
+                span_id: None,
             }),
             started("child-turn"),
             RolloutItem::TurnContext(TurnContextItem {

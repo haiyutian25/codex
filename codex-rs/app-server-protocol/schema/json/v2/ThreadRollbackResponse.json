@@ -38,7 +38,7 @@
       "oneOf": [
         {
           "enum": [
-            "contextWindowExceeded",
+            "contextSpanExceeded",
             "sessionBudgetExceeded",
             "usageLimitExceeded",
             "rateLimitExceeded",

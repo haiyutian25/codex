@@ -334,7 +334,7 @@ async fn guardian_session_prewarms_and_is_reused_for_first_review(
             config.model_catalog = Some(ModelsResponse {
                 models: vec![review_model],
             });
-            config.model_context_window = Some(900_000);
+            config.model_context_span = Some(900_000);
             config.model_auto_compact_token_limit = Some(600_000);
             config.service_tier = Some("priority".to_owned());
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
@@ -504,14 +504,14 @@ async fn guardian_session_prewarms_and_is_reused_for_first_review(
         }),
         Some(&ThreadSource::GuardianReview)
     );
-    let guardian_context_windows = guardian_rollout
+    let guardian_context_spans = guardian_rollout
         .into_iter()
         .filter_map(|line| match line.item {
-            RolloutItem::EventMsg(EventMsg::TurnStarted(event)) => Some(event.model_context_window),
+            RolloutItem::EventMsg(EventMsg::TurnStarted(event)) => Some(event.model_context_span),
             _ => None,
         })
         .collect::<Vec<_>>();
-    assert_eq!(guardian_context_windows, vec![Some(258_400)]);
+    assert_eq!(guardian_context_spans, vec![Some(258_400)]);
     for handshake in server.handshakes() {
         let is_guardian = handshake.header("x-openai-subagent").as_deref() == Some("guardian");
         let uses_guardian_endpoint = uses_codex_backend && is_guardian;

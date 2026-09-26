@@ -1961,7 +1961,7 @@ mod tests {
                 turn_id: turn_id.to_string(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -2026,7 +2026,7 @@ mod tests {
                 turn_id: turn_id.to_string(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::ItemCompleted(ItemCompletedEvent {
@@ -2073,7 +2073,7 @@ mod tests {
                 turn_id: turn_id.to_string(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::ItemCompleted(ItemCompletedEvent {
@@ -2164,7 +2164,7 @@ mod tests {
                 turn_id: turn_id.to_string(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::ExecCommandBegin(ExecCommandBeginEvent {
@@ -2281,7 +2281,7 @@ mod tests {
                 turn_id: turn_id.to_string(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::ItemStarted(ItemStartedEvent {
@@ -2369,7 +2369,7 @@ mod tests {
                 turn_id: "turn-image".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             })),
             RolloutItem::EventMsg(EventMsg::UserMessage(UserMessageEvent {
@@ -2749,7 +2749,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -2816,7 +2816,7 @@ mod tests {
                 turn_id: "turn-1".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -2951,7 +2951,7 @@ mod tests {
                 turn_id: "turn-1".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::McpToolCallEnd(McpToolCallEndEvent {
@@ -3030,7 +3030,7 @@ mod tests {
                 turn_id: "turn-1".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3114,7 +3114,7 @@ mod tests {
                 turn_id: "turn-1".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3210,7 +3210,7 @@ mod tests {
                 turn_id: "turn-1".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3302,7 +3302,7 @@ mod tests {
                 turn_id: "turn-1".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3372,7 +3372,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3396,7 +3396,7 @@ mod tests {
                 turn_id: "turn-b".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3478,7 +3478,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3502,7 +3502,7 @@ mod tests {
                 turn_id: "turn-b".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3578,7 +3578,7 @@ mod tests {
                 turn_id: turn_id.to_string(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3646,7 +3646,7 @@ mod tests {
                 turn_id: turn_id.to_string(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3714,7 +3714,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3738,7 +3738,7 @@ mod tests {
                 turn_id: "turn-b".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3793,7 +3793,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: Some(10),
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3808,7 +3808,7 @@ mod tests {
                 turn_id: "turn-b".into(),
                 trace_id: None,
                 started_at: Some(30),
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3895,7 +3895,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3919,7 +3919,7 @@ mod tests {
                 turn_id: "turn-b".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -3964,17 +3964,17 @@ mod tests {
                 turn_id: "turn-compact".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             })),
             RolloutItem::Compacted(CompactedItem {
                 message: String::new(),
                 replacement_history: None,
                 mcp_resource_origins: None,
-                window_number: None,
-                first_window_id: None,
-                previous_window_id: None,
-                window_id: None,
+                span_number: None,
+                first_span_id: None,
+                previous_span_id: None,
+                span_id: None,
             }),
             RolloutItem::EventMsg(EventMsg::TurnComplete(TurnCompleteEvent {
                 turn_id: "turn-compact".into(),
@@ -4231,7 +4231,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -4293,7 +4293,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -4352,7 +4352,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: Some(10),
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
             EventMsg::UserMessage(UserMessageEvent {
@@ -4422,7 +4422,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             })),
             RolloutItem::EventMsg(EventMsg::UserMessage(UserMessageEvent {
@@ -4482,7 +4482,7 @@ mod tests {
             turn_id: "turn-a".into(),
             trace_id: None,
             started_at: None,
-            model_context_window: None,
+            model_context_span: None,
             collaboration_mode_kind: Default::default(),
         }));
         builder.handle_event(&EventMsg::ItemCompleted(ItemCompletedEvent {
@@ -4510,7 +4510,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             })),
             RolloutItem::EventMsg(EventMsg::TurnComplete(TurnCompleteEvent {
@@ -4557,7 +4557,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             })),
             RolloutItem::ResponseItem(
@@ -4716,7 +4716,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: Some(10),
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             }),
         ));
@@ -4830,7 +4830,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: Some(10),
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             })),
             RolloutItem::EventMsg(EventMsg::TurnComplete(TurnCompleteEvent {
@@ -4869,7 +4869,7 @@ mod tests {
                 turn_id: "turn-a".into(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: Default::default(),
             })),
             RolloutItem::EventMsg(EventMsg::UserMessage(UserMessageEvent {

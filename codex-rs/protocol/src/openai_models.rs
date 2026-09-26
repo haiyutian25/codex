@@ -374,7 +374,7 @@ impl TruncationPolicyConfig {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, TS, JsonSchema)]
 pub struct ClientVersion(pub i32, pub i32, pub i32);
 
-const fn default_effective_context_window_percent() -> i64 {
+const fn default_effective_context_span_percent() -> i64 {
     95
 }
 
@@ -429,23 +429,26 @@ pub struct ModelInfo {
     pub truncation_policy: TruncationPolicyConfig,
     #[serde(default)]
     pub supports_image_detail_original: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub context_window: Option<i64>,
-    /// Maximum context window allowed for config overrides.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub max_context_window: Option<i64>,
+    /// Wire name is `context_span` (remote `models` endpoint + local catalog).
+    #[serde(default, rename = "context_span", skip_serializing_if = "Option::is_none")]
+    pub context_span: Option<i64>,
+    /// Maximum context span allowed for config overrides.
+    /// Wire name is `max_context_span`.
+    #[serde(default, rename = "max_context_span", skip_serializing_if = "Option::is_none")]
+    pub max_context_span: Option<i64>,
     /// Token threshold for automatic compaction. When omitted, core derives it
-    /// from `context_window` (90%). When provided, core clamps it to 90% of the
-    /// context window when available.
+    /// from `context_span` (90%). When provided, core clamps it to 90% of the
+    /// context span when available.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_compact_token_limit: Option<i64>,
     /// Opaque identifier for compaction-compatible model configurations.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub comp_hash: Option<String>,
-    /// Percentage of the context window considered usable for inputs, after
+    /// Percentage of the context span considered usable for inputs, after
     /// reserving headroom for system prompts, tool overhead, and model output.
-    #[serde(default = "default_effective_context_window_percent")]
-    pub effective_context_window_percent: i64,
+    /// Wire name is `effective_context_span_percent`.
+    #[serde(default = "default_effective_context_span_percent", rename = "effective_context_span_percent")]
+    pub effective_context_span_percent: i64,
     pub experimental_supported_tools: Vec<String>,
     /// Input modalities accepted by the backend for this model.
     #[serde(default = "default_input_modalities")]
@@ -482,14 +485,14 @@ pub struct ModelInfo {
 }
 
 impl ModelInfo {
-    pub fn resolved_context_window(&self) -> Option<i64> {
-        self.context_window.or(self.max_context_window)
+    pub fn resolved_context_span(&self) -> Option<i64> {
+        self.context_span.or(self.max_context_span)
     }
 
     pub fn auto_compact_token_limit(&self) -> Option<i64> {
         let context_limit = self
-            .resolved_context_window()
-            .map(|context_window| (context_window * 9) / 10);
+            .resolved_context_span()
+            .map(|context_span| (context_span * 9) / 10);
         let config_limit = self.auto_compact_token_limit;
         if let Some(context_limit) = context_limit {
             return Some(
@@ -950,11 +953,11 @@ mod tests {
             web_search_tool_type: WebSearchToolType::Text,
             truncation_policy: TruncationPolicyConfig::bytes(/*limit*/ 10_000),
             supports_image_detail_original: false,
-            context_window: None,
-            max_context_window: None,
+            context_span: None,
+            max_context_span: None,
             auto_compact_token_limit: None,
             comp_hash: None,
-            effective_context_window_percent: 95,
+            effective_context_span_percent: 95,
             experimental_supported_tools: vec![],
             input_modalities: default_input_modalities(),
             used_fallback_model_metadata: false,
@@ -1809,25 +1812,25 @@ mod tests {
     }
 
     #[test]
-    fn resolved_context_window_prefers_context_window() {
+    fn resolved_context_span_prefers_context_span() {
         let model = ModelInfo {
-            context_window: Some(273_000),
-            max_context_window: Some(400_000),
+            context_span: Some(273_000),
+            max_context_span: Some(400_000),
             ..test_model(/*spec*/ None)
         };
 
-        assert_eq!(model.resolved_context_window(), Some(273_000));
+        assert_eq!(model.resolved_context_span(), Some(273_000));
     }
 
     #[test]
-    fn resolved_context_window_falls_back_to_max_context_window() {
+    fn resolved_context_span_falls_back_to_max_context_span() {
         let model = ModelInfo {
-            context_window: None,
-            max_context_window: Some(400_000),
+            context_span: None,
+            max_context_span: Some(400_000),
             ..test_model(/*spec*/ None)
         };
 
-        assert_eq!(model.resolved_context_window(), Some(400_000));
+        assert_eq!(model.resolved_context_span(), Some(400_000));
         assert_eq!(model.auto_compact_token_limit(), Some(360_000));
     }
 

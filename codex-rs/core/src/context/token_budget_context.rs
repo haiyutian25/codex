@@ -12,25 +12,25 @@ use uuid::Uuid;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TokenBudgetContext {
     agent_path: AgentPath,
-    first_window_id: Uuid,
-    previous_window_id: Option<Uuid>,
-    window_id: Uuid,
+    first_span_id: Uuid,
+    previous_span_id: Option<Uuid>,
+    span_id: Uuid,
     thread_hint: Option<String>,
 }
 
 impl TokenBudgetContext {
     pub(crate) fn new(
         agent_path: AgentPath,
-        first_window_id: Uuid,
-        previous_window_id: Option<Uuid>,
-        window_id: Uuid,
+        first_span_id: Uuid,
+        previous_span_id: Option<Uuid>,
+        span_id: Uuid,
         thread_hint: Option<String>,
     ) -> Self {
         Self {
             agent_path,
-            first_window_id,
-            previous_window_id,
-            window_id,
+            first_span_id,
+            previous_span_id,
+            span_id,
             thread_hint,
         }
     }
@@ -38,7 +38,7 @@ impl TokenBudgetContext {
 
 impl ContextualUserFragment for TokenBudgetContext {
     fn content_kind(&self) -> ContentItemKind {
-        ContentItemKind("token_budget.context_window".to_string())
+        ContentItemKind("token_budget.context_span".to_string())
     }
 
     fn role(&self) -> &'static str {
@@ -58,15 +58,15 @@ impl ContextualUserFragment for TokenBudgetContext {
     }
 
     fn body(&self) -> String {
-        let first_window_id = self.first_window_id;
-        let window_id = self.window_id;
+        let first_span_id = self.first_span_id;
+        let span_id = self.span_id;
         let mut lines = vec![
             format!("Agent name: {}", self.agent_path),
-            format!("First context window id: {first_window_id}"),
-            format!("Current context window id: {window_id}"),
+            format!("First context span id: {first_span_id}"),
+            format!("Current context span id: {span_id}"),
         ];
-        if let Some(previous_window_id) = self.previous_window_id {
-            lines.push(format!("Previous context window id: {previous_window_id}"));
+        if let Some(previous_span_id) = self.previous_span_id {
+            lines.push(format!("Previous context span id: {previous_span_id}"));
         }
         if let Some(thread_hint) = &self.thread_hint {
             lines.push(thread_hint.clone());
@@ -76,7 +76,7 @@ impl ContextualUserFragment for TokenBudgetContext {
 }
 
 impl WorldStateSection for TokenBudgetContext {
-    const ID: &'static str = "context_window";
+    const ID: &'static str = "context_span";
     type Snapshot = AgentPath;
 
     fn snapshot(&self) -> Self::Snapshot {
@@ -93,11 +93,11 @@ impl WorldStateSection for TokenBudgetContext {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ContextWindowGuidance {
+pub(crate) struct ContextSpanGuidance {
     message: String,
 }
 
-impl ContextWindowGuidance {
+impl ContextSpanGuidance {
     pub(crate) fn new(message: &str) -> Self {
         Self {
             message: message.to_string(),
@@ -105,9 +105,9 @@ impl ContextWindowGuidance {
     }
 }
 
-impl ContextualUserFragment for ContextWindowGuidance {
+impl ContextualUserFragment for ContextSpanGuidance {
     fn content_kind(&self) -> ContentItemKind {
-        ContentItemKind("token_budget.context_window_guidance".to_string())
+        ContentItemKind("token_budget.context_span_guidance".to_string())
     }
 
     fn role(&self) -> &'static str {
@@ -167,9 +167,9 @@ impl ContextualUserFragment for TokenBudgetRemainingContext {
     fn body(&self) -> String {
         match self.tokens_left {
             Some(tokens_left) => {
-                format!("You have {tokens_left} tokens left in this context window.")
+                format!("You have {tokens_left} tokens left in this context span.")
             }
-            None => "You have unknown tokens left in this context window.".to_string(),
+            None => "You have unknown tokens left in this context span.".to_string(),
         }
     }
 }

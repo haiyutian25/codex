@@ -53,31 +53,31 @@ fn test_mcp_turn_metadata_context() -> McpTurnMetadataContext<'static> {
 
 fn test_responses_metadata_json(
     state: &TurnMetadataState,
-    window_id: &str,
+    span_id: &str,
     request_kind: CodexResponsesRequestKind,
 ) -> String {
     state
         .to_responses_metadata(
             "installation-a".to_string(),
-            window_id.to_string(),
+            span_id.to_string(),
             request_kind,
         )
         .turn_metadata_json()
         .expect("turn metadata json")
 }
 
-fn test_turn_responses_metadata_json(state: &TurnMetadataState, window_id: &str) -> String {
-    test_responses_metadata_json(state, window_id, CodexResponsesRequestKind::Turn)
+fn test_turn_responses_metadata_json(state: &TurnMetadataState, span_id: &str) -> String {
+    test_responses_metadata_json(state, span_id, CodexResponsesRequestKind::Turn)
 }
 
 fn test_compaction_responses_metadata_json(
     state: &TurnMetadataState,
-    window_id: &str,
+    span_id: &str,
     compaction: CompactionTurnMetadata,
 ) -> String {
     test_responses_metadata_json(
         state,
-        window_id,
+        span_id,
         CodexResponsesRequestKind::Compaction(compaction),
     )
 }

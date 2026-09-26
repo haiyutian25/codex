@@ -1626,7 +1626,7 @@ const result = await tools.get_context_remaining({});
 text(JSON.stringify(result));
 "#,
         |config| {
-            config.model_context_window = Some(10_000);
+            config.model_context_span = Some(10_000);
             config
                 .features
                 .enable(Feature::TokenBudget)
@@ -4494,9 +4494,9 @@ async fn code_mode_node_repl_text_evidence_is_visible_only_to_guardian(
                     reviewer.input_modalities =
                         vec![codex_protocol::openai_models::InputModality::Text];
                 } else {
-                    reviewer.context_window =
+                    reviewer.context_span =
                         (reviewer_constraint == Some("small")).then_some(10_000);
-                    reviewer.max_context_window = reviewer.context_window;
+                    reviewer.max_context_span = reviewer.context_span;
                 }
             }
             config

@@ -717,7 +717,7 @@ async fn get_model_info_applies_long_context_override_to_bundled_gpt_5_6_models(
         TestModelsEndpoint::new(Vec::new()),
     );
     let config = ModelsManagerConfig {
-        model_context_window: Some(1_000_000),
+        model_context_span: Some(1_000_000),
         ..Default::default()
     };
 
@@ -726,7 +726,7 @@ async fn get_model_info_applies_long_context_override_to_bundled_gpt_5_6_models(
         let mut expected = manager
             .get_model_info(slug, &ModelsManagerConfig::default())
             .await;
-        expected.context_window = Some(872_000);
+        expected.context_span = Some(872_000);
 
         assert_eq!(model_info, expected);
     }
@@ -748,7 +748,7 @@ async fn get_model_info_uses_custom_catalog() {
 
     assert_eq!(model_info.slug, "gpt-overlay-experiment");
     assert_eq!(model_info.display_name, "Overlay");
-    assert_eq!(model_info.context_window, Some(272_000));
+    assert_eq!(model_info.context_span, Some(272_000));
     assert!(model_info.supports_image_detail_original);
     assert!(!model_info.used_fallback_model_metadata);
 }

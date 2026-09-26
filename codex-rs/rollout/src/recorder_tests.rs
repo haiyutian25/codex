@@ -208,7 +208,7 @@ async fn state_db_init_backfills_before_returning() -> anyhow::Result<()> {
             history_base: None,
             subagent_history_start_ordinal: None,
             multi_agent_version: None,
-            context_window: None,
+            context_span: None,
         },
         git: None,
     };
@@ -618,7 +618,7 @@ async fn recorder_materializes_on_flush_with_pending_items() -> std::io::Result<
     let config = test_config(home.path());
     let session_id = SessionId::default();
     let thread_id = ThreadId::new();
-    let initial_window_id = Uuid::now_v7().to_string();
+    let initial_span_id = Uuid::now_v7().to_string();
     let recorder = RolloutRecorder::new(
         &config,
         RolloutRecorderParams::new(
@@ -633,7 +633,7 @@ async fn recorder_materializes_on_flush_with_pending_items() -> std::io::Result<
         )
         .with_session_id(session_id)
         .with_history_mode(ThreadHistoryMode::Paginated)
-        .with_initial_window_id(initial_window_id.clone()),
+        .with_initial_span_id(initial_span_id.clone()),
     )
     .await?;
 
@@ -694,9 +694,9 @@ async fn recorder_materializes_on_flush_with_pending_items() -> std::io::Result<
     assert_eq!(
         session_meta
             .meta
-            .context_window
-            .map(|window| window.window_id),
-        Some(initial_window_id)
+            .context_span
+            .map(|window| window.span_id),
+        Some(initial_span_id)
     );
     let buffered_idx = text
         .find("buffered-event")

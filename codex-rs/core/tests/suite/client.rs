@@ -191,7 +191,7 @@ fn assert_codex_client_metadata(
     );
     assert_eq!(
         client_metadata["x-codex-window-id"].as_str(),
-        turn_metadata["window_id"].as_str()
+        turn_metadata["span_id"].as_str()
     );
 }
 
@@ -3207,8 +3207,8 @@ async fn token_count_includes_rate_limits_snapshot() {
                     "reasoning_output_tokens": 0,
                     "total_tokens": 123
                 },
-                // Default model is gpt-5.4 in tests → 95% usable context window
-                "model_context_window": 258400
+                // Default model is gpt-5.4 in tests → 95% usable context span
+                "model_context_span": 258400
             },
             "rate_limits": {
                 "limit_id": "codex",
@@ -3354,7 +3354,7 @@ async fn usage_limit_error_emits_rate_limit_event() -> anyhow::Result<()> {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn context_window_error_sets_total_tokens_to_model_window() -> anyhow::Result<()> {
+async fn context_span_error_sets_total_tokens_to_model_window() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
     let server = MockServer::start().await;
 
@@ -3362,11 +3362,11 @@ async fn context_window_error_sets_total_tokens_to_model_window() -> anyhow::Res
 
     mount_sse_once_match(
         &server,
-        body_string_contains("trigger context window"),
+        body_string_contains("trigger context span"),
         sse_failed(
-            "resp_context_window",
+            "resp_context_span",
             "context_length_exceeded",
-            "Your input exceeds the context window of this model. Please adjust your input and try again.",
+            "Your input exceeds the context span of this model. Please adjust your input and try again.",
         ),
     )
     .await;
@@ -3384,7 +3384,7 @@ async fn context_window_error_sets_total_tokens_to_model_window() -> anyhow::Res
     let TestCodex { codex, .. } = test_codex()
         .with_config(|config| {
             config.model = Some("gpt-5.4".to_string());
-            config.model_context_window = Some(272_000);
+            config.model_context_span = Some(272_000);
         })
         .build(&server)
         .await?;
@@ -3400,7 +3400,7 @@ async fn context_window_error_sets_total_tokens_to_model_window() -> anyhow::Res
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
-            text: "trigger context window".into(),
+            text: "trigger context span".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
@@ -3410,7 +3410,7 @@ async fn context_window_error_sets_total_tokens_to_model_window() -> anyhow::Res
             event,
             EventMsg::TokenCount(payload)
                 if payload.info.as_ref().is_some_and(|info| {
-                    info.model_context_window == Some(info.total_token_usage.total_tokens)
+                    info.model_context_span == Some(info.total_token_usage.total_tokens)
                         && info.total_token_usage.total_tokens > 0
                 })
         )
@@ -3423,22 +3423,22 @@ async fn context_window_error_sets_total_tokens_to_model_window() -> anyhow::Res
 
     let info = token_payload
         .info
-        .expect("token usage info present when context window is exceeded");
+        .expect("token usage info present when context span is exceeded");
 
-    assert_eq!(info.model_context_window, Some(EFFECTIVE_CONTEXT_WINDOW));
+    assert_eq!(info.model_context_span, Some(EFFECTIVE_CONTEXT_WINDOW));
     assert_eq!(
         info.total_token_usage.total_tokens,
         EFFECTIVE_CONTEXT_WINDOW
     );
 
     let error_event = wait_for_event(&codex, |ev| matches!(ev, EventMsg::Error(_))).await;
-    let expected_context_window_message = CodexErr::ContextWindowExceeded.to_string();
+    let expected_context_span_message = CodexErr::ContextSpanExceeded.to_string();
     assert!(
         matches!(
             error_event,
-            EventMsg::Error(ref err) if err.message == expected_context_window_message
+            EventMsg::Error(ref err) if err.message == expected_context_span_message
         ),
-        "expected context window error; got {error_event:?}"
+        "expected context span error; got {error_event:?}"
     );
 
     wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;

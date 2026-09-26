@@ -2380,7 +2380,7 @@ async fn compaction_event_ingests_custom_fact() {
                     phase: CompactionPhase::StandaloneTurn,
                     strategy: CompactionStrategy::Memento,
                     status: CompactionStatus::Failed,
-                    codex_error_kind: Some(CodexErrKind::ContextWindowExceeded),
+                    codex_error_kind: Some(CodexErrKind::ContextSpanExceeded),
                     codex_error_http_status_code: None,
                     active_context_tokens_before: 131_000,
                     active_context_tokens_after: 131_000,
@@ -2405,7 +2405,7 @@ async fn compaction_event_ingests_custom_fact() {
     assert_eq!(payload[0]["event_params"]["turn_id"], "turn-compact");
     assert_eq!(
         payload[0]["event_params"]["codex_error_kind"],
-        json!("context_window_exceeded")
+        json!("context_span_exceeded")
     );
     assert_eq!(
         payload[0]["event_params"]["codex_error_http_status_code"],

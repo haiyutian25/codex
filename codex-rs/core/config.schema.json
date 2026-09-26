@@ -1007,7 +1007,7 @@
           "type": "string"
         },
         {
-          "description": "Allow reminders after user input or tool output; new context windows still force one.",
+          "description": "Allow reminders after user input or tool output; new context spans still force one.",
           "enum": [
             "after_user_or_tool_output"
           ],
@@ -3380,7 +3380,7 @@
           "type": "boolean"
         },
         "max_context_tokens": {
-          "description": "Maximum tokens used by the available-skills catalog. Defaults to 2% of the model context window and is capped at 10,000 tokens when set.",
+          "description": "Maximum tokens used by the available-skills catalog. Defaults to 2% of the model context span and is capped at 10,000 tokens when set.",
           "format": "uint",
           "minimum": 1.0,
           "type": "integer"
@@ -6178,8 +6178,8 @@
       ],
       "description": "Optional path to a JSON model catalog (applied on startup only). Per-thread `config` overrides are accepted but do not reapply this (no-ops)."
     },
-    "model_context_window": {
-      "description": "Size of the context window for the model, in tokens.",
+    "model_context_span": {
+      "description": "Size of the context span for the model, in tokens.",
       "format": "int64",
       "type": "integer"
     },

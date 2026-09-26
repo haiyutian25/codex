@@ -164,7 +164,7 @@ async fn create_paginated_thread(store: &LocalThreadStore, thread_id: ThreadId) 
             history_mode: ThreadHistoryMode::Paginated,
             history_base: None,
             subagent_history_start_ordinal: None,
-            initial_window_id: "window-1".to_string(),
+            initial_span_id: "window-1".to_string(),
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(std::env::current_dir().expect("cwd")),
                 model_provider: "test-provider".to_string(),
@@ -198,7 +198,7 @@ fn turn_started(turn_id: &str) -> RolloutItem {
         turn_id: turn_id.to_string(),
         trace_id: None,
         started_at: Some(10),
-        model_context_window: None,
+        model_context_span: None,
         collaboration_mode_kind: Default::default(),
     }))
 }

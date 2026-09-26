@@ -580,7 +580,7 @@ fn detects_wezterm() {
 
 #[test]
 fn detects_kitty() {
-    let env = FakeEnvironment::new().with_var("KITTY_WINDOW_ID", "1");
+    let env = FakeEnvironment::new().with_var("KITTY_SPAN_ID", "1");
     let terminal = detect_terminal_info_from_env(&env);
     assert_eq!(
         terminal,
@@ -591,12 +591,12 @@ fn detects_kitty() {
             /*term*/ None,
             /*multiplexer*/ None
         ),
-        "kitty_window_id_info"
+        "kitty_span_id_info"
     );
     assert_eq!(
         terminal.user_agent_token(),
         "kitty",
-        "kitty_window_id_user_agent"
+        "kitty_span_id_user_agent"
     );
 
     let env = FakeEnvironment::new()

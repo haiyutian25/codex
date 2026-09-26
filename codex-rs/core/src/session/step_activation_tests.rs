@@ -300,8 +300,8 @@ async fn submitted_sparse_updates_preserve_captured_steps_and_ordering() {
         .iter_mut()
         .find(|model| model.slug == MODEL_B)
         .expect("destination model");
-    destination.context_window = Some(190_000);
-    destination.max_context_window = Some(190_000);
+    destination.context_span = Some(190_000);
+    destination.max_context_span = Some(190_000);
     destination.auto_compact_token_limit = Some(150_000);
     destination.default_reasoning_summary = ReasoningSummary::Detailed;
     destination
@@ -436,8 +436,8 @@ async fn submitted_sparse_updates_preserve_captured_steps_and_ordering() {
     assert!(Arc::ptr_eq(&before.turn, &after.turn));
     assert_eq!(after.settings.model_info.as_ref(), &expected_destination);
     assert_ne!(
-        before.settings.model_info.context_window,
-        after.settings.model_info.context_window
+        before.settings.model_info.context_span,
+        after.settings.model_info.context_span
     );
     assert_eq!(desired_step_settings(&session).await, desired);
     assert!(Arc::ptr_eq(&before.settings, &during.settings));
@@ -1124,7 +1124,7 @@ async fn guardian_v2_empty_model_defaults_are_equivalent() {
             .expect("enable Guardian V2");
     }
     let (admitted, mut destination) = safety_models();
-    destination.context_window = Some(123_456);
+    destination.context_span = Some(123_456);
     for settings in [
         GuardianV2ModelConfig::default(),
         GuardianV2ModelConfig {

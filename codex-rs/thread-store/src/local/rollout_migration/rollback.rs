@@ -100,8 +100,8 @@ fn is_known_contextual_developer_message_content(content: &[ContentItem]) -> boo
             "<tools>",
             "<personality_spec>",
             "<token_budget>",
-            "<context_window>",
-            "<context_window_guidance>",
+            "<context_span>",
+            "<context_span_guidance>",
             "<rollout_budget>",
         ]
         .iter()

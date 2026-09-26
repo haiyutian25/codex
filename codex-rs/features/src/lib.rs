@@ -319,7 +319,7 @@ pub enum Feature {
     RemoteCompactionV2,
     /// Include retained images in the remote compaction context budget.
     CompactionImageBudget,
-    /// Retain client-authored developer messages across compacted context windows.
+    /// Retain client-authored developer messages across compacted context spans.
     RetainClientDeveloperMessages,
     /// Use Agent Identity for ChatGPT-authenticated sessions.
     UseAgentIdentity,

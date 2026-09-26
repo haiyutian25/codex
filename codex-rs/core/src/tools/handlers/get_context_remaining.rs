@@ -78,14 +78,14 @@ impl ToolExecutor<ToolInvocation> for GetContextRemainingHandler {
                 ));
             }
 
-            let token_status = crate::session::context_window::context_window_token_status(
+            let token_status = crate::session::context_span::context_span_token_status(
                 invocation.session.as_ref(),
                 invocation.turn.as_ref(),
             )
             .await;
 
             Ok(boxed_tool_output(GetContextRemainingOutput::new(
-                token_status.base_window_tokens_remaining,
+                token_status.base_span_tokens_remaining,
             )))
         })
     }

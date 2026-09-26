@@ -341,7 +341,7 @@ invalid = ["#;
 #[tokio::test]
 async fn returns_config_error_for_schema_error_in_user_config() {
     let tmp = tempdir().expect("tempdir");
-    let contents = "model_context_window = \"not_a_number\"";
+    let contents = "model_context_span = \"not_a_number\"";
     let config_path = tmp.path().join(CONFIG_TOML_FILE);
     std::fs::write(&config_path, contents).expect("write config");
 

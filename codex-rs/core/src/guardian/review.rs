@@ -916,7 +916,7 @@ pub(super) async fn guardian_review_session_config(
             })?;
     }
     if guardian_model != turn.model_info().slug {
-        spawn_config.model_context_window = None;
+        spawn_config.model_context_span = None;
         spawn_config.model_auto_compact_token_limit = None;
     }
     Ok(GuardianReviewSessionConfig {

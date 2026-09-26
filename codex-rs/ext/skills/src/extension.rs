@@ -231,7 +231,7 @@ where
                 &catalog,
                 include_usage,
                 SkillCatalogRenderPolicy::ExtensionCompatible,
-                skill_metadata_budget(/*context_window*/ None, config.max_context_tokens),
+                skill_metadata_budget(/*context_span*/ None, config.max_context_tokens),
             );
             if let Some(message) = rendered.warning_message {
                 self.emit_warning(thread_store.level_id(), /*turn_id*/ None, message);
@@ -429,11 +429,11 @@ where
                 let include_usage = model_info
                     .as_deref()
                     .is_some_and(|model_info| model_info.include_skills_usage_instructions);
-                let context_window = model_info
+                let context_span = model_info
                     .as_deref()
-                    .and_then(ModelInfo::resolved_context_window);
+                    .and_then(ModelInfo::resolved_context_span);
                 let metadata_budget =
-                    skill_metadata_budget(context_window, config.max_context_tokens);
+                    skill_metadata_budget(context_span, config.max_context_tokens);
                 let rendered = render_catalog(
                     extension_metrics.as_deref(),
                     CatalogSurface::TurnInput,

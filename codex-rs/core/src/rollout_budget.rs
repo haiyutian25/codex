@@ -27,7 +27,7 @@ struct RolloutBudgetState {
 }
 
 struct ThreadBudgetDelivery {
-    window_id: String,
+    span_id: String,
     reminder_index: i64,
 }
 
@@ -67,7 +67,7 @@ impl RolloutBudget {
     pub(crate) fn pending_reminder(
         &self,
         thread_id: ThreadId,
-        window_id: &str,
+        span_id: &str,
     ) -> Option<RolloutBudgetReminder> {
         let state = self.lock()?;
         let remaining_tokens = (state.config.limit_tokens as f64 - state.weighted_tokens_used)
@@ -80,7 +80,7 @@ impl RolloutBudget {
             .filter(|&&threshold| remaining_tokens <= threshold)
             .count() as i64;
         if state.deliveries.get(&thread_id).is_some_and(|delivery| {
-            delivery.window_id.as_str() == window_id && delivery.reminder_index >= reminder_index
+            delivery.span_id.as_str() == span_id && delivery.reminder_index >= reminder_index
         }) {
             return None;
         }
@@ -93,7 +93,7 @@ impl RolloutBudget {
     pub(crate) fn mark_reminder_delivered(
         &self,
         thread_id: ThreadId,
-        window_id: &str,
+        span_id: &str,
         reminder: RolloutBudgetReminder,
     ) {
         // Mark delivery only after history insertion; cancellation before then should retry it.
@@ -103,7 +103,7 @@ impl RolloutBudget {
         state.deliveries.insert(
             thread_id,
             ThreadBudgetDelivery {
-                window_id: window_id.to_string(),
+                span_id: span_id.to_string(),
                 reminder_index: reminder.reminder_index,
             },
         );

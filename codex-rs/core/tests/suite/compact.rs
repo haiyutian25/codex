@@ -88,7 +88,7 @@ const FIRST_AUTO_SUMMARY: &str = "FIRST_AUTO_SUMMARY";
 const SECOND_AUTO_SUMMARY: &str = "SECOND_AUTO_SUMMARY";
 const FINAL_REPLY: &str = "FINAL_REPLY";
 const CONTEXT_LIMIT_MESSAGE: &str =
-    "Your input exceeds the context window of this model. Please adjust your input and try again.";
+    "Your input exceeds the context span of this model. Please adjust your input and try again.";
 const DUMMY_FUNCTION_NAME: &str = "test_tool";
 const DUMMY_CALL_ID: &str = "call-multi-auto";
 const FUNCTION_CALL_LIMIT_MSG: &str = "function call limit push";
@@ -403,19 +403,19 @@ fn local_compaction_provider(server: &wiremock::MockServer) -> ModelProviderInfo
     provider
 }
 
-fn model_info_with_context_window(slug: &str, context_window: i64) -> ModelInfo {
+fn model_info_with_context_span(slug: &str, context_span: i64) -> ModelInfo {
     let models_response = bundled_models_response().expect("bundled models.json should parse");
     let mut model_info = models_response
         .models
         .into_iter()
         .find(|model| model.slug == slug)
         .expect("model missing from models.json");
-    model_info.context_window = Some(context_window);
+    model_info.context_span = Some(context_span);
     model_info
 }
 
 fn model_info_with_optional_comp_hash(slug: &str, comp_hash: Option<&str>) -> ModelInfo {
-    let mut model_info = model_info_with_context_window(slug, /*context_window*/ 273_000);
+    let mut model_info = model_info_with_context_span(slug, /*context_span*/ 273_000);
     model_info.comp_hash = comp_hash.map(str::to_string);
     model_info
 }
@@ -2100,8 +2100,8 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
         &server,
         ModelsResponse {
             models: vec![
-                model_info_with_context_window(previous_model, /*context_window*/ 273_000),
-                model_info_with_context_window(next_model, /*context_window*/ 125_000),
+                model_info_with_context_span(previous_model, /*context_span*/ 273_000),
+                model_info_with_context_span(next_model, /*context_span*/ 125_000),
             ],
         },
     )
@@ -2177,7 +2177,7 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
     insta::assert_snapshot!(
         "pre_sampling_model_switch_compaction_shapes",
         format_labeled_requests_snapshot(
-            "Pre-sampling compaction on model switch to a smaller context window: current behavior compacts using prior-turn history only (incoming user message excluded), and the follow-up request carries compacted history plus the new user message.",
+            "Pre-sampling compaction on model switch to a smaller context span: current behavior compacts using prior-turn history only (incoming user message excluded), and the follow-up request carries compacted history plus the new user message.",
             &[
                 ("Initial Request (Previous Model)", &requests[0]),
                 ("Pre-sampling Compaction Request", &requests[1]),
@@ -2658,10 +2658,10 @@ async fn pre_sampling_compact_falls_back_after_previous_model_invalid_request_on
     let previous_model_family = "gpt-5.6";
     let next_model = "gpt-5.5";
     let mut previous_model_info =
-        model_info_with_context_window("gpt-5.4", /*context_window*/ 273_000);
+        model_info_with_context_span("gpt-5.4", /*context_span*/ 273_000);
     previous_model_info.slug = previous_model_family.to_string();
     let mut next_model_info =
-        model_info_with_context_window("gpt-5.4", /*context_window*/ 125_000);
+        model_info_with_context_span("gpt-5.4", /*context_span*/ 125_000);
     next_model_info.slug = next_model.to_string();
 
     let models_mock = mount_models_once(
@@ -2760,10 +2760,10 @@ async fn pre_sampling_legacy_remote_compact_falls_back_after_previous_model_inva
     let previous_model_family = "gpt-5.6";
     let next_model = "gpt-5.5";
     let mut previous_model_info =
-        model_info_with_context_window("gpt-5.4", /*context_window*/ 273_000);
+        model_info_with_context_span("gpt-5.4", /*context_span*/ 273_000);
     previous_model_info.slug = previous_model_family.to_string();
     let mut next_model_info =
-        model_info_with_context_window("gpt-5.4", /*context_window*/ 125_000);
+        model_info_with_context_span("gpt-5.4", /*context_span*/ 125_000);
     next_model_info.slug = next_model.to_string();
 
     let models_mock = mount_models_once(
@@ -3063,8 +3063,8 @@ async fn body_after_prefix_model_switch_budget_compacts_with_next_model() {
         &server,
         ModelsResponse {
             models: vec![
-                model_info_with_context_window(previous_model, /*context_window*/ 273_000),
-                model_info_with_context_window(next_model, /*context_window*/ 125_000),
+                model_info_with_context_span(previous_model, /*context_span*/ 273_000),
+                model_info_with_context_span(next_model, /*context_span*/ 125_000),
             ],
         },
     )
@@ -3157,8 +3157,8 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
         &server,
         ModelsResponse {
             models: vec![
-                model_info_with_context_window(previous_model, /*context_window*/ 273_000),
-                model_info_with_context_window(next_model, /*context_window*/ 125_000),
+                model_info_with_context_span(previous_model, /*context_span*/ 273_000),
+                model_info_with_context_span(next_model, /*context_span*/ 125_000),
             ],
         },
     )
@@ -3649,7 +3649,7 @@ async fn auto_compact_persists_rollout_entries() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn manual_compact_retries_after_context_window_error() {
+async fn manual_compact_retries_after_context_span_error() {
     skip_if_no_network!();
 
     let server = start_mock_server().await;
@@ -3945,7 +3945,7 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
         Some("compaction")
     );
     assert_eq!(
-        compact_metadata["window_id"].as_str(),
+        compact_metadata["span_id"].as_str(),
         requests[1].header("x-codex-window-id").as_deref()
     );
     assert_eq!(
@@ -3975,12 +3975,12 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
         "regular requests after compaction should remain turn requests"
     );
     assert_eq!(
-        next_turn_metadata["window_id"].as_str(),
+        next_turn_metadata["span_id"].as_str(),
         requests[2].header("x-codex-window-id").as_deref()
     );
     assert_ne!(
-        compact_metadata["window_id"], next_turn_metadata["window_id"],
-        "the next request should use the new compacted context window"
+        compact_metadata["span_id"], next_turn_metadata["span_id"],
+        "the next request should use the new compacted context span"
     );
     assert!(
         next_turn_metadata.get("compaction").is_none(),
@@ -4166,9 +4166,9 @@ async fn snapshot_request_shape_mid_turn_continuation_compaction() {
 
     let server = start_mock_server().await;
 
-    let context_window = 100;
-    let limit = context_window * 90 / 100;
-    let over_limit_tokens = context_window * 95 / 100 + 1;
+    let context_span = 100;
+    let limit = context_span * 90 / 100;
+    let over_limit_tokens = context_span * 95 / 100 + 1;
 
     let first_turn = sse(vec![
         ev_function_call(DUMMY_CALL_ID, DUMMY_FUNCTION_NAME, "{}"),
@@ -4194,7 +4194,7 @@ async fn snapshot_request_shape_mid_turn_continuation_compaction() {
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
-        config.model_context_window = Some(context_window);
+        config.model_context_span = Some(context_span);
         config.model_auto_compact_token_limit = Some(limit);
     });
     let codex = builder.build(&server).await.unwrap().codex;
@@ -4262,14 +4262,14 @@ async fn snapshot_request_shape_mid_turn_continuation_compaction() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn auto_compact_clamps_config_limit_to_context_window() {
+async fn auto_compact_clamps_config_limit_to_context_span() {
     skip_if_no_network!();
 
     let server = start_mock_server().await;
 
-    let context_window = 100;
+    let context_span = 100;
     let config_limit = 200;
-    let over_limit_tokens = context_window * 90 / 100 + 1;
+    let over_limit_tokens = context_span * 90 / 100 + 1;
 
     let first_turn = sse(vec![
         ev_assistant_message("m1", FIRST_REPLY),
@@ -4292,7 +4292,7 @@ async fn auto_compact_clamps_config_limit_to_context_window() {
     let mut builder = test_codex().with_config(move |config| {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
-        config.model_context_window = Some(context_window);
+        config.model_context_span = Some(context_span);
         config.model_auto_compact_token_limit = Some(config_limit);
     });
     let codex = builder.build(&server).await.unwrap();
@@ -4354,7 +4354,7 @@ async fn auto_compact_body_after_prefix_ignores_starting_window_prefix() {
         .with_config(move |config| {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
-            config.model_context_window = Some(1_000);
+            config.model_context_span = Some(1_000);
             config.model_auto_compact_token_limit = Some(100);
             config.model_auto_compact_token_limit_scope =
                 AutoCompactTokenLimitScope::BodyAfterPrefix;
@@ -4442,7 +4442,7 @@ async fn auto_compact_body_after_prefix_counts_growth_after_compaction() {
         .with_config(move |config| {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
-            config.model_context_window = Some(200_000);
+            config.model_context_span = Some(200_000);
             config.model_auto_compact_token_limit = Some(40);
             config.model_auto_compact_token_limit_scope =
                 AutoCompactTokenLimitScope::BodyAfterPrefix;
@@ -4494,7 +4494,7 @@ async fn auto_compact_body_after_prefix_counts_growth_after_compaction() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn auto_compact_body_after_prefix_still_caps_at_context_window() {
+async fn auto_compact_body_after_prefix_still_caps_at_context_span() {
     skip_if_no_network!();
 
     let server = start_mock_server().await;
@@ -4526,7 +4526,7 @@ async fn auto_compact_body_after_prefix_still_caps_at_context_window() {
         .with_config(move |config| {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
-            config.model_context_window = Some(100);
+            config.model_context_span = Some(100);
             config.model_auto_compact_token_limit = Some(200);
             config.model_auto_compact_token_limit_scope =
                 AutoCompactTokenLimitScope::BodyAfterPrefix;
@@ -4548,7 +4548,7 @@ async fn auto_compact_body_after_prefix_still_caps_at_context_window() {
     let compact_body = requests[2].body_json().to_string();
     assert!(
         body_contains_text(&compact_body, SUMMARIZATION_PROMPT),
-        "body-after-prefix mode should still clamp the total threshold to the usable context window"
+        "body-after-prefix mode should still clamp the total threshold to the usable context span"
     );
 }
 
@@ -4978,7 +4978,7 @@ async fn snapshot_request_shape_pre_turn_compaction_strips_incoming_model_switch
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
+async fn snapshot_request_shape_pre_turn_compaction_context_span_exceeded() {
     skip_if_no_network!();
 
     let server = start_mock_server().await;
@@ -4993,7 +4993,7 @@ async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
             sse_failed(
                 "compact-failed",
                 "context_length_exceeded",
-                "Your input exceeds the context window of this model. Please adjust your input and try again.",
+                "Your input exceeds the context span of this model. Please adjust your input and try again.",
             )
         }),
     );
@@ -5042,7 +5042,7 @@ async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
     );
 
     insta::assert_snapshot!(
-        "pre_turn_compaction_context_window_exceeded_shapes",
+        "pre_turn_compaction_context_span_exceeded_shapes",
         format_labeled_requests_snapshot(
             "Pre-turn auto-compaction context-window failure: compaction request excludes the incoming user message and the turn errors.",
             &[(
@@ -5053,8 +5053,8 @@ async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
     );
 
     assert!(
-        error_message.contains("ran out of room in the model's context window"),
-        "expected context window exceeded message, got {error_message}"
+        error_message.contains("ran out of room in the model's context span"),
+        "expected context span exceeded message, got {error_message}"
     );
 }
 
@@ -5230,7 +5230,7 @@ async fn mid_turn_compaction_keeps_the_creation_time_global_instructions() -> Re
         .with_home(Arc::clone(&home))
         .with_config(move |config| {
             config.model_provider = provider;
-            config.model_context_window = Some(100);
+            config.model_context_span = Some(100);
             config.model_auto_compact_token_limit = Some(90);
         });
     let test = builder.build(&server).await?;

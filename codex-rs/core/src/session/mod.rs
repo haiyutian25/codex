@@ -214,7 +214,7 @@ use codex_protocol::error::Result as CodexResult;
 use codex_protocol::exec_output::StreamOutput;
 
 mod code_mode_warning;
-pub(crate) mod context_window;
+pub(crate) mod context_span;
 mod environment;
 pub(crate) mod extension_metrics;
 mod handlers;
@@ -287,8 +287,8 @@ use crate::network_policy_decision::execpolicy_network_rule_amendment;
 use crate::rollout::map_session_init_error;
 use crate::session_startup_prewarm::SessionStartupPrewarmHandle;
 use crate::shell;
-use crate::state::AutoCompactWindowIds;
-use crate::state::AutoCompactWindowSnapshot;
+use crate::state::AutoCompactSpanIds;
+use crate::state::AutoCompactSpanSnapshot;
 use crate::state::PendingRequestPermissions;
 use crate::state::SessionServices;
 use crate::state::SessionState;
@@ -1260,9 +1260,9 @@ impl Session {
         state.get_total_token_usage(state.server_reasoning_included())
     }
 
-    pub(crate) async fn auto_compact_window_snapshot(&self) -> AutoCompactWindowSnapshot {
+    pub(crate) async fn auto_compact_span_snapshot(&self) -> AutoCompactSpanSnapshot {
         let state = self.state.lock().await;
-        state.auto_compact_window_snapshot()
+        state.auto_compact_span_snapshot()
     }
 
     pub(crate) async fn estimated_tokens_after_last_model_generated_item(&self) -> i64 {
@@ -1490,10 +1490,10 @@ impl Session {
             previous_turn_settings,
             reference_context_item,
             world_state_baseline,
-            window_number,
-            first_window_id,
-            previous_window_id,
-            window_id,
+            span_number,
+            first_span_id,
+            previous_span_id,
+            span_id,
         } = self
             .reconstruct_history_from_rollout(turn_context, rollout_items)
             .await;
@@ -1528,14 +1528,14 @@ impl Session {
             if let Some(world_state) = world_state_baseline {
                 state.history.set_world_state_baseline(world_state);
             }
-            let fallback_ids = state.auto_compact_window_ids();
-            let window_id = window_id.unwrap_or(fallback_ids.window_id);
-            state.restore_auto_compact_window(
-                window_number,
-                AutoCompactWindowIds {
-                    first_window_id: first_window_id.unwrap_or(window_id),
-                    previous_window_id,
-                    window_id,
+            let fallback_ids = state.auto_compact_span_ids();
+            let span_id = span_id.unwrap_or(fallback_ids.span_id);
+            state.restore_auto_compact_span(
+                span_number,
+                AutoCompactSpanIds {
+                    first_span_id: first_span_id.unwrap_or(span_id),
+                    previous_span_id,
+                    span_id,
                 },
             );
             state.set_previous_turn_settings(previous_turn_settings.clone());
@@ -1551,13 +1551,13 @@ impl Session {
             None
         };
         if let Some(prefix_tokens) = prefix_tokens {
-            self.set_auto_compact_window_estimated_prefill_for_scope(turn_context, prefix_tokens)
+            self.set_auto_compact_span_estimated_prefill_for_scope(turn_context, prefix_tokens)
                 .await;
         }
         previous_turn_settings
     }
 
-    async fn set_auto_compact_window_estimated_prefill_for_scope(
+    async fn set_auto_compact_span_estimated_prefill_for_scope(
         &self,
         turn_context: &TurnContext,
         tokens: i64,
@@ -1570,7 +1570,7 @@ impl Session {
         }
 
         let mut state = self.state.lock().await;
-        state.set_auto_compact_window_estimated_prefill(tokens);
+        state.set_auto_compact_span_estimated_prefill(tokens);
     }
 
     fn last_token_info_from_rollout(rollout_items: &[RolloutItem]) -> Option<TokenUsageInfo> {
@@ -3519,13 +3519,13 @@ impl Session {
             message: metadata.message,
             replacement_history: Some(items.clone()),
             mcp_resource_origins: self.services.mcp_runtime.resource_origin_checkpoint(),
-            window_number: Some(metadata.window_number),
-            first_window_id: Some(metadata.window_ids.first_window_id.to_string()),
-            previous_window_id: metadata
-                .window_ids
-                .previous_window_id
+            span_number: Some(metadata.span_number),
+            first_span_id: Some(metadata.span_ids.first_span_id.to_string()),
+            previous_span_id: metadata
+                .span_ids
+                .previous_span_id
                 .map(|id| id.to_string()),
-            window_id: Some(metadata.window_ids.window_id.to_string()),
+            span_id: Some(metadata.span_ids.span_id.to_string()),
         };
         // Compaction starts a new history window, so its WorldState baseline must be full.
         let mut world_state_item = None;
@@ -3625,7 +3625,7 @@ impl Session {
                     session_store: &self.services.session_extension_data,
                     thread_store: &self.services.thread_extension_data,
                     turn_store: turn_context.extension_data.as_ref(),
-                    model_context_window: turn_context.model_context_window(),
+                    model_context_span: turn_context.model_context_span(),
                 })
                 .await
             {
@@ -3646,12 +3646,12 @@ impl Session {
         let mut developer_sections = Vec::<RenderedFragment>::with_capacity(8);
         let mut contextual_user_sections = Vec::<RenderedFragment>::with_capacity(2);
         let mut separate_developer_sections = Vec::<RenderedFragment>::new();
-        let mut context_window_hints = Vec::new();
-        let (session_source, auto_compact_window_ids) = {
+        let mut context_span_hints = Vec::new();
+        let (session_source, auto_compact_span_ids) = {
             let state = self.state.lock().await;
             (
                 state.session_configuration.session_source.clone(),
-                state.auto_compact_window_ids(),
+                state.auto_compact_span_ids(),
             )
         };
         let separate_guardian_developer_message =
@@ -3707,8 +3707,8 @@ impl Session {
                 .await
             {
                 match fragment.slot() {
-                    PromptSlot::ContextWindow => {
-                        context_window_hints.push(fragment.text().to_string());
+                    PromptSlot::ContextSpan => {
+                        context_span_hints.push(fragment.text().to_string());
                     }
                     PromptSlot::DeveloperPolicy | PromptSlot::DeveloperCapabilities => {
                         developer_sections.push(fragment.into());
@@ -3724,7 +3724,7 @@ impl Session {
                     session_store: &self.services.session_extension_data,
                     thread_store: &self.services.thread_extension_data,
                     turn_store: turn_context.extension_data.as_ref(),
-                    model_context_window: turn_context.model_context_window(),
+                    model_context_span: turn_context.model_context_span(),
                 })
                 .await
             {
@@ -3733,7 +3733,7 @@ impl Session {
         }
         // This is full-context metadata. Steady-state context diffs should not re-emit it.
         if turn_context.config.features.enabled(Feature::TokenBudget)
-            && turn_context.model_context_window().is_some()
+            && turn_context.model_context_span().is_some()
         {
             // Emit the legacy bridge hint when the notes MCP server provides one.
             // A failed request must not fall back to another source.
@@ -3766,17 +3766,17 @@ impl Session {
                     (!text.is_empty()).then_some(text)
                 })
             {
-                context_window_hints.push(mcp_result);
+                context_span_hints.push(mcp_result);
             }
             separate_developer_sections.push(
                 crate::context::TokenBudgetContext::new(
                     session_source
                         .get_agent_path()
                         .unwrap_or_else(codex_protocol::AgentPath::root),
-                    auto_compact_window_ids.first_window_id,
-                    auto_compact_window_ids.previous_window_id,
-                    auto_compact_window_ids.window_id,
-                    (!context_window_hints.is_empty()).then(|| context_window_hints.join("\n")),
+                    auto_compact_span_ids.first_span_id,
+                    auto_compact_span_ids.previous_span_id,
+                    auto_compact_span_ids.span_id,
+                    (!context_span_hints.is_empty()).then(|| context_span_hints.join("\n")),
                 )
                 .render_fragment(),
             );
@@ -3860,7 +3860,7 @@ impl Session {
         {
             items.push(message);
         }
-        // New context windows and compaction install these items directly into replacement history.
+        // New context spans and compaction install these items directly into replacement history.
         for item in &mut items {
             item.set_turn_id_if_missing(&turn_context.sub_id);
         }
@@ -3888,38 +3888,38 @@ impl Session {
         state.history.conversation_history_snapshot()
     }
 
-    pub(crate) async fn current_window_id(&self) -> String {
-        self.current_window().await.0
+    pub(crate) async fn current_span_id(&self) -> String {
+        self.current_span().await.0
     }
 
-    pub(crate) async fn current_window(&self) -> (String, u64, Uuid) {
+    pub(crate) async fn current_span(&self) -> (String, u64, Uuid) {
         let state = self.state.lock().await;
         let thread_id = self.thread_id;
-        let window_number = state.auto_compact_window_number();
-        let context_window_id = state.auto_compact_window_ids().window_id;
+        let span_number = state.auto_compact_span_number();
+        let context_span_id = state.auto_compact_span_ids().span_id;
         (
-            format!("{thread_id}:{window_number}"),
-            window_number,
-            context_window_id,
+            format!("{thread_id}:{span_number}"),
+            span_number,
+            context_span_id,
         )
     }
 
-    pub(crate) async fn advance_auto_compact_window(&self) -> (u64, AutoCompactWindowIds) {
+    pub(crate) async fn advance_auto_compact_span(&self) -> (u64, AutoCompactSpanIds) {
         let mut state = self.state.lock().await;
-        state.advance_auto_compact_window()
+        state.advance_auto_compact_span()
     }
 
-    pub(crate) async fn request_new_context_window(&self) {
+    pub(crate) async fn request_new_context_span(&self) {
         let mut state = self.state.lock().await;
-        state.request_new_context_window();
+        state.request_new_context_span();
     }
 
-    pub(crate) async fn take_new_context_window_request(&self) -> bool {
+    pub(crate) async fn take_new_context_span_request(&self) -> bool {
         let mut state = self.state.lock().await;
-        state.take_new_context_window_request()
+        state.take_new_context_span_request()
     }
 
-    pub(crate) async fn start_new_context_window(
+    pub(crate) async fn start_new_context_span(
         &self,
         step_context: &StepContext,
         world_state: Arc<WorldState>,
@@ -3944,9 +3944,9 @@ impl Session {
             };
         let window = {
             let mut state = self.state.lock().await;
-            state.start_new_context_window()
+            state.start_new_context_span()
         };
-        let (window_number, window_ids) = window;
+        let (span_number, span_ids) = window;
         let context_items = self
             .build_initial_context_with_world_state(turn_context, world_state.as_ref())
             .await
@@ -3961,13 +3961,13 @@ impl Session {
             Some(world_state),
             CompactedHistoryMetadata {
                 message: String::new(),
-                window_number,
-                window_ids,
+                span_number,
+                span_ids,
             },
         )
         .await;
         self.recompute_token_usage(turn_context).await;
-        window_number
+        span_number
     }
 
     pub(crate) async fn reference_context_item(&self) -> Option<TurnContextItem> {
@@ -4086,12 +4086,12 @@ impl Session {
             let token_info = {
                 let mut state = self.state.lock().await;
                 state
-                    .update_token_info_from_usage(token_usage, turn_context.model_context_window());
+                    .update_token_info_from_usage(token_usage, turn_context.model_context_span());
                 if matches!(
                     turn_context.config.model_auto_compact_token_limit_scope,
                     AutoCompactTokenLimitScope::BodyAfterPrefix
                 ) {
-                    state.ensure_auto_compact_window_server_prefill_from_usage(token_usage);
+                    state.ensure_auto_compact_span_server_prefill_from_usage(token_usage);
                 }
                 state.token_info()
             };
@@ -4126,7 +4126,7 @@ impl Session {
             let mut info = state.token_info().unwrap_or(TokenUsageInfo {
                 total_token_usage: TokenUsage::default(),
                 last_token_usage: TokenUsage::default(),
-                model_context_window: None,
+                model_context_span: None,
             });
 
             info.last_token_usage = TokenUsage {
@@ -4139,13 +4139,13 @@ impl Session {
                 codex_rollout_budget_units: None,
             };
 
-            if let Some(model_context_window) = turn_context.model_context_window() {
-                info.model_context_window = Some(model_context_window);
+            if let Some(model_context_span) = turn_context.model_context_span() {
+                info.model_context_span = Some(model_context_span);
             }
 
             state.set_token_info(Some(info));
         }
-        self.set_auto_compact_window_estimated_prefill_for_scope(
+        self.set_auto_compact_span_estimated_prefill_for_scope(
             turn_context,
             estimated_total_tokens,
         )
@@ -4197,9 +4197,9 @@ impl Session {
     }
 
     pub(crate) async fn set_total_tokens_full(&self, turn_context: &TurnContext) {
-        if let Some(context_window) = turn_context.model_context_window() {
+        if let Some(context_span) = turn_context.model_context_span() {
             let mut state = self.state.lock().await;
-            state.set_token_usage_full(context_window);
+            state.set_token_usage_full(context_span);
         }
         self.send_token_count_event(turn_context).await;
     }

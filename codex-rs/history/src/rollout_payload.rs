@@ -142,14 +142,14 @@ pub(super) struct CompactedItemWire<'a> {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     mcp_resource_origins: Option<Cow<'a, McpResourceOriginCheckpoint>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    window_number: Option<u64>,
+    span_number: Option<u64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    first_window_id: Option<Cow<'a, str>>,
+    first_span_id: Option<Cow<'a, str>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    previous_window_id: Option<Cow<'a, str>>,
+    previous_span_id: Option<Cow<'a, str>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(with = "Option<String>")]
-    window_id: Option<WindowIdWire<'a>>,
+    span_id: Option<WindowIdWire<'a>>,
 }
 
 impl<'a> From<&'a CompactedItem> for CompactedItemWire<'a> {
@@ -178,13 +178,13 @@ impl<'a> From<&'a CompactedItem> for CompactedItemWire<'a> {
             }),
             replacement_history_metadata,
             mcp_resource_origins: item.mcp_resource_origins.as_ref().map(Cow::Borrowed),
-            window_number: item.window_number,
-            first_window_id: item.first_window_id.as_deref().map(Cow::Borrowed),
-            previous_window_id: item.previous_window_id.as_deref().map(Cow::Borrowed),
-            window_id: item
-                .window_id
+            span_number: item.span_number,
+            first_span_id: item.first_span_id.as_deref().map(Cow::Borrowed),
+            previous_span_id: item.previous_span_id.as_deref().map(Cow::Borrowed),
+            span_id: item
+                .span_id
                 .as_deref()
-                .map(|window_id| WindowIdWire::Id(Cow::Borrowed(window_id))),
+                .map(|span_id| WindowIdWire::Id(Cow::Borrowed(span_id))),
         }
     }
 }
@@ -228,11 +228,11 @@ impl TryFrom<CompactedItemWire<'_>> for CompactedItem {
             (None, None) => None,
         };
 
-        let mut window_number = item.window_number;
-        let window_id = match item.window_id {
-            Some(WindowIdWire::Id(window_id)) => Some(window_id.into_owned()),
-            Some(WindowIdWire::LegacyWindowNumber(legacy_window_number)) => {
-                window_number.get_or_insert(legacy_window_number);
+        let mut span_number = item.span_number;
+        let span_id = match item.span_id {
+            Some(WindowIdWire::Id(span_id)) => Some(span_id.into_owned()),
+            Some(WindowIdWire::LegacyWindowNumber(legacy_span_number)) => {
+                span_number.get_or_insert(legacy_span_number);
                 None
             }
             None => None,
@@ -242,15 +242,15 @@ impl TryFrom<CompactedItemWire<'_>> for CompactedItem {
             message: item.message.into_owned(),
             replacement_history,
             mcp_resource_origins: item.mcp_resource_origins.map(Cow::into_owned),
-            window_number,
-            first_window_id: item.first_window_id.map(Cow::into_owned),
-            previous_window_id: item.previous_window_id.map(Cow::into_owned),
-            window_id,
+            span_number,
+            first_span_id: item.first_span_id.map(Cow::into_owned),
+            previous_span_id: item.previous_span_id.map(Cow::into_owned),
+            span_id,
         })
     }
 }
 
-// Older rollouts stored the numeric window number in `window_id`.
+// Older rollouts stored the numeric window number in `span_id`.
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
 enum WindowIdWire<'a> {

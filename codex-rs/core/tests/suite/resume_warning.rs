@@ -62,7 +62,7 @@ fn resume_history(
                 turn_id: turn_id.clone(),
                 trace_id: None,
                 started_at: None,
-                model_context_window: None,
+                model_context_span: None,
                 collaboration_mode_kind: ModeKind::Default,
             })),
             RolloutItem::EventMsg(EventMsg::UserMessage(UserMessageEvent {

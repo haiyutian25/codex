@@ -20,7 +20,7 @@ use tokio_util::sync::CancellationToken;
 
 /// Runs token-budget manual compaction as a normal compaction lifecycle.
 ///
-/// Token-budget compaction skips model/server summarization and installs a fresh context window
+/// Token-budget compaction skips model/server summarization and installs a fresh context span
 /// instead. It is still modeled as compaction so compact hooks and `ContextCompaction` turn items
 /// observe the same lifecycle as local or remote compaction.
 pub(crate) async fn run_manual_compact_task(
@@ -31,7 +31,7 @@ pub(crate) async fn run_manual_compact_task(
         turn_id: turn_context.sub_id.clone(),
         trace_id: turn_context.trace_id.clone(),
         started_at: turn_context.turn_timing_state.started_at_unix_secs().await,
-        model_context_window: turn_context.model_context_window(),
+        model_context_span: turn_context.model_context_span(),
         collaboration_mode_kind: turn_context.mode(),
     });
     sess.send_event(&turn_context, start_event).await;
@@ -46,7 +46,7 @@ pub(crate) async fn run_manual_compact_task(
 
 /// Runs token-budget inline auto-compaction as a normal compaction lifecycle.
 ///
-/// Token-budget compaction skips model/server summarization and installs a fresh context window
+/// Token-budget compaction skips model/server summarization and installs a fresh context span
 /// instead. It is still modeled as compaction so compact hooks and `ContextCompaction` turn items
 /// observe the same lifecycle as local or remote compaction.
 pub(crate) async fn run_inline_auto_compact_task(
@@ -79,7 +79,7 @@ async fn run_compact_task_inner(
     let compaction_item = TurnItem::ContextCompaction(ContextCompactionItem::new());
     sess.emit_turn_item_started(turn_context, &compaction_item)
         .await;
-    sess.start_new_context_window(step_context, world_state)
+    sess.start_new_context_span(step_context, world_state)
         .await;
     sess.emit_turn_item_completed(turn_context, compaction_item)
         .await;

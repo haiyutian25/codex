@@ -65,7 +65,7 @@ use codex_git_utils::get_git_repo_root;
 use codex_protocol::protocol::GitInfo as ProtocolGitInfo;
 use codex_protocol::protocol::HistoryPosition;
 use codex_protocol::protocol::MultiAgentVersion;
-use codex_protocol::protocol::SessionContextWindow;
+use codex_protocol::protocol::SessionContextSpan;
 use codex_protocol::protocol::SessionMeta;
 use codex_protocol::protocol::SessionMetaLine;
 use codex_protocol::protocol::SessionSource;
@@ -115,7 +115,7 @@ pub enum RolloutRecorderParams {
         history_mode: ThreadHistoryMode,
         history_base: Option<HistoryPosition>,
         subagent_history_start_ordinal: Option<u64>,
-        initial_window_id: Option<String>,
+        initial_span_id: Option<String>,
     },
     Resume {
         path: PathBuf,
@@ -212,7 +212,7 @@ impl RolloutRecorderParams {
             history_mode: Default::default(),
             history_base: None,
             subagent_history_start_ordinal: None,
-            initial_window_id: None,
+            initial_span_id: None,
         }
     }
 
@@ -311,13 +311,13 @@ impl RolloutRecorderParams {
         self
     }
 
-    pub fn with_initial_window_id(mut self, initial_window_id: String) -> Self {
+    pub fn with_initial_span_id(mut self, initial_span_id: String) -> Self {
         if let Self::Create {
-            initial_window_id: window_id,
+            initial_span_id: span_id,
             ..
         } = &mut self
         {
-            *window_id = Some(initial_window_id);
+            *span_id = Some(initial_span_id);
         }
         self
     }
@@ -856,7 +856,7 @@ impl RolloutRecorder {
                 history_mode,
                 history_base,
                 subagent_history_start_ordinal,
-                initial_window_id,
+                initial_span_id,
             } => {
                 let ordinal_state =
                     RolloutOrdinalState::for_new_rollout(history_mode, history_base);
@@ -900,7 +900,7 @@ impl RolloutRecorder {
                     history_base,
                     subagent_history_start_ordinal,
                     multi_agent_version,
-                    context_window: initial_window_id.map(SessionContextWindow::new),
+                    context_span: initial_span_id.map(SessionContextSpan::new),
                 };
 
                 RolloutWriterState {

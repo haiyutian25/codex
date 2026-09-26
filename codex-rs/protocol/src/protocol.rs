@@ -131,10 +131,10 @@ pub const MULTI_AGENT_MODE_OPEN_TAG: &str = "<multi_agent_mode>";
 pub const MULTI_AGENT_MODE_CLOSE_TAG: &str = "</multi_agent_mode>";
 pub const REALTIME_CONVERSATION_OPEN_TAG: &str = "<realtime_conversation>";
 pub const REALTIME_CONVERSATION_CLOSE_TAG: &str = "</realtime_conversation>";
-pub const CONTEXT_WINDOW_OPEN_TAG: &str = "<context_window>";
-pub const CONTEXT_WINDOW_CLOSE_TAG: &str = "</context_window>";
-pub const CONTEXT_WINDOW_GUIDANCE_OPEN_TAG: &str = "<context_window_guidance>";
-pub const CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG: &str = "</context_window_guidance>";
+pub const CONTEXT_WINDOW_OPEN_TAG: &str = "<context_span>";
+pub const CONTEXT_WINDOW_CLOSE_TAG: &str = "</context_span>";
+pub const CONTEXT_WINDOW_GUIDANCE_OPEN_TAG: &str = "<context_span_guidance>";
+pub const CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG: &str = "</context_span_guidance>";
 pub const USER_MESSAGE_BEGIN: &str = "## My request for Codex:";
 
 /// Removes the model-context prefix from a user message before displaying it.
@@ -1811,7 +1811,7 @@ pub enum NonSteerableTurnKind {
 #[serde(rename_all = "snake_case")]
 #[ts(rename_all = "snake_case")]
 pub enum CodexErrorInfo {
-    ContextWindowExceeded,
+    ContextSpanExceeded,
     SessionBudgetExceeded,
     UsageLimitExceeded,
     RateLimitExceeded,
@@ -1851,7 +1851,7 @@ impl CodexErrorInfo {
     pub fn affects_turn_status(&self) -> bool {
         match self {
             Self::ThreadRollbackFailed | Self::ActiveTurnNotSteerable { .. } => false,
-            Self::ContextWindowExceeded
+            Self::ContextSpanExceeded
             | Self::SessionBudgetExceeded
             | Self::UsageLimitExceeded
             | Self::RateLimitExceeded
@@ -2128,7 +2128,7 @@ pub struct TurnStartedEvent {
     #[ts(type = "number | null", optional)]
     pub started_at: Option<i64>,
     // TODO(aibrahim): make this not optional
-    pub model_context_window: Option<i64>,
+    pub model_context_span: Option<i64>,
     #[serde(default)]
     pub collaboration_mode_kind: ModeKind,
 }
@@ -2188,14 +2188,14 @@ pub struct TokenUsageInfo {
     pub last_token_usage: TokenUsage,
     // TODO(aibrahim): make this not optional
     #[ts(type = "number | null")]
-    pub model_context_window: Option<i64>,
+    pub model_context_span: Option<i64>,
 }
 
 impl TokenUsageInfo {
     pub fn new_or_append(
         info: &Option<TokenUsageInfo>,
         last: &Option<TokenUsage>,
-        model_context_window: Option<i64>,
+        model_context_span: Option<i64>,
     ) -> Option<Self> {
         if info.is_none() && last.is_none() {
             return None;
@@ -2206,14 +2206,14 @@ impl TokenUsageInfo {
             None => Self {
                 total_token_usage: TokenUsage::default(),
                 last_token_usage: TokenUsage::default(),
-                model_context_window,
+                model_context_span,
             },
         };
         if let Some(last) = last {
             info.append_last_usage(last);
         }
-        if let Some(model_context_window) = model_context_window {
-            info.model_context_window = Some(model_context_window);
+        if let Some(model_context_span) = model_context_span {
+            info.model_context_span = Some(model_context_span);
         }
         Some(info)
     }
@@ -2223,13 +2223,13 @@ impl TokenUsageInfo {
         self.last_token_usage = last.clone();
     }
 
-    pub fn fill_to_context_window(&mut self, context_window: i64) {
+    pub fn fill_to_context_span(&mut self, context_span: i64) {
         let previous_total = self.total_token_usage.total_tokens;
-        let delta = (context_window - previous_total).max(0);
+        let delta = (context_span - previous_total).max(0);
 
-        self.model_context_window = Some(context_window);
+        self.model_context_span = Some(context_span);
         self.total_token_usage = TokenUsage {
-            total_tokens: context_window,
+            total_tokens: context_span,
             ..TokenUsage::default()
         };
         self.last_token_usage = TokenUsage {
@@ -2238,13 +2238,13 @@ impl TokenUsageInfo {
         };
     }
 
-    pub fn full_context_window(context_window: i64) -> Self {
+    pub fn full_context_span(context_span: i64) -> Self {
         let mut info = Self {
             total_token_usage: TokenUsage::default(),
             last_token_usage: TokenUsage::default(),
-            model_context_window: Some(context_window),
+            model_context_span: Some(context_span),
         };
-        info.fill_to_context_window(context_window);
+        info.fill_to_context_span(context_span);
         info
     }
 }
@@ -2343,13 +2343,13 @@ impl TokenUsage {
         (self.non_cached_input() + self.output_tokens.max(0)).max(0)
     }
 
-    pub fn tokens_in_context_window(&self) -> i64 {
+    pub fn tokens_in_context_span(&self) -> i64 {
         self.total_tokens
     }
 
-    /// Estimate the remaining user-controllable percentage of the model's context window.
+    /// Estimate the remaining user-controllable percentage of the model's context span.
     ///
-    /// `context_window` is the total size of the model's context window.
+    /// `context_span` is the total size of the model's context span.
     /// `BASELINE_TOKENS` should capture tokens that are always present in
     /// the context (e.g., system prompt and fixed tool instructions) so that
     /// the percentage reflects the portion the user can influence.
@@ -2357,15 +2357,15 @@ impl TokenUsage {
     /// This normalizes both the numerator and denominator by subtracting the
     /// baseline, so immediately after the first prompt the UI shows 100% left
     /// and trends toward 0% as the user fills the effective window.
-    pub fn percent_of_context_window_remaining(&self, context_window: i64) -> i64 {
-        if context_window <= BASELINE_TOKENS {
+    pub fn percent_of_context_span_remaining(&self, context_span: i64) -> i64 {
+        if context_span <= BASELINE_TOKENS {
             return 0;
         }
 
-        let effective_window = context_window - BASELINE_TOKENS;
-        let used = (self.tokens_in_context_window() - BASELINE_TOKENS).max(0);
-        let remaining = (effective_window - used).max(0);
-        ((remaining as f64 / effective_window as f64) * 100.0)
+        let effective_span = context_span - BASELINE_TOKENS;
+        let used = (self.tokens_in_context_span() - BASELINE_TOKENS).max(0);
+        let remaining = (effective_span - used).max(0);
+        ((remaining as f64 / effective_span as f64) * 100.0)
             .clamp(0.0, 100.0)
             .round() as i64
     }
@@ -2933,14 +2933,14 @@ pub enum MultiAgentVersion {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
-pub struct SessionContextWindow {
-    /// UUIDv7 identity of this context window.
-    pub window_id: String,
+pub struct SessionContextSpan {
+    /// UUIDv7 identity of this context span.
+    pub span_id: String,
 }
 
-impl SessionContextWindow {
-    pub fn new(window_id: String) -> Self {
-        Self { window_id }
+impl SessionContextSpan {
+    pub fn new(span_id: String) -> Self {
+        Self { span_id }
     }
 }
 
@@ -3026,7 +3026,7 @@ pub struct SessionMeta {
     pub multi_agent_version: Option<MultiAgentVersion>,
     /// Initial context-window identity for consumers that tail rollout JSONL before compaction.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub context_window: Option<SessionContextWindow>,
+    pub context_span: Option<SessionContextSpan>,
 }
 
 impl Default for SessionMeta {
@@ -3056,7 +3056,7 @@ impl Default for SessionMeta {
             history_base: None,
             subagent_history_start_ordinal: None,
             multi_agent_version: None,
-            context_window: None,
+            context_span: None,
         }
     }
 }
@@ -6122,11 +6122,11 @@ mod tests {
     }
 
     #[test]
-    fn token_usage_info_new_or_append_updates_context_window_when_provided() {
+    fn token_usage_info_new_or_append_updates_context_span_when_provided() {
         let initial = Some(TokenUsageInfo {
             total_token_usage: TokenUsage::default(),
             last_token_usage: TokenUsage::default(),
-            model_context_window: Some(258_400),
+            model_context_span: Some(258_400),
         });
         let last = Some(TokenUsage {
             input_tokens: 10,
@@ -6141,15 +6141,15 @@ mod tests {
         let info = TokenUsageInfo::new_or_append(&initial, &last, Some(128_000))
             .expect("new_or_append should return info");
 
-        assert_eq!(info.model_context_window, Some(128_000));
+        assert_eq!(info.model_context_span, Some(128_000));
     }
 
     #[test]
-    fn token_usage_info_new_or_append_preserves_context_window_when_not_provided() {
+    fn token_usage_info_new_or_append_preserves_context_span_when_not_provided() {
         let initial = Some(TokenUsageInfo {
             total_token_usage: TokenUsage::default(),
             last_token_usage: TokenUsage::default(),
-            model_context_window: Some(258_400),
+            model_context_span: Some(258_400),
         });
         let last = Some(TokenUsage {
             input_tokens: 10,
@@ -6162,9 +6162,9 @@ mod tests {
         });
 
         let info =
-            TokenUsageInfo::new_or_append(&initial, &last, /*model_context_window*/ None)
+            TokenUsageInfo::new_or_append(&initial, &last, /*model_context_span*/ None)
                 .expect("new_or_append should return info");
 
-        assert_eq!(info.model_context_window, Some(258_400));
+        assert_eq!(info.model_context_span, Some(258_400));
     }
 }

@@ -117,7 +117,7 @@ fn test_model_provider() -> SharedModelProvider {
 fn test_responses_metadata_for_client(
     client: &ModelClient,
     turn_id: Option<&str>,
-    window_id: String,
+    span_id: String,
     parent_thread_id: Option<ThreadId>,
     request_kind: TestCodexResponsesRequestKind,
 ) -> CodexResponsesMetadata {
@@ -127,7 +127,7 @@ fn test_responses_metadata_for_client(
         &thread_id,
         &thread_id,
         turn_id,
-        window_id,
+        span_id,
         &client.state.session_source,
         parent_thread_id,
         request_kind,
@@ -440,11 +440,11 @@ fn build_ws_client_metadata_includes_window_lineage_and_turn_metadata() {
     }));
 
     let thread_id = client.state.thread_id.to_string();
-    let expected_window_id = format!("{thread_id}:1");
+    let expected_span_id = format!("{thread_id}:1");
     let responses_metadata = test_responses_metadata_for_client(
         &client,
         Some("turn-123"),
-        expected_window_id.clone(),
+        expected_span_id.clone(),
         Some(parent_thread_id),
         TestCodexResponsesRequestKind::Turn,
     );
@@ -468,8 +468,8 @@ fn build_ws_client_metadata_includes_window_lineage_and_turn_metadata() {
         ("turn_id", "turn_id", "turn-123"),
         (
             X_CODEX_WINDOW_ID_HEADER,
-            "window_id",
-            expected_window_id.as_str(),
+            "span_id",
+            expected_span_id.as_str(),
         ),
         (
             X_CODEX_PARENT_THREAD_ID_HEADER,

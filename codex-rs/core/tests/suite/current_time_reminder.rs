@@ -469,7 +469,7 @@ async fn current_time_reminder_is_refreshed_after_compaction() -> Result<()> {
     assert_eq!(
         current_time_reminders(&requests[2]),
         vec![SECOND_REMINDER],
-        "a new context window should force a fresh reminder before the next model request"
+        "a new context span should force a fresh reminder before the next model request"
     );
 
     Ok(())

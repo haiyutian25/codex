@@ -13,7 +13,7 @@ use chrono::Utc;
 use codex_protocol::ThreadId;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SessionContextWindow;
+use codex_protocol::protocol::SessionContextSpan;
 use codex_protocol::protocol::SessionMeta;
 use codex_protocol::protocol::SessionMetaLine;
 use codex_protocol::protocol::ThreadHistoryMode;
@@ -143,7 +143,7 @@ mod tests {
                     history_mode: ThreadHistoryMode::Legacy,
                     history_base: None,
                     subagent_history_start_ordinal: None,
-                    initial_window_id: uuid::Uuid::now_v7().to_string(),
+                    initial_span_id: uuid::Uuid::now_v7().to_string(),
                     metadata: ThreadPersistenceMetadata {
                         cwd: None,
                         model_provider: "test-provider".to_string(),
@@ -436,7 +436,7 @@ mod tests {
             history_mode,
             history_base: None,
             subagent_history_start_ordinal: None,
-            initial_window_id: uuid::Uuid::now_v7().to_string(),
+            initial_span_id: uuid::Uuid::now_v7().to_string(),
             metadata: thread_metadata(),
         }
     }
@@ -565,7 +565,7 @@ impl InMemoryThreadStore {
             history_base: params.history_base,
             subagent_history_start_ordinal: params.subagent_history_start_ordinal,
             multi_agent_version: params.multi_agent_version,
-            context_window: Some(SessionContextWindow::new(params.initial_window_id.clone())),
+            context_span: Some(SessionContextSpan::new(params.initial_span_id.clone())),
             ..SessionMeta::default()
         };
         state

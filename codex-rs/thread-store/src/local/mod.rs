@@ -1021,7 +1021,7 @@ mod tests {
                     turn_id: "turn-1".to_string(),
                     trace_id: None,
                     started_at: None,
-                    model_context_window: None,
+                    model_context_span: None,
                     collaboration_mode_kind: Default::default(),
                 },
             ))])
@@ -1957,7 +1957,7 @@ mod tests {
             history_mode: ThreadHistoryMode::Legacy,
             history_base: None,
             subagent_history_start_ordinal: None,
-            initial_window_id: uuid::Uuid::now_v7().to_string(),
+            initial_span_id: uuid::Uuid::now_v7().to_string(),
             metadata: thread_metadata(),
         }
     }

@@ -5,7 +5,7 @@ use ts_rs::TS;
 
 use crate::models::ImageDetail;
 
-/// Conservative cap so one user message cannot monopolize a large context window.
+/// Conservative cap so one user message cannot monopolize a large context span.
 pub const MAX_USER_INPUT_TEXT_CHARS: usize = 1 << 20;
 
 /// User input

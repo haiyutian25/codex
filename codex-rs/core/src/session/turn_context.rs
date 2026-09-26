@@ -410,14 +410,14 @@ impl TurnContext {
             .unwrap_or_else(|| "default".to_string())
     }
 
-    /// Legacy: returns the frozen initial-turn model context window.
+    /// Legacy: returns the frozen initial-turn model context span.
     /// Step-scoped consumers should use their captured `StepContext::settings`.
-    pub(crate) fn model_context_window(&self) -> Option<i64> {
-        let effective_context_window_percent = self.model_info().effective_context_window_percent;
+    pub(crate) fn model_context_span(&self) -> Option<i64> {
+        let effective_context_span_percent = self.model_info().effective_context_span_percent;
         self.model_info()
-            .resolved_context_window()
-            .map(|context_window| {
-                context_window.saturating_mul(effective_context_window_percent) / 100
+            .resolved_context_span()
+            .map(|context_span| {
+                context_span.saturating_mul(effective_context_span_percent) / 100
             })
     }
 

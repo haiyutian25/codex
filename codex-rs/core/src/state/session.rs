@@ -9,9 +9,9 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 
 use super::AdditionalContextStore;
-use super::auto_compact_window::AutoCompactWindow;
-use super::auto_compact_window::AutoCompactWindowIds;
-use super::auto_compact_window::AutoCompactWindowSnapshot;
+use super::auto_compact_span::AutoCompactSpan;
+use super::auto_compact_span::AutoCompactSpanIds;
+use super::auto_compact_span::AutoCompactSpanSnapshot;
 use crate::context_manager::ContextManager;
 use crate::session::PreviousTurnSettings;
 use crate::session::session::SessionConfiguration;
@@ -39,7 +39,7 @@ pub(crate) struct SessionState {
     /// reinjection after resume or `/compact`).
     previous_turn_settings: Option<PreviousTurnSettings>,
     /// Runtime accounting state for the active auto-compaction window.
-    auto_compact_window: AutoCompactWindow,
+    auto_compact_span: AutoCompactSpan,
     /// Startup prewarmed session prepared during session initialization.
     pub(crate) startup_prewarm: Option<SessionStartupPrewarmHandle>,
     pub(crate) current_time_reminder: CurrentTimeReminderState,
@@ -53,15 +53,15 @@ impl SessionState {
     /// Create a new session state mirroring previous `State::default()` semantics.
     #[cfg(test)]
     pub(crate) fn new(session_configuration: SessionConfiguration) -> Self {
-        Self::new_with_auto_compact_window_ids(
+        Self::new_with_auto_compact_span_ids(
             session_configuration,
-            AutoCompactWindowIds::new_initial(),
+            AutoCompactSpanIds::new_initial(),
         )
     }
 
-    pub(crate) fn new_with_auto_compact_window_ids(
+    pub(crate) fn new_with_auto_compact_span_ids(
         session_configuration: SessionConfiguration,
-        auto_compact_window_ids: AutoCompactWindowIds,
+        auto_compact_span_ids: AutoCompactSpanIds,
     ) -> Self {
         let history = ContextManager::new();
         Self {
@@ -73,7 +73,7 @@ impl SessionState {
             mcp_dependency_prompted: HashSet::new(),
             additional_context: AdditionalContextStore::default(),
             previous_turn_settings: None,
-            auto_compact_window: AutoCompactWindow::new_with_ids(auto_compact_window_ids),
+            auto_compact_span: AutoCompactSpan::new_with_ids(auto_compact_span_ids),
             startup_prewarm: None,
             current_time_reminder: CurrentTimeReminderState::default(),
             active_connector_selection: HashSet::new(),
@@ -125,7 +125,7 @@ impl SessionState {
         self.history.replace(items);
         self.history
             .set_reference_context_item(reference_context_item);
-        self.auto_compact_window.clear_prefill();
+        self.auto_compact_span.clear_prefill();
     }
 
     pub(crate) fn replace_annotated_history(
@@ -136,7 +136,7 @@ impl SessionState {
         self.history.replace_annotated(items);
         self.history
             .set_reference_context_item(reference_context_item);
-        self.auto_compact_window.clear_prefill();
+        self.auto_compact_span.clear_prefill();
     }
 
     pub(crate) fn set_token_info(&mut self, info: Option<TokenUsageInfo>) {
@@ -155,66 +155,66 @@ impl SessionState {
     pub(crate) fn update_token_info_from_usage(
         &mut self,
         usage: &TokenUsage,
-        model_context_window: Option<i64>,
+        model_context_span: Option<i64>,
     ) {
-        self.history.update_token_info(usage, model_context_window);
+        self.history.update_token_info(usage, model_context_span);
     }
 
-    pub(crate) fn ensure_auto_compact_window_server_prefill_from_usage(
+    pub(crate) fn ensure_auto_compact_span_server_prefill_from_usage(
         &mut self,
         usage: &TokenUsage,
     ) {
-        self.auto_compact_window
+        self.auto_compact_span
             .ensure_server_observed_prefill_from_usage(usage);
     }
 
-    pub(crate) fn set_auto_compact_window_estimated_prefill(&mut self, tokens: i64) {
-        self.auto_compact_window.set_estimated_prefill(tokens);
+    pub(crate) fn set_auto_compact_span_estimated_prefill(&mut self, tokens: i64) {
+        self.auto_compact_span.set_estimated_prefill(tokens);
     }
 
-    pub(crate) fn auto_compact_window_snapshot(&self) -> AutoCompactWindowSnapshot {
-        self.auto_compact_window.snapshot()
+    pub(crate) fn auto_compact_span_snapshot(&self) -> AutoCompactSpanSnapshot {
+        self.auto_compact_span.snapshot()
     }
 
     pub(crate) fn claim_token_budget_reminder(&mut self) -> bool {
-        self.auto_compact_window.claim_token_budget_reminder()
+        self.auto_compact_span.claim_token_budget_reminder()
     }
 
     pub(crate) fn claim_auto_compact_fallback(&mut self) -> bool {
-        self.auto_compact_window.claim_auto_compact_fallback()
+        self.auto_compact_span.claim_auto_compact_fallback()
     }
 
-    pub(crate) fn auto_compact_window_number(&self) -> u64 {
-        self.auto_compact_window.window_number()
+    pub(crate) fn auto_compact_span_number(&self) -> u64 {
+        self.auto_compact_span.span_number()
     }
 
-    pub(crate) fn auto_compact_window_ids(&self) -> AutoCompactWindowIds {
-        self.auto_compact_window.ids()
+    pub(crate) fn auto_compact_span_ids(&self) -> AutoCompactSpanIds {
+        self.auto_compact_span.ids()
     }
 
-    pub(crate) fn restore_auto_compact_window(
+    pub(crate) fn restore_auto_compact_span(
         &mut self,
-        window_number: u64,
-        ids: AutoCompactWindowIds,
+        span_number: u64,
+        ids: AutoCompactSpanIds,
     ) {
-        self.auto_compact_window.restore(window_number, ids);
+        self.auto_compact_span.restore(span_number, ids);
     }
 
-    pub(crate) fn advance_auto_compact_window(&mut self) -> (u64, AutoCompactWindowIds) {
-        self.auto_compact_window.advance()
+    pub(crate) fn advance_auto_compact_span(&mut self) -> (u64, AutoCompactSpanIds) {
+        self.auto_compact_span.advance()
     }
 
-    pub(crate) fn request_new_context_window(&mut self) {
-        self.auto_compact_window.request_new_context_window();
+    pub(crate) fn request_new_context_span(&mut self) {
+        self.auto_compact_span.request_new_context_span();
     }
 
-    pub(crate) fn take_new_context_window_request(&mut self) -> bool {
-        self.auto_compact_window.take_new_context_window_request()
+    pub(crate) fn take_new_context_span_request(&mut self) -> bool {
+        self.auto_compact_span.take_new_context_span_request()
     }
 
-    pub(crate) fn start_new_context_window(&mut self) -> (u64, AutoCompactWindowIds) {
-        let window = self.auto_compact_window.advance();
-        self.auto_compact_window.clear_prefill();
+    pub(crate) fn start_new_context_span(&mut self) -> (u64, AutoCompactSpanIds) {
+        let window = self.auto_compact_span.advance();
+        self.auto_compact_span.clear_prefill();
         window
     }
 
@@ -235,8 +235,8 @@ impl SessionState {
         (self.token_info(), self.latest_rate_limits.clone())
     }
 
-    pub(crate) fn set_token_usage_full(&mut self, context_window: i64) {
-        self.history.set_token_usage_full(context_window);
+    pub(crate) fn set_token_usage_full(&mut self, context_span: i64) {
+        self.history.set_token_usage_full(context_span);
     }
 
     pub(crate) fn get_total_token_usage(&self, server_reasoning_included: bool) -> i64 {

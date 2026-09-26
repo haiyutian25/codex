@@ -96,9 +96,9 @@ pub enum CodexErrorDetails {
     #[error("rate limit exceeded: {0}")]
     RateLimitExceeded(String),
     #[error(
-        "Codex ran out of room in the model's context window. Start a new thread or clear earlier history before retrying."
+        "Codex ran out of room in the model's context span. Start a new thread or clear earlier history before retrying."
     )]
-    ContextWindowExceeded,
+    ContextSpanExceeded,
     #[error("no thread with id: {0}")]
     ThreadNotFound(ThreadId),
     #[error("agent thread limit reached")]
@@ -313,7 +313,7 @@ impl CodexErr {
     codex_err_unit_constructors!(
         TurnAborted,
         SessionBudgetExceeded,
-        ContextWindowExceeded,
+        ContextSpanExceeded,
         SessionConfiguredNotFirstEvent,
         Timeout,
         RequestTimeout,
@@ -385,7 +385,7 @@ impl CodexErr {
             | CodexErrorDetails::Sandbox(_)
             | CodexErrorDetails::LandlockSandboxExecutableNotProvided
             | CodexErrorDetails::RetryLimit(_)
-            | CodexErrorDetails::ContextWindowExceeded
+            | CodexErrorDetails::ContextSpanExceeded
             | CodexErrorDetails::ThreadNotFound(_)
             | CodexErrorDetails::AgentLimitReached { .. }
             | CodexErrorDetails::Spawn
@@ -430,7 +430,7 @@ impl CodexErr {
     /// Translate core error to client-facing protocol error.
     pub fn to_codex_protocol_error(&self) -> CodexErrorInfo {
         match &self.details {
-            CodexErrorDetails::ContextWindowExceeded => CodexErrorInfo::ContextWindowExceeded,
+            CodexErrorDetails::ContextSpanExceeded => CodexErrorInfo::ContextSpanExceeded,
             CodexErrorDetails::SessionBudgetExceeded => CodexErrorInfo::SessionBudgetExceeded,
             CodexErrorDetails::RateLimitExceeded(_) => CodexErrorInfo::RateLimitExceeded,
             CodexErrorDetails::UsageLimitReached(_)

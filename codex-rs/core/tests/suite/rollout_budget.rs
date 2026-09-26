@@ -454,7 +454,7 @@ async fn restates_the_current_remainder_after_compaction() -> Result<()> {
     assert_eq!(
         rollout_budget_texts(&requests[2]),
         vec![rollout_budget_message(/*remaining_tokens*/ 70)],
-        "a new context window should restate the current remainder"
+        "a new context span should restate the current remainder"
     );
     let request_body = requests[2].body_json().to_string();
     let summary_position = request_body

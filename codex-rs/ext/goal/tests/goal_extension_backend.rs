@@ -1392,7 +1392,7 @@ impl GoalExtensionHarness {
         let token_usage = TokenUsageInfo {
             total_token_usage: usage.clone(),
             last_token_usage: TokenUsage::default(),
-            model_context_window: None,
+            model_context_span: None,
         };
         for contributor in self.registry.token_usage_contributors() {
             contributor

@@ -185,20 +185,20 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
     Ok(())
 }
 
-/// Scenario: the model advertises a default 273k context window and a 400k max
-/// context window, and the user explicitly configures 1M. This verifies the
+/// Scenario: the model advertises a default 273k context span and a 400k max
+/// context span, and the user explicitly configures 1M. This verifies the
 /// runtime turn clamps the override to the advertised max window.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_models_config_context_window_override_clamps_to_max_context_window() -> Result<()> {
+async fn remote_models_config_context_span_override_clamps_to_max_context_span() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = MockServer::start().await;
     let requested_model = "gpt-5.4-test";
     let mut remote_model =
         test_remote_model("gpt-5.4", ModelVisibility::List, /*priority*/ 1_000);
-    remote_model.context_window = Some(273_000);
-    remote_model.max_context_window = Some(400_000);
-    remote_model.effective_context_window_percent = 100;
+    remote_model.context_span = Some(273_000);
+    remote_model.max_context_span = Some(400_000);
+    remote_model.effective_context_span_percent = 100;
     mount_models_once(
         &server,
         ModelsResponse {
@@ -216,14 +216,14 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
         .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
-            config.model_context_window = Some(1_000_000);
+            config.model_context_span = Some(1_000_000);
         })
         .build(&server)
         .await?;
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
-            text: "check context window".into(),
+            text: "check context span".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
@@ -232,7 +232,7 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
         matches!(
             event,
             EventMsg::TurnStarted(started)
-                if started.model_context_window == Some(400_000)
+                if started.model_context_span == Some(400_000)
         )
     })
     .await;
@@ -240,25 +240,25 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
         unreachable!("wait_for_event returned unexpected event");
     };
 
-    assert_eq!(turn_started.model_context_window, Some(400_000));
+    assert_eq!(turn_started.model_context_span, Some(400_000));
 
     Ok(())
 }
 
-/// Scenario: the user explicitly configures a context window above the model's
-/// max_context_window. This verifies the runtime window is clamped to the max
+/// Scenario: the user explicitly configures a context span above the model's
+/// max_context_span. This verifies the runtime window is clamped to the max
 /// instead of using the oversized config value.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_models_config_override_above_max_uses_max_context_window() -> Result<()> {
+async fn remote_models_config_override_above_max_uses_max_context_span() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = MockServer::start().await;
     let requested_model = "gpt-5.4-test";
     let mut remote_model =
         test_remote_model("gpt-5.4", ModelVisibility::List, /*priority*/ 1_000);
-    remote_model.context_window = Some(273_000);
-    remote_model.max_context_window = Some(400_000);
-    remote_model.effective_context_window_percent = 100;
+    remote_model.context_span = Some(273_000);
+    remote_model.max_context_span = Some(400_000);
+    remote_model.effective_context_span_percent = 100;
     mount_models_once(
         &server,
         ModelsResponse {
@@ -276,14 +276,14 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
         .with_auth(CodexAuth::from_api_key("dummy-test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
-            config.model_context_window = Some(500_000);
+            config.model_context_span = Some(500_000);
         })
         .build(&server)
         .await?;
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
-            text: "check context window".into(),
+            text: "check context span".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
@@ -292,7 +292,7 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
         matches!(
             event,
             EventMsg::TurnStarted(started)
-                if started.model_context_window == Some(400_000)
+                if started.model_context_span == Some(400_000)
         )
     })
     .await;
@@ -300,25 +300,25 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
         unreachable!("wait_for_event returned unexpected event");
     };
 
-    assert_eq!(turn_started.model_context_window, Some(400_000));
+    assert_eq!(turn_started.model_context_span, Some(400_000));
 
     Ok(())
 }
 
-/// Scenario: model metadata includes both context_window and max_context_window,
+/// Scenario: model metadata includes both context_span and max_context_span,
 /// but the user did not configure an override. This verifies the runtime keeps
-/// using the model's default context_window in the no-override path.
+/// using the model's default context_span in the no-override path.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_models_use_context_window_when_config_override_is_absent() -> Result<()> {
+async fn remote_models_use_context_span_when_config_override_is_absent() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = MockServer::start().await;
     let requested_model = "gpt-5.4-test";
     let mut remote_model =
         test_remote_model("gpt-5.4", ModelVisibility::List, /*priority*/ 1_000);
-    remote_model.context_window = Some(273_000);
-    remote_model.max_context_window = Some(400_000);
-    remote_model.effective_context_window_percent = 100;
+    remote_model.context_span = Some(273_000);
+    remote_model.max_context_span = Some(400_000);
+    remote_model.effective_context_span_percent = 100;
     mount_models_once(
         &server,
         ModelsResponse {
@@ -342,7 +342,7 @@ async fn remote_models_use_context_window_when_config_override_is_absent() -> Re
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
-            text: "check context window".into(),
+            text: "check context span".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
@@ -351,7 +351,7 @@ async fn remote_models_use_context_window_when_config_override_is_absent() -> Re
         matches!(
             event,
             EventMsg::TurnStarted(started)
-                if started.model_context_window == Some(273_000)
+                if started.model_context_span == Some(273_000)
         )
     })
     .await;
@@ -359,7 +359,7 @@ async fn remote_models_use_context_window_when_config_override_is_absent() -> Re
         unreachable!("wait_for_event returned unexpected event");
     };
 
-    assert_eq!(turn_started.model_context_window, Some(273_000));
+    assert_eq!(turn_started.model_context_span, Some(273_000));
 
     Ok(())
 }
@@ -583,11 +583,11 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
         web_search_tool_type: Default::default(),
         truncation_policy: TruncationPolicyConfig::bytes(/*limit*/ 10_000),
         supports_image_detail_original: false,
-        context_window: Some(272_000),
-        max_context_window: None,
+        context_span: Some(272_000),
+        max_context_span: None,
         auto_compact_token_limit: None,
         comp_hash: None,
-        effective_context_window_percent: 95,
+        effective_context_span_percent: 95,
         experimental_supported_tools: Vec::new(),
     };
 
@@ -860,11 +860,11 @@ async fn remote_models_apply_legacy_instructions() -> Result<()> {
         web_search_tool_type: Default::default(),
         truncation_policy: TruncationPolicyConfig::bytes(/*limit*/ 10_000),
         supports_image_detail_original: false,
-        context_window: Some(272_000),
-        max_context_window: None,
+        context_span: Some(272_000),
+        max_context_span: None,
         auto_compact_token_limit: None,
         comp_hash: None,
-        effective_context_window_percent: 95,
+        effective_context_span_percent: 95,
         experimental_supported_tools: Vec::new(),
     };
     let mut models_response = serde_json::to_value(ModelsResponse {
@@ -1426,11 +1426,11 @@ fn test_remote_model_with_policy(
         web_search_tool_type: Default::default(),
         truncation_policy,
         supports_image_detail_original: false,
-        context_window: Some(272_000),
-        max_context_window: None,
+        context_span: Some(272_000),
+        max_context_span: None,
         auto_compact_token_limit: None,
         comp_hash: None,
-        effective_context_window_percent: 95,
+        effective_context_span_percent: 95,
         experimental_supported_tools: Vec::new(),
     }
 }

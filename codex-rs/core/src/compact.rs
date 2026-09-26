@@ -20,7 +20,7 @@ use crate::session::session::Session;
 use crate::session::step_context::StepContext;
 use crate::session::turn::get_last_assistant_message_from_turn;
 use crate::session::turn_context::TurnContext;
-use crate::state::AutoCompactWindowIds;
+use crate::state::AutoCompactSpanIds;
 use crate::util::backoff;
 use codex_analytics::CodexCompactionEvent;
 use codex_analytics::CompactionImplementation;
@@ -84,8 +84,8 @@ pub(crate) enum InitialContextInjection {
 /// `CompactedItem`, ensuring the live and persisted histories remain identical.
 pub(crate) struct CompactedHistoryMetadata {
     pub(crate) message: String,
-    pub(crate) window_number: u64,
-    pub(crate) window_ids: AutoCompactWindowIds,
+    pub(crate) span_number: u64,
+    pub(crate) span_ids: AutoCompactSpanIds,
 }
 
 pub(crate) async fn build_compaction_initial_context(
@@ -154,7 +154,7 @@ pub(crate) async fn run_compact_task(
         turn_id: turn_context.sub_id.clone(),
         trace_id: turn_context.trace_id.clone(),
         started_at: turn_context.turn_timing_state.started_at_unix_secs().await,
-        model_context_window: turn_context.model_context_window(),
+        model_context_span: turn_context.model_context_span(),
         collaboration_mode_kind: turn_context.mode(),
     });
     sess.send_event(&turn_context, start_event).await;
@@ -311,7 +311,7 @@ async fn run_compact_task_inner_impl(
                 sess.send_event(&turn_context, event).await;
                 return Err(e);
             }
-            Err(e) if matches!(e.details(), CodexErrorDetails::ContextWindowExceeded) => {
+            Err(e) if matches!(e.details(), CodexErrorDetails::ContextSpanExceeded) => {
                 if turn_input_len > 1 {
                     // Trim from the beginning to preserve cache (prefix-based) and keep recent messages intact.
                     error!(
@@ -362,7 +362,7 @@ async fn run_compact_task_inner_impl(
         // belongs to this compaction turn.
         summary_item.set_turn_id_if_missing(&turn_context.sub_id);
     }
-    let (window_number, window_ids) = sess.advance_auto_compact_window().await;
+    let (span_number, span_ids) = sess.advance_auto_compact_span().await;
 
     let (initial_context, world_state_baseline) =
         build_compaction_initial_context(sess.as_ref(), &initial_context_injection).await;
@@ -382,8 +382,8 @@ async fn run_compact_task_inner_impl(
         world_state_baseline,
         CompactedHistoryMetadata {
             message: summary_text,
-            window_number,
-            window_ids,
+            span_number,
+            span_ids,
         },
     )
     .await;

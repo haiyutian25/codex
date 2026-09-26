@@ -201,7 +201,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create() -> Result<()> {
     )?;
     assert_eq!(warmup_metadata["request_kind"].as_str(), Some("prewarm"));
     assert_eq!(
-        warmup_metadata["window_id"].as_str(),
+        warmup_metadata["span_id"].as_str(),
         warmup["client_metadata"]["x-codex-window-id"].as_str()
     );
     assert!(
@@ -217,15 +217,15 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create() -> Result<()> {
             .expect("turn metadata"),
     )?;
     assert_eq!(turn_metadata["request_kind"].as_str(), Some("turn"));
-    assert_eq!(warmup_metadata["window_number"].as_u64(), Some(0));
+    assert_eq!(warmup_metadata["span_number"].as_u64(), Some(0));
     assert_eq!(
-        warmup_metadata["window_number"],
-        turn_metadata["window_number"]
+        warmup_metadata["span_number"],
+        turn_metadata["span_number"]
     );
-    assert!(warmup_metadata["context_window_id"].is_string());
+    assert!(warmup_metadata["context_span_id"].is_string());
     assert_eq!(
-        warmup_metadata["context_window_id"],
-        turn_metadata["context_window_id"]
+        warmup_metadata["context_span_id"],
+        turn_metadata["context_span_id"]
     );
 
     server.shutdown().await;

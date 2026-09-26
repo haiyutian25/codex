@@ -51,7 +51,7 @@ impl SessionTask for RegularTask {
                 turn_id: ctx.sub_id.clone(),
                 trace_id: ctx.trace_id.clone(),
                 started_at: ctx.turn_timing_state.started_at_unix_secs().await,
-                model_context_window: ctx.model_context_window(),
+                model_context_span: ctx.model_context_span(),
                 collaboration_mode_kind: ctx.mode(),
             });
             sess.send_event(ctx.as_ref(), event).await;

@@ -410,7 +410,7 @@ async fn packaged_defaults_have_lower_precedence_than_existing_config_layers() {
         r#"
 model = "packaged-model"
 model_provider = "packaged-provider"
-model_context_window = 120000
+model_context_span = 120000
 "#,
     )
     .expect("write packaged defaults");
@@ -468,7 +468,7 @@ model_provider = "system-provider"
         toml::toml! {
             model = "session-model"
             model_provider = "system-provider"
-            model_context_window = 120000
+            model_context_span = 120000
         }
         .into()
     );

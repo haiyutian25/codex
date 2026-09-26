@@ -632,7 +632,7 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
             "openai",
             /*reasoning_effort*/ None,
             ReasoningSummary::Auto,
-            /*context_window*/ None,
+            /*context_span*/ None,
             /*auto_compact_token_limit*/ None,
             AskForApproval::Never,
             SandboxPolicy::DangerFullAccess,
