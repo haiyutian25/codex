@@ -1,0 +1,46 @@
+=== check (warnings from tests.rs) ===
+warning: enum `StdinCloseBehavior` is never used
+  --> utils/pty/src/unix_io.rs:15:17
+   |
+15 | pub(crate) enum StdinCloseBehavior {
+--
+warning: struct `PtyIo` is never constructed
+  --> utils/pty/src/unix_io.rs:20:19
+   |
+20 | pub(crate) struct PtyIo {
+--
+warning: associated items `new` and `spawn` are never used
+  --> utils/pty/src/unix_io.rs:25:19
+   |
+24 | impl PtyIo {
+--
+warning: function `write_all` is never used
+  --> utils/pty/src/unix_io.rs:96:10
+   |
+96 | async fn write_all(fd: &AsyncFd<File>, mut bytes: &[u8]) -> io::Result<()> {
+--
+warning: `codex-utils-pty` (lib) generated 4 warnings
+    Checking gix v0.81.0
+    Checking codex-git-utils v0.0.0 (/home/ubuntu/codex-rs/git-utils)
+   Compiling unic-langid-impl v0.9.6
+--
+warning: function `exec_command_event` is never used
+   --> core/tests/suite/request_permissions.rs:121:4
+    |
+121 | fn exec_command_event(call_id: &str, command: &str) -> Result<Value> {
+--
+warning: function `exec_command_event_with_missing_additional_permissions` is never used
+   --> core/tests/suite/request_permissions.rs:145:4
+    |
+145 | fn exec_command_event_with_missing_additional_permissions(
+--
+warning: function `wait_for_exec_approval_or_completion` is never used
+   --> core/tests/suite/request_permissions.rs:228:10
+    |
+228 | async fn wait_for_exec_approval_or_completion(
+--
+=== check finished ===
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.69s
+=== session::tests (full) ===
+---
+1

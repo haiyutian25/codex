@@ -97,3 +97,17 @@ __pycache__/
 
 # IDE assistant project data
 .codebuddy/
+.trae/rules/git-commit-message.md
+windows-keyword-scan.md
+.del_test.py
+scan_windows_keyword.py
+restore_line_endings.py
+rename_context_window.py
+.remote_verify.py
+.remote_check_launch.py
+.remote_clean.py
+.remote_log_check.py
+.remote_poll.py
+.remote_regen_launch.py
+.remote_tail.py
+.remote_verify_tests.py
